@@ -1,0 +1,139 @@
+I want to brainstorm an app idea with you. I'll lay it out, and please help me develop it further by asking me questions. Let's focus on the idea first, and then we can go into the more technical stuff.
+
+Throughout our lives, we experience several moments of happiness, or when something very funny or memorable happened. These may be very short lived moments. You smile, laugh etc., but it may be so fast or short you may not even manage to take a photo or video of the moment. So what ends up happening is the moment gets forgotten. Someone may bring it up at some point in the future like "remember when...", but it's not stored somewhere. And with time, details of it may fade away, or it may be completely forgotten. I think it would beautiful if people had a tool to capture these moments. It's not something people will be able to do in the moment - the moment should be enjoyed to the fullest. But perhaps shortly after the moment, while the memory is fresh in their minds, or even weeks, months, years later when someone brings it up, they would still be able to note down some of the details. Perhaps, even be able to find any photos or videos around or during the moment, and upload them together with their notes. A moment should be shared among all people involved (owners / editors), or even others who weren't present, but would still like to know about it (readers).
+
+For now, I feel like the app should be called "moments", but I'm open to ideas. I'm not sure what this looks like, but I have. Few things in mind:
+
+* It should work well on both laptops and smartphones
+
+* Users sign up with their first name, last name, email, and select a username. Checks are in place to prevent the same username being used multiple times. There should also be an option to upload a profile pic
+
+* A user's home page should have an overview of all of their moments. Perhaps they should have the option to sort these in different ways, either chronologically (ascending or descending), or split as "Created by you", and "Shared with you". They should also be able to filter by date, location, people involved, or specific keywords / tags
+
+* A user should be able to create a moment through a modal. This would capture standard info like moment name, date, location, people involved. Only Moment name should be mandatory field. Also the date field should somehow allow users to just capture the year of the moment, or only month and year, or a standard date (day, month, year) - depending on how much they remember about the moment
+
+* Moment cards on the home page should be editable through a small edit icon. Every user mentioned in the moment should be able to make edits (more on this later). Every time someone edits a moment card, or the contents of a moment, all mentioned users should be notified
+
+* A user can share a moment only with people they are friends with. If someone shares / mentions / tags a user in their moment, then all of those users become owners / editors of that moment. However, the users tagged / mentioned in a moment would receive a notification first alerting them that a friend mentioned them on a moment, and they have to accept or decline them being included. If all mentioned users decline, they moment can still exist in the originator user's account
+
+* A user's home page there should be an Add friend functionality that allows them to search by a user's first name, last name, or username to find users, and add them as friends. This should send a friend request to the appropriate user (which they have to accept or reject). Since people can have friends, there also needs to be a Manage friends section somewhere to allow viewing friends, adding more friends, or deleting friends
+
+* An Account page should also be available for each user. This is where they can edit their personal details, upload / edit their profile photo, and delete their account. Deleting an account would delete all of a user's data, but any moments they shared with other users should remain in those users' accounts. There should also be a notifications section allowing users to select or deselect if they want to receive notifications for new friend requests, moment invites / mentions, moment edits (posts etc.)
+
+* Once a moment is created, the originator and mentioned users (once they accept) are able to type in a text box the details of the moment. Users can post multiple times, and each should appear as an individual post with details on who posted in, and when. There should be an option to sort posts in ascending or descending order based on the date posted, or filter posts by user. Posts should be able to also accommodate photos, videos, and voice recordings related to the moment - perhaps the modal allowing a user to add text details, also provides the ability to upload media
+
+* There should also be a functionality within a moment page to invite readers. These are users who can view the moment contents, but they cannot make any edits. These should be already be friends with all users mentioned in the moment, and be searchable through their first name, last name, or username
+
+This should form a strong foundation / basis for allowing users to capture their moment. I have additional ideas that we could layer on top of this (e.g., at the top of each moment page, a short AI summary of the moment based on all moment posts), but let's focus on the core idea for now
+
+#####
+
+On the core experience: I see people the app the evening or the day after a moment. But initially, many will like to retroactively capture old moments. Both should work. Perhaps a notification "it's been a few days since your last moment..." that can be tweaked (i.e., weekly, bi-weekly, monthly, never in account settings) would work
+
+On the social layer: I initially thought about these moment being very personal, so I felt the social graph would be a big driver. But now that you mention in I think it could be nice to be able to invite anyone through a link or via their username. It opens this up to more options (i.e., not just close friends). I'm not 100% sure about this tbh. Open to your suggestions
+
+On posts within a moment: I'm imagining these as more like journal entries (reflective, narrative, possibly long). If someone decides to just write something short, or only upload media, that's fine too
+
+On the name: You are completely right! I like Linger, Ember, and Remember When. Let's keep these noted down for now, and we can decide later
+
+On scope: Honestly at first, me and my friends. But I would like us to think about it, and develop it as if it would be working at scale (just in case)
+
+#####
+
+On notifications: Yes! I was also thinking about implementing something like that
+
+On the social layer: Agree with your suggestion
+
+On journal entries: A shared memory book is the perfect way to describe this. I love your suggestion on this. For now, let's do no likes, no reactions, no follower counts
+
+On scale:
+- Moderation: Perhaps they have the options to leave the moment at any time? And that should give them the options to also delete their posts in the moment or leave them in (other editors can delete them later)
+- Media storage: We can think about monetisation and a free tier with limits - I like that! At the beginning when it will be just me and my friends, perhaps we can omit any caps. But it would be nice to have a page showing the different pricing plans / tiers. Me and my friends will be free users with no caps; but if we notice usage increasing, then we can think about implementing free tier caps, as well as caps for paid users
+- Discoverability: No - strangers should never be bale to find public moments. There are no public moments in the sense that a public moment is available to every user. Moments strictly belong to their originators, the people tagged in them (as editors / owners), and any users invited as readers
+
+#####
+
+On moderation / leaving a moment: Let's have the owner be able to transfer ownership to another editor, and choose whether to delete their posts after leaving the moment or leave them in the moment. The remaining editors will be able to delete those posts later
+
+On pricing / tiers: I like this - agree
+
+On discoverability: No comments - all aligned
+
+On the moment page itself: A summary area at the top with moment name, date, location, and users involved would be nice. Then the journal entries in chronological order, although users should have options to sort posts in ascending or descending order based on the date posted, or filter posts by user. For now let's allow the option to set the cover photo wither by selecting from an already uploaded photo in the moment, or a newly uploaded photo. Within each post, the media uploaded with the post would be present
+
+On friendship asymmetry: I cannot think of using the friends list for anything other than moment sharing, but I would suggest keeping a friends list as a social layer in case we decide to add any additional functionality later on
+
+On mobile specifically: Interesting thought. I was imagining that would be feasible from the capture moment (or equivalent) button we would have in a user's home page
+
+#####
+
+On the moment page: Perhaps part of it should collapse, leaving only the moment name visible
+
+On the create / capture flow: Create a new moment works as you described. I don't think resurfacing should ask for adding info in an already existing moment. The notification should be something generic as we already discussed, highlighting to users they haven't captured a moment in a week / 2 weeks / month etc. (or switched off in their settings). Resurfacing a moment is just to remind a user about it, and perhaps make them go into the moment and review / re-live the moment. Not necessarily to add anything to it; of course if they want to they can
+
+On notifications in more detail:
+* When a new post is added to a moment you're part of — notify all editors and readers? - Yes; users may add info in a moment at first, so there might be a few notifications, but then I expect the moment solidifies, and there is very little new content. It just stays there so users can re-live the moment whenever they want
+* When someone leaves a moment? - Yes
+* When ownership is transferred to you? - Yes
+
+I think all possible notifications should be able to be switched on or off in a user's account settings. I'm open to your suggestions on the above.
+
+One open question I want to plant: The moment is primarily for the people involved in it - specifically, the originator / owner, and editors; slightly less so for readers. I really want this to focus on the people involved! These can be shared with future people — children, grandchildren — who weren't there, but I still imagine this being described for the people who were there! I feel it would be nice for a child or grandchild to re-live my moment through my eyes
+
+#####
+
+On the collapsing header: Agree - all aligned
+
+On notifications: Agree - all aligned
+
+One remaining gap I want to close: Oops - forgot about this. Let's have keywords be words of short phrases the moment originator adds manually when creating or editing a moment. After a moment is created and users are invites / mentioned in it, they can then also edit these tags. Let's have these be free form for now, with a maximum of 20 characters per tag / keyword
+
+And a bigger open question: Success feels like having a product me and my friends can use to capture previous, and future moments of our lives together, and at the same time, be developed in such a way that would be able to scale if necessary. What you mentioned on the first time a friend adds something to a moment you created and it surprises you, or someone re-reading a moment years later and feeling something, are both excellent examples of what I aspire this app to be
+
+#####
+
+Looks good!
+
+On soft deletes, let's go with your suggestion. All clear on ownership transfer, and search.
+
+A question on Friendships from my side: If a user deletes a friend, would this delete the row in the relevant DB table?
+
+#####
+
+I’m building an app called Remember When — a shared memory book where users capture and revisit meaningful moments from their lives.
+
+Stack: Next.js (App Router), Supabase (Postgres + Auth + Storage), shadcn/ui, deployed on Vercel.
+
+We are working on Phase 1: Foundation
+
+Here is the relevant product spec and data model for this phase:
+
+Tech Stack
+• Frontend: Next.js (React, App Router)
+• Backend: Next.js API routes (same codebase as frontend, no separate server)
+• Database: Supabase (Postgres)
+• Auth: Supabase Auth (sign up, login, session handling, password reset)
+• File storage: Supabase Storage (photos, videos, voice recordings, profile photos)
+• UI components: shadcn/ui — modern, sleek, highly customisable
+• Deployment: Vercel (pulling from GitHub)
+• Development: Claude Code
+
+Data Model
+All tables live in Supabase (Postgres). Arrows (→) denote foreign key references. Soft deletes use a deleted_at timestamp; a null value means the record is active.
+
+[TABLES]
+
+Phase 1 — Foundation
+
+Get the project scaffolded and infrastructure in place. Nothing visible yet, but everything else depends on this.
+• Next.js project setup, Supabase connection, GitHub repo, Vercel deployment pipeline
+• Supabase schema — all tables created, relationships and indexes in place
+• Supabase Auth — sign up, log in, log out, session handling, forgot password / password reset
+• Basic routing structure — placeholder pages for home, moment, account
+✓ End state: sign up, log in, and navigate between empty pages.
+
+Set up the Supabase schema with all tables. Apply row level security policies so users can only access their own data. Set up Supabase Auth including forgot password / reset. Scaffold the Next.js app with placeholder routes for: home (/), moment detail (/moments/[id]), and account (/account).
+
+Please implement this phase. Ask me if anything is unclear before writing code.
+
+#####
