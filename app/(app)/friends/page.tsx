@@ -50,8 +50,8 @@ export default async function FriendsPage() {
   const friends = (friendships ?? []).map((f) => {
     const isRequester = f.requester_id === user.id
     const friend = isRequester
-      ? (f.recipient as Friend)
-      : (f.requester as Friend)
+      ? (f.recipient as unknown as Friend)
+      : (f.requester as unknown as Friend)
     return { friendshipId: f.id, friend }
   })
 
@@ -63,13 +63,13 @@ export default async function FriendsPage() {
           friends={friends}
           pendingReceived={(pendingReceived ?? []).map((r) => ({
             friendshipId: r.id,
-            from: r.requester as Friend,
+            from: r.requester as unknown as Friend,
           }))}
           notifications={(notifications ?? []).map((n) => ({
             id: n.id,
             type: n.type as 'friend_request' | 'friend_request_accepted',
             createdAt: n.created_at,
-            fromUser: n.from_user as Friend,
+            fromUser: n.from_user as unknown as Friend,
           }))}
         />
       </div>
