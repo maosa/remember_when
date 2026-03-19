@@ -134,6 +134,7 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
               <PostCard
                 post={post}
                 canDelete={post.authorId === currentUserId || momentOwnerId === currentUserId}
+                canEdit={post.authorId === currentUserId}
               />
               <div className="mt-8 border-b last:hidden" />
             </div>

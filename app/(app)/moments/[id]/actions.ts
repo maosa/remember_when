@@ -398,6 +398,7 @@ export type PostWithMedia = {
   authorPhotoUrl: string | null
   content: string | null
   createdAt: string
+  editedAt: string | null
   media: PostMedia[]
 }
 
@@ -412,9 +413,9 @@ export async function fetchPosts(
   const { data, error } = await admin
     .from('posts')
     .select(`
-      id, moment_id, author_id, content, created_at,
+      id, moment_id, author_id, content, created_at, edited_at,
       author:users!posts_author_id_fkey(id, first_name, last_name, profile_photo_url),
-      post_media(id, media_type, storage_url)
+      post_media(id, media_type, storage_url, deleted_at)
     `)
     .eq('moment_id', momentId)
     .is('deleted_at', null)
@@ -427,8 +428,8 @@ export async function fetchPosts(
       id: string; first_name: string; last_name: string; profile_photo_url: string | null
     }
     const media = (row.post_media as unknown as Array<{
-      id: string; media_type: string; storage_url: string
-    }>).map((m) => ({
+      id: string; media_type: string; storage_url: string; deleted_at: string | null
+    }>).filter((m) => !m.deleted_at).map((m) => ({
       id: m.id,
       mediaType: m.media_type as 'photo' | 'video' | 'audio',
       storageUrl: m.storage_url,
@@ -443,6 +444,7 @@ export async function fetchPosts(
       authorPhotoUrl: author.profile_photo_url,
       content: row.content ?? null,
       createdAt: row.created_at,
+      editedAt: (row as unknown as { edited_at: string | null }).edited_at ?? null,
       media,
     }
   })
@@ -591,6 +593,117 @@ export async function deletePost(postId: string, momentId: string): Promise<{ er
   const { error } = await admin
     .from('posts')
     .update({ deleted_at: new Date().toISOString() })
+    .eq('id', postId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
+export async function editPost(postId: string, momentId: string, formData: FormData): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  // Verify the current user is the author
+  const { data: post } = await admin
+    .from('posts')
+    .select('author_id, moment_id')
+    .eq('id', postId)
+    .is('deleted_at', null)
+    .single()
+
+  if (!post || post.moment_id !== momentId) return { error: 'Post not found.' }
+  if (post.author_id !== user.id) return { error: 'Only the author can edit this post.' }
+
+  const content = (formData.get('content') as string | null)?.trim() || null
+  const removeMediaIds = formData.getAll('removeMediaId') as string[]
+  const newFiles = (formData.getAll('media') as File[]).filter((f) => f && f.size > 0)
+
+  for (const f of newFiles) {
+    if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
+  }
+
+  // Count remaining media after removals + new uploads
+  const { data: existingMedia } = await admin
+    .from('post_media')
+    .select('id')
+    .eq('post_id', postId)
+    .is('deleted_at', null)
+
+  const remainingCount = ((existingMedia ?? []).length - removeMediaIds.length) + newFiles.length
+
+  if (!content && remainingCount <= 0) {
+    return { error: 'A post must have text or at least one media file.' }
+  }
+
+  // Soft-delete removed media items and remove from Storage
+  if (removeMediaIds.length > 0) {
+    const { data: toRemove } = await admin
+      .from('post_media')
+      .select('id, storage_url')
+      .in('id', removeMediaIds)
+      .eq('post_id', postId)
+
+    if (toRemove && toRemove.length > 0) {
+      await admin
+        .from('post_media')
+        .update({ deleted_at: new Date().toISOString() })
+        .in('id', removeMediaIds)
+        .eq('post_id', postId)
+
+      // Best-effort Storage deletions
+      for (const row of toRemove) {
+        try {
+          const storagePath = row.storage_url.split('/post-media/')[1]?.split('?')[0]
+          if (storagePath) {
+            await supabase.storage.from('post-media').remove([storagePath])
+          }
+        } catch {
+          // non-fatal
+        }
+      }
+    }
+  }
+
+  // Upload new media files
+  if (newFiles.length > 0) {
+    // Use a timestamp-based offset to avoid collisions with existing files
+    const offset = Date.now()
+    for (let i = 0; i < newFiles.length; i++) {
+      const file = newFiles[i]
+      const ext = file.name.split('.').pop() ?? 'bin'
+      const path = `${momentId}/${postId}/${offset}-${i}.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('post-media')
+        .upload(path, file, { upsert: false })
+
+      if (uploadError) return { error: `Upload failed: ${uploadError.message}` }
+
+      const { data: { publicUrl } } = supabase.storage.from('post-media').getPublicUrl(path)
+
+      const mediaType = file.type.startsWith('video/')
+        ? 'video'
+        : file.type.startsWith('audio/')
+          ? 'audio'
+          : 'photo'
+
+      await admin.from('post_media').insert({
+        post_id: postId,
+        media_type: mediaType,
+        storage_url: publicUrl,
+      })
+    }
+  }
+
+  // Update post content and edited_at
+  const { error } = await admin
+    .from('posts')
+    .update({ content, edited_at: new Date().toISOString() })
     .eq('id', postId)
 
   if (error) return { error: error.message }

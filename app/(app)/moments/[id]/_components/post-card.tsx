@@ -1,44 +1,45 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Trash2, Mic } from 'lucide-react'
+import { Pencil, Trash2, Mic } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { deletePost, type PostWithMedia } from '../actions'
+import { EditPostDialog } from './edit-post-dialog'
 
 interface Props {
   post: PostWithMedia
   canDelete: boolean
+  canEdit: boolean
 }
 
 function formatTimestamp(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-export function PostCard({ post, canDelete }: Props) {
+export function PostCard({ post, canDelete, canEdit }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [deleted, setDeleted] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  // Track the post's own mutable state so edits reflect immediately
+  const [currentPost, setCurrentPost] = useState(post)
 
   if (deleted) return null
 
   function handleDelete() {
     setError(null)
     startTransition(async () => {
-      const res = await deletePost(post.id, post.momentId)
-      if (res.error) {
-        setError(res.error)
-      } else {
-        setDeleted(true)
-      }
+      const res = await deletePost(currentPost.id, currentPost.momentId)
+      if (res.error) setError(res.error)
+      else setDeleted(true)
     })
   }
 
-  const photos = post.media.filter((m) => m.mediaType === 'photo')
-  const videos = post.media.filter((m) => m.mediaType === 'video')
-  const audios = post.media.filter((m) => m.mediaType === 'audio')
+  const photos = currentPost.media.filter((m) => m.mediaType === 'photo')
+  const videos = currentPost.media.filter((m) => m.mediaType === 'video')
+  const audios = currentPost.media.filter((m) => m.mediaType === 'audio')
 
   return (
     <article className="space-y-3">
@@ -46,35 +47,59 @@ export function PostCard({ post, canDelete }: Props) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <Avatar className="size-8 shrink-0">
-            <AvatarImage src={post.authorPhotoUrl ?? undefined} />
+            <AvatarImage src={currentPost.authorPhotoUrl ?? undefined} />
             <AvatarFallback className="text-xs">
-              {post.authorFirstName[0]}{post.authorLastName[0]}
+              {currentPost.authorFirstName[0]}{currentPost.authorLastName[0]}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
             <p className="text-sm font-medium truncate">
-              {post.authorFirstName} {post.authorLastName}
+              {currentPost.authorFirstName} {currentPost.authorLastName}
             </p>
-            <p className="text-xs text-muted-foreground">{formatTimestamp(post.createdAt)}</p>
+            <p className="text-xs text-muted-foreground">
+              {formatTimestamp(currentPost.createdAt)}
+              {currentPost.editedAt && (
+                <span className="ml-1.5">
+                  · Edited {formatTimestamp(currentPost.editedAt)}
+                </span>
+              )}
+            </p>
           </div>
         </div>
-        {canDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
-            disabled={isPending}
-            onClick={handleDelete}
-          >
-            <Trash2 className="size-3.5" />
-            <span className="sr-only">Delete post</span>
-          </Button>
+
+        {/* Action buttons — only rendered if the user has at least one permission */}
+        {(canEdit || canDelete) && (
+          <div className="flex items-center gap-0.5 shrink-0">
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-foreground"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="size-3.5" />
+                <span className="sr-only">Edit post</span>
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-destructive"
+                disabled={isPending}
+                onClick={handleDelete}
+              >
+                <Trash2 className="size-3.5" />
+                <span className="sr-only">Delete post</span>
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
       {/* Text content */}
-      {post.content && (
-        <p className="text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
+      {currentPost.content && (
+        <p className="text-sm whitespace-pre-wrap leading-relaxed">{currentPost.content}</p>
       )}
 
       {/* Photos */}
@@ -118,6 +143,22 @@ export function PostCard({ post, canDelete }: Props) {
       ))}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
+
+      {canEdit && (
+        <EditPostDialog
+          post={currentPost}
+          open={editOpen}
+          onOpenChange={(val) => {
+            setEditOpen(val)
+            // Reflect the server revalidation by updating local post state.
+            // The full up-to-date post comes back on the next server render;
+            // for now we optimistically mark it as edited.
+            if (!val && !error) {
+              setCurrentPost((p) => ({ ...p, editedAt: new Date().toISOString() }))
+            }
+          }}
+        />
+      )}
     </article>
   )
 }
