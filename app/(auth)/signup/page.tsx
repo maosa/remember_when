@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+
+type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -16,9 +19,44 @@ export default function SignupPage() {
     username: '',
     password: '',
   })
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const username = formData.username.trim()
+
+    if (!username) {
+      setUsernameStatus('idle')
+      return
+    }
+
+    if (!/^[a-z0-9_]{3,20}$/.test(username.toLowerCase())) {
+      setUsernameStatus('invalid')
+      return
+    }
+
+    setUsernameStatus('checking')
+
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+
+    debounceTimer.current = setTimeout(async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', username.toLowerCase())
+        .maybeSingle()
+
+      setUsernameStatus(data ? 'taken' : 'available')
+    }, 500)
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+  }, [formData.username])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -27,22 +65,22 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    setLoading(true)
 
-    const supabase = createClient()
-
-    // Check username availability
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id')
-      .eq('username', formData.username.toLowerCase())
-      .maybeSingle()
-
-    if (existing) {
+    if (usernameStatus === 'taken') {
       setError('Username is already taken.')
-      setLoading(false)
       return
     }
+    if (usernameStatus === 'invalid') {
+      setError('Username must be 3–20 characters: letters, numbers, underscores only.')
+      return
+    }
+    if (usernameStatus === 'checking') {
+      setError('Please wait — checking username availability.')
+      return
+    }
+
+    setLoading(true)
+    const supabase = createClient()
 
     const { error } = await supabase.auth.signUp({
       email: formData.email,
@@ -139,17 +177,40 @@ export default function SignupPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                name="username"
-                placeholder="janesmith"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                autoComplete="username"
-              />
+              <div className="relative">
+                <Input
+                  id="username"
+                  name="username"
+                  placeholder="janesmith"
+                  value={formData.username}
+                  onChange={handleChange}
+                  required
+                  autoComplete="username"
+                  className="pr-8"
+                />
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                  {usernameStatus === 'checking' && (
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  )}
+                  {usernameStatus === 'available' && (
+                    <CheckCircle className="size-4 text-green-500" />
+                  )}
+                  {(usernameStatus === 'taken' || usernameStatus === 'invalid') && (
+                    <XCircle className="size-4 text-destructive" />
+                  )}
+                </div>
+              </div>
+              {usernameStatus === 'available' && (
+                <p className="text-xs text-green-600">Available</p>
+              )}
+              {usernameStatus === 'taken' && (
+                <p className="text-xs text-destructive">Already taken</p>
+              )}
+              {usernameStatus === 'invalid' && (
+                <p className="text-xs text-muted-foreground">3–20 characters: letters, numbers, underscores</p>
+              )}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 pb-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -164,7 +225,11 @@ export default function SignupPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
+            >
               {loading ? 'Creating account…' : 'Create account'}
             </Button>
             <p className="text-sm text-muted-foreground text-center">

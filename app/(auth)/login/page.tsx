@@ -58,7 +58,7 @@ export default function LoginPage() {
                 autoComplete="email"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 pb-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
                 <Link

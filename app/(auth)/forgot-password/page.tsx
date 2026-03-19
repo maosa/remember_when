@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
             {error && (
               <p className="text-sm text-destructive">{error}</p>
             )}
-            <div className="space-y-2">
+            <div className="space-y-2 pb-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
