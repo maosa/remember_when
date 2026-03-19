@@ -381,6 +381,43 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
   return {}
 }
 
+export async function setCoverPhotoFromUrl(momentId: string, url: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { error } = await supabase
+    .from('moments')
+    .update({ cover_photo_url: url })
+    .eq('id', momentId)
+
+  if (error) return { error: error.message }
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
+export async function fetchMomentPhotos(momentId: string): Promise<{ urls: string[] }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('post_media')
+    .select('storage_url, post:posts!post_media_post_id_fkey(moment_id, deleted_at)')
+    .eq('media_type', 'photo')
+    .is('deleted_at', null)
+
+  const urls = (data ?? [])
+    .filter((row) => {
+      const post = row.post as unknown as { moment_id: string; deleted_at: string | null } | null
+      return post && post.moment_id === momentId && !post.deleted_at
+    })
+    .map((row) => row.storage_url)
+
+  return { urls }
+}
+
 // ─── Posts ────────────────────────────────────────────────────────────────────
 
 export type PostMedia = {
