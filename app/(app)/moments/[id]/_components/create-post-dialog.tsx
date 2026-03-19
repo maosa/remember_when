@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 import { createPost } from '../actions'
 
 interface Props {
@@ -100,13 +100,16 @@ export function CreatePostDialog({ momentId }: Props) {
         </DialogHeader>
 
         <div className="space-y-4 py-1">
-          <Textarea
+          <textarea
             placeholder="Write something…"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={4}
             autoFocus
-            className="resize-none"
+            className={cn(
+              'w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none resize-none transition-colors',
+              'placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+            )}
           />
 
           {/* Media previews */}
