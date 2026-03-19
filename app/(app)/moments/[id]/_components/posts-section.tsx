@@ -4,11 +4,15 @@ import { PostsFeed } from './posts-feed'
 interface Props {
   momentId: string
   momentOwnerId: string
-  canPost: boolean
+  myRole: 'owner' | 'editor' | 'reader'
+  myStatus: 'pending' | 'accepted' | 'declined'
 }
 
-export async function PostsSection({ momentId, momentOwnerId, canPost }: Props) {
+export async function PostsSection({ momentId, momentOwnerId, myRole, myStatus }: Props) {
   const { posts, currentUserId } = await fetchPosts(momentId)
+
+  const canPost = myStatus === 'accepted' && myRole !== 'reader'
+  const isEditor = myStatus === 'accepted' && myRole === 'editor'
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
@@ -18,6 +22,7 @@ export async function PostsSection({ momentId, momentOwnerId, canPost }: Props) 
         momentOwnerId={momentOwnerId}
         momentId={momentId}
         canPost={canPost}
+        isEditor={isEditor}
       />
     </section>
   )

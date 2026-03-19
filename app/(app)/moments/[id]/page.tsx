@@ -12,9 +12,9 @@ interface Props {
 
 export default async function MomentPage({ params }: Props) {
   const { id } = await params
-  const { moment, myRole, myStatus, error } = await fetchMomentDetail(id)
+  const { moment, myRole, myStatus, myUserId, error } = await fetchMomentDetail(id)
 
-  if (error || !moment || !myRole || !myStatus) notFound()
+  if (error || !moment || !myRole || !myStatus || !myUserId) notFound()
 
   const canEdit = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
 
@@ -38,13 +38,14 @@ export default async function MomentPage({ params }: Props) {
       />
 
       {/* Members */}
-      <MembersSection moment={moment} myRole={myRole} myStatus={myStatus} />
+      <MembersSection moment={moment} myRole={myRole} myStatus={myStatus} myUserId={myUserId} />
 
       {/* Posts & media */}
       <PostsSection
         momentId={moment.id}
         momentOwnerId={moment.ownerId}
-        canPost={myStatus === 'accepted'}
+        myRole={myRole}
+        myStatus={myStatus}
       />
     </main>
   )

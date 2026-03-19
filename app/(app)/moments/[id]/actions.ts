@@ -34,13 +34,14 @@ export type MomentDetail = {
   createdAt: string
   tags: Array<{ id: string; tag: string }>
   members: MomentMemberFull[]
+  inviteLink: { token: string; expiresAt: string | null; createdAt: string } | null
 }
 
 // ─── Fetch moment detail ──────────────────────────────────────────────────────
 
 export async function fetchMomentDetail(
   momentId: string
-): Promise<{ moment?: MomentDetail; myRole?: 'owner' | 'editor' | 'reader'; myStatus?: 'pending' | 'accepted' | 'declined'; error?: string }> {
+): Promise<{ moment?: MomentDetail; myRole?: 'owner' | 'editor' | 'reader'; myStatus?: 'pending' | 'accepted' | 'declined'; myUserId?: string; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -77,6 +78,27 @@ export async function fetchMomentDetail(
   // Access check
   if (!isOwner && !myMembership) return { error: 'Not found.' }
 
+  // Fetch invite link — only for owners and accepted editors
+  const canManageLink =
+    isOwner ||
+    (myMembership?.role === 'editor' && myMembership?.status === 'accepted')
+
+  let inviteLink: MomentDetail['inviteLink'] = null
+  if (canManageLink) {
+    const { data: linkData } = await admin
+      .from('invite_links')
+      .select('token, expires_at, created_at')
+      .eq('moment_id', momentId)
+      .maybeSingle()
+    if (linkData) {
+      inviteLink = {
+        token: linkData.token as string,
+        expiresAt: linkData.expires_at ?? null,
+        createdAt: linkData.created_at,
+      }
+    }
+  }
+
   const owner = data.owner as unknown as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }
 
   return {
@@ -106,9 +128,11 @@ export async function fetchMomentDetail(
           status: m.status,
           invitedBy: m.invited_by,
         })),
+      inviteLink,
     },
     myRole: isOwner ? 'owner' : myMembership!.role,
     myStatus: myMembership?.status ?? (isOwner ? 'accepted' : 'pending'),
+    myUserId: user.id,
   }
 }
 
@@ -300,7 +324,32 @@ export async function removeMember(momentId: string, memberId: string): Promise<
     .eq('id', momentId)
     .single()
 
-  if (!moment || moment.owner_id !== user.id) return { error: 'Only the owner can remove members.' }
+  if (!moment) return { error: 'Moment not found.' }
+
+  const isOwner = moment.owner_id === user.id
+  if (!isOwner) {
+    // Accepted editors may remove readers only
+    const { data: myMembership } = await admin
+      .from('moment_members')
+      .select('role, status')
+      .eq('moment_id', momentId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (!myMembership || myMembership.status !== 'accepted' || myMembership.role !== 'editor') {
+      return { error: 'Only the owner or an editor can remove members.' }
+    }
+
+    const { data: target } = await admin
+      .from('moment_members')
+      .select('role')
+      .eq('id', memberId)
+      .eq('moment_id', momentId)
+      .single()
+
+    if (!target) return { error: 'Member not found.' }
+    if (target.role !== 'reader') return { error: 'Editors can only remove readers.' }
+  }
 
   const { error } = await admin
     .from('moment_members')
@@ -520,12 +569,15 @@ export async function createPost(momentId: string, formData: FormData): Promise<
   if (!isOwner) {
     const { data: membership } = await admin
       .from('moment_members')
-      .select('status')
+      .select('role, status')
       .eq('moment_id', momentId)
       .eq('user_id', user.id)
       .single()
     if (!membership || membership.status !== 'accepted') {
       return { error: 'You do not have permission to post in this moment.' }
+    }
+    if (membership.role === 'reader') {
+      return { error: 'Readers cannot post in this moment.' }
     }
   }
 
@@ -623,7 +675,18 @@ export async function deletePost(postId: string, momentId: string): Promise<{ er
   const isAuthor = post.author_id === user.id
   const isMomentOwner = moment?.owner_id === user.id
 
+  let isEditor = false
   if (!isAuthor && !isMomentOwner) {
+    const { data: membership } = await admin
+      .from('moment_members')
+      .select('role, status')
+      .eq('moment_id', momentId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    isEditor = membership?.role === 'editor' && membership?.status === 'accepted'
+  }
+
+  if (!isAuthor && !isMomentOwner && !isEditor) {
     return { error: 'You do not have permission to delete this post.' }
   }
 
@@ -782,6 +845,182 @@ export async function removeTag(momentId: string, tagId: string): Promise<{ erro
     .eq('moment_id', momentId)
 
   if (error) return { error: error.message }
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
+// ─── Invite links (shareable) ─────────────────────────────────────────────────
+
+type ExpiryOption = 'week' | 'month' | '3months' | '6months' | 'year' | 'never'
+
+function expiryToDate(expiresIn: ExpiryOption): string | null {
+  if (expiresIn === 'never') return null
+  const days: Record<string, number> = { week: 7, month: 30, '3months': 90, '6months': 180, year: 365 }
+  const d = new Date()
+  d.setDate(d.getDate() + days[expiresIn])
+  return d.toISOString()
+}
+
+async function assertCanManageLink(momentId: string, userId: string): Promise<{ error?: string }> {
+  const admin = createAdminClient()
+  const { data: moment } = await admin.from('moments').select('owner_id').eq('id', momentId).single()
+  if (!moment) return { error: 'Moment not found.' }
+  if (moment.owner_id === userId) return {}
+  const { data: membership } = await admin
+    .from('moment_members')
+    .select('role, status')
+    .eq('moment_id', momentId)
+    .eq('user_id', userId)
+    .single()
+  if (!membership || membership.status !== 'accepted') return { error: 'Permission denied.' }
+  return {}
+}
+
+export async function generateInviteLink(
+  momentId: string,
+  expiresIn: ExpiryOption
+): Promise<{ token?: string; expiresAt?: string | null; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const permCheck = await assertCanManageLink(momentId, user.id)
+  if (permCheck.error) return permCheck
+
+  const admin = createAdminClient()
+  const expiresAt = expiryToDate(expiresIn)
+
+  // Delete any existing link (ensures only one active link per moment)
+  await admin.from('invite_links').delete().eq('moment_id', momentId)
+
+  const { data, error } = await admin
+    .from('invite_links')
+    .insert({ moment_id: momentId, created_by: user.id, expires_at: expiresAt })
+    .select('token, expires_at')
+    .single()
+
+  if (error || !data) return { error: error?.message ?? 'Failed to create link.' }
+
+  revalidatePath(`/moments/${momentId}`)
+  return { token: data.token as string, expiresAt: data.expires_at ?? null }
+}
+
+export async function revokeInviteLink(momentId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const permCheck = await assertCanManageLink(momentId, user.id)
+  if (permCheck.error) return permCheck
+
+  const admin = createAdminClient()
+  const { error } = await admin.from('invite_links').delete().eq('moment_id', momentId)
+  if (error) return { error: error.message }
+
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
+// ─── Leave moment ─────────────────────────────────────────────────────────────
+
+export async function leaveMoment(
+  momentId: string,
+  deletePosts: boolean
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+
+  if (!moment) return { error: 'Moment not found.' }
+  if (moment.owner_id === user.id) {
+    return { error: 'Transfer ownership before leaving.' }
+  }
+
+  const { data: membership } = await admin
+    .from('moment_members')
+    .select('id')
+    .eq('moment_id', momentId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!membership) return { error: 'You are not a member of this moment.' }
+
+  if (deletePosts) {
+    await admin
+      .from('posts')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('moment_id', momentId)
+      .eq('author_id', user.id)
+      .is('deleted_at', null)
+  }
+
+  const { error } = await admin.from('moment_members').delete().eq('id', membership.id)
+  if (error) return { error: error.message }
+
+  revalidatePath('/home')
+  return {}
+}
+
+// ─── Transfer ownership ───────────────────────────────────────────────────────
+
+export async function transferOwnership(
+  momentId: string,
+  newOwnerId: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+
+  if (!moment) return { error: 'Moment not found.' }
+  if (moment.owner_id !== user.id) return { error: 'Only the owner can transfer ownership.' }
+  if (newOwnerId === user.id) return { error: 'You are already the owner.' }
+
+  const { data: target } = await admin
+    .from('moment_members')
+    .select('id, role, status')
+    .eq('moment_id', momentId)
+    .eq('user_id', newOwnerId)
+    .single()
+
+  if (!target || target.status !== 'accepted' || target.role !== 'editor') {
+    return { error: 'Ownership can only be transferred to an accepted editor.' }
+  }
+
+  // Remove new owner from members (they'll become the owner row)
+  await admin.from('moment_members').delete().eq('id', target.id)
+
+  // Insert current owner as accepted editor
+  await admin.from('moment_members').insert({
+    moment_id: momentId,
+    user_id: user.id,
+    role: 'editor',
+    status: 'accepted',
+    invited_by: null,
+  })
+
+  const { error } = await admin
+    .from('moments')
+    .update({ owner_id: newOwnerId })
+    .eq('id', momentId)
+
+  if (error) return { error: error.message }
+
   revalidatePath(`/moments/${momentId}`)
   return {}
 }

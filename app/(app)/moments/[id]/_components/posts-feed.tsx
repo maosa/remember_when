@@ -15,6 +15,7 @@ interface Props {
   momentOwnerId: string
   momentId: string
   canPost: boolean
+  isEditor: boolean
 }
 
 type SortOrder = 'asc' | 'desc'
@@ -26,7 +27,7 @@ interface Author {
   photoUrl: string | null
 }
 
-export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId, canPost }: Props) {
+export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId, canPost, isEditor }: Props) {
   const [sort, setSort] = useState<SortOrder>('asc')
   const [filterAuthorId, setFilterAuthorId] = useState<string | null>(null)
 
@@ -133,7 +134,7 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
             <PostCard
               key={post.id}
               post={post}
-              canDelete={post.authorId === currentUserId || momentOwnerId === currentUserId}
+              canDelete={post.authorId === currentUserId || momentOwnerId === currentUserId || isEditor}
               canEdit={post.authorId === currentUserId}
             />
           ))}
