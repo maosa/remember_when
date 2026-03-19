@@ -101,11 +101,11 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         <Menu>
           <MenuTrigger
             render={
-              <Button variant="outline" size="sm" className="shrink-0 gap-1.5" />
+              <Button variant="outline" className="shrink-0 w-36" />
             }
           >
             <ArrowUpDown className="size-3.5" />
-            <span className="hidden sm:inline">{sortLabel[sort]}</span>
+            <span>{sortLabel[sort]}</span>
           </MenuTrigger>
           <MenuContent align="end">
             <MenuLabel>Sort</MenuLabel>

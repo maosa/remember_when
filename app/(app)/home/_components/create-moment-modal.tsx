@@ -129,7 +129,7 @@ export function CreateMomentModal() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button />}>
+      <DialogTrigger render={<Button className="w-36" />}>
         <Plus className="size-4" />
         New moment
       </DialogTrigger>

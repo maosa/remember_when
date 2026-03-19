@@ -381,6 +381,224 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
   return {}
 }
 
+// ─── Posts ────────────────────────────────────────────────────────────────────
+
+export type PostMedia = {
+  id: string
+  mediaType: 'photo' | 'video' | 'audio'
+  storageUrl: string
+}
+
+export type PostWithMedia = {
+  id: string
+  momentId: string
+  authorId: string
+  authorFirstName: string
+  authorLastName: string
+  authorPhotoUrl: string | null
+  content: string | null
+  createdAt: string
+  media: PostMedia[]
+}
+
+export async function fetchPosts(
+  momentId: string
+): Promise<{ posts: PostWithMedia[]; currentUserId: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('posts')
+    .select(`
+      id, moment_id, author_id, content, created_at,
+      author:users!posts_author_id_fkey(id, first_name, last_name, profile_photo_url),
+      post_media(id, media_type, storage_url)
+    `)
+    .eq('moment_id', momentId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: true })
+
+  if (error || !data) return { posts: [], currentUserId: user.id }
+
+  const posts = data.map((row) => {
+    const author = row.author as unknown as {
+      id: string; first_name: string; last_name: string; profile_photo_url: string | null
+    }
+    const media = (row.post_media as unknown as Array<{
+      id: string; media_type: string; storage_url: string
+    }>).map((m) => ({
+      id: m.id,
+      mediaType: m.media_type as 'photo' | 'video' | 'audio',
+      storageUrl: m.storage_url,
+    }))
+
+    return {
+      id: row.id,
+      momentId: row.moment_id,
+      authorId: row.author_id,
+      authorFirstName: author.first_name,
+      authorLastName: author.last_name,
+      authorPhotoUrl: author.profile_photo_url,
+      content: row.content ?? null,
+      createdAt: row.created_at,
+      media,
+    }
+  })
+
+  return { posts, currentUserId: user.id }
+}
+
+export async function createPost(momentId: string, formData: FormData): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const content = (formData.get('content') as string | null)?.trim() || null
+  const files = formData.getAll('media') as File[]
+  const validFiles = files.filter((f) => f && f.size > 0)
+
+  if (!content && validFiles.length === 0) {
+    return { error: 'A post must have text or at least one media file.' }
+  }
+
+  for (const f of validFiles) {
+    if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
+  }
+
+  // Verify access: accepted member or owner
+  const admin = createAdminClient()
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+
+  if (!moment) return { error: 'Moment not found.' }
+
+  const isOwner = moment.owner_id === user.id
+  if (!isOwner) {
+    const { data: membership } = await admin
+      .from('moment_members')
+      .select('status')
+      .eq('moment_id', momentId)
+      .eq('user_id', user.id)
+      .single()
+    if (!membership || membership.status !== 'accepted') {
+      return { error: 'You do not have permission to post in this moment.' }
+    }
+  }
+
+  // Create post record
+  const { data: post, error: postError } = await admin
+    .from('posts')
+    .insert({ moment_id: momentId, author_id: user.id, content })
+    .select('id')
+    .single()
+
+  if (postError || !post) return { error: postError?.message ?? 'Failed to create post.' }
+
+  // Upload media files
+  if (validFiles.length > 0) {
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i]
+      const ext = file.name.split('.').pop() ?? 'bin'
+      const path = `${momentId}/${post.id}/${i}.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('post-media')
+        .upload(path, file, { upsert: false })
+
+      if (uploadError) {
+        // Best-effort cleanup: soft-delete the post
+        await admin.from('posts').update({ deleted_at: new Date().toISOString() }).eq('id', post.id)
+        return { error: `Upload failed: ${uploadError.message}` }
+      }
+
+      const { data: { publicUrl } } = supabase.storage.from('post-media').getPublicUrl(path)
+
+      const mediaType = file.type.startsWith('video/')
+        ? 'video'
+        : file.type.startsWith('audio/')
+          ? 'audio'
+          : 'photo'
+
+      await admin.from('post_media').insert({
+        post_id: post.id,
+        media_type: mediaType,
+        storage_url: publicUrl,
+      })
+    }
+  }
+
+  // Notify accepted members (excluding author) + owner (if not author)
+  const { data: members } = await admin
+    .from('moment_members')
+    .select('user_id')
+    .eq('moment_id', momentId)
+    .eq('status', 'accepted')
+    .neq('user_id', user.id)
+
+  const recipientIds = new Set<string>((members ?? []).map((m) => m.user_id))
+  if (moment.owner_id !== user.id) recipientIds.add(moment.owner_id)
+
+  if (recipientIds.size > 0) {
+    await admin.from('notifications').insert(
+      Array.from(recipientIds).map((uid) => ({
+        user_id: uid,
+        type: 'new_post',
+        from_user_id: user.id,
+        moment_id: momentId,
+        post_id: post.id,
+      }))
+    )
+  }
+
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
+export async function deletePost(postId: string, momentId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: post } = await admin
+    .from('posts')
+    .select('author_id, moment_id')
+    .eq('id', postId)
+    .is('deleted_at', null)
+    .single()
+
+  if (!post || post.moment_id !== momentId) return { error: 'Post not found.' }
+
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+
+  const isAuthor = post.author_id === user.id
+  const isMomentOwner = moment?.owner_id === user.id
+
+  if (!isAuthor && !isMomentOwner) {
+    return { error: 'You do not have permission to delete this post.' }
+  }
+
+  const { error } = await admin
+    .from('posts')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', postId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
 // ─── Manage tags ──────────────────────────────────────────────────────────────
 
 export async function addTag(momentId: string, tag: string): Promise<{ error?: string }> {
