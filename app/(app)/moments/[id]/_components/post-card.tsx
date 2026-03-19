@@ -104,20 +104,14 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
 
       {/* Photos */}
       {photos.length > 0 && (
-        <div className={cn(
-          'grid gap-1.5 rounded-xl overflow-hidden',
-          photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
-        )}>
+        <div className="flex flex-wrap gap-1.5">
           {photos.map((m) => (
-            <a key={m.id} href={m.storageUrl} target="_blank" rel="noreferrer" className="block">
+            <a key={m.id} href={m.storageUrl} target="_blank" rel="noreferrer" className="block shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={m.storageUrl}
                 alt=""
-                className={cn(
-                  'w-full object-cover bg-muted',
-                  photos.length === 1 ? 'max-h-96' : 'aspect-square'
-                )}
+                className="size-40 rounded-lg object-cover bg-muted"
               />
             </a>
           ))}

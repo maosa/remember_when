@@ -114,9 +114,9 @@ export function CreatePostDialog({ momentId }: Props) {
 
           {/* Media previews */}
           {previews.length > 0 && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-wrap gap-2">
               {previews.map((p, i) => (
-                <div key={i} className="relative rounded-lg overflow-hidden bg-muted aspect-square">
+                <div key={i} className="relative size-40 rounded-lg overflow-hidden bg-muted shrink-0">
                   {p.kind === 'photo' && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.objectUrl} alt="" className="size-full object-cover" />

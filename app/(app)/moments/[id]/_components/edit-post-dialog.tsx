@@ -129,9 +129,9 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
 
           {/* Media grid — existing + new previews */}
           {(visibleExisting.length > 0 || newPreviews.length > 0) && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-wrap gap-2">
               {visibleExisting.map((m) => (
-                <div key={m.id} className="relative rounded-lg overflow-hidden bg-muted aspect-square">
+                <div key={m.id} className="relative size-40 rounded-lg overflow-hidden bg-muted shrink-0">
                   {m.mediaType === 'photo' && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={m.storageUrl} alt="" className="size-full object-cover" />
