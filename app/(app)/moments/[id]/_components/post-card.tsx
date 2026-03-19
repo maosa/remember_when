@@ -42,7 +42,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
   const audios = currentPost.media.filter((m) => m.mediaType === 'audio')
 
   return (
-    <article className="space-y-3">
+    <article className="space-y-3 rounded-xl border bg-card p-4">
       {/* Author row */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">

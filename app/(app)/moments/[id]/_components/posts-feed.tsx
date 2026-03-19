@@ -128,16 +128,14 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
           {canPost && <CreatePostDialog momentId={momentId} />}
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-3">
           {sorted.map((post) => (
-            <div key={post.id}>
-              <PostCard
-                post={post}
-                canDelete={post.authorId === currentUserId || momentOwnerId === currentUserId}
-                canEdit={post.authorId === currentUserId}
-              />
-              <div className="mt-8 border-b last:hidden" />
-            </div>
+            <PostCard
+              key={post.id}
+              post={post}
+              canDelete={post.authorId === currentUserId || momentOwnerId === currentUserId}
+              canEdit={post.authorId === currentUserId}
+            />
           ))}
         </div>
       )}
