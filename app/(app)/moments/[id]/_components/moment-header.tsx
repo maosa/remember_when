@@ -128,7 +128,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
           className={cn(
             'px-4 pb-3',
             moment.coverPhotoUrl
-              ? 'relative -mt-28 pt-0'
+              ? 'absolute inset-x-0 bottom-0'
               : 'pt-6'
           )}
         >
