@@ -64,12 +64,11 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-3 border-b">
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger render={<Button size="sm" variant="outline" className="gap-1.5" />}>
-          <Camera className="size-3.5" />
-          {currentUrl ? 'Change cover photo' : 'Add cover photo'}
-        </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger render={<Button size="sm" variant="outline" />}>
+        <Camera className="size-3.5" />
+        {currentUrl ? 'Change cover photo' : 'Add cover photo'}
+      </DialogTrigger>
 
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -133,7 +132,6 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
         </DialogContent>
-      </Dialog>
-    </div>
+    </Dialog>
   )
 }

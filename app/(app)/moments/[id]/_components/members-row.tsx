@@ -2,30 +2,31 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { Crown, Shield, Eye, Users } from 'lucide-react'
+import { Crown, Shield, Eye, Settings } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/lib/button-variants'
 import { InviteDialog } from './members-section'
+import { CoverPhotoSection } from './cover-photo-section'
 import { type MomentDetail } from '../actions'
 
 interface Props {
   moment: MomentDetail
   myRole: 'owner' | 'editor' | 'reader'
   myStatus: 'pending' | 'accepted' | 'declined'
+  canEdit: boolean
 }
 
-export function MembersRow({ moment, myRole, myStatus }: Props) {
-  const canManage = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
+export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
 
   const acceptedNonOwner = moment.members.filter(
-    (m) => m.userId !== moment.ownerId && m.status === 'accepted'
+    (m) => m.userId && m.userId !== moment.ownerId && m.status === 'accepted'
   )
 
-  // Build ordered display list: owner first, then accepted members
+  // Build ordered display list: owner first, then accepted registered members
   const allMembers = [
     { userId: moment.ownerId, firstName: moment.ownerFirstName, lastName: moment.ownerLastName, photoUrl: moment.ownerPhotoUrl, role: 'owner' as const },
-    ...acceptedNonOwner.map((m) => ({ userId: m.userId, firstName: m.firstName, lastName: m.lastName, photoUrl: m.photoUrl, role: m.role })),
+    ...acceptedNonOwner.map((m) => ({ userId: m.userId!, firstName: m.firstName, lastName: m.lastName, photoUrl: m.photoUrl, role: m.role })),
   ]
 
   const SHOWN = 5
@@ -48,10 +49,10 @@ export function MembersRow({ moment, myRole, myStatus }: Props) {
   }
 
   const acceptedEditors = moment.members.filter(
-    (m) => m.userId !== moment.ownerId && m.role === 'editor' && m.status === 'accepted'
+    (m) => m.userId && m.userId !== moment.ownerId && m.role === 'editor' && m.status === 'accepted'
   )
   const acceptedReaders = moment.members.filter(
-    (m) => m.role === 'reader' && m.status === 'accepted'
+    (m) => m.userId && m.role === 'reader' && m.status === 'accepted'
   )
 
   return (
@@ -121,16 +122,21 @@ export function MembersRow({ moment, myRole, myStatus }: Props) {
         )}
       </div>
 
-      {/* Action buttons — managers only */}
-      {canManage && (
+      {/* Action buttons — editors/owners only */}
+      {canEdit && (
         <div className="flex items-center gap-2 shrink-0">
+          <CoverPhotoSection
+            momentId={moment.id}
+            currentUrl={moment.coverPhotoUrl}
+            canEdit={true}
+          />
           <InviteDialog momentId={moment.id} myRole={myRole} />
           <Link
             href={`/moments/${moment.id}/members`}
             className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
           >
-            <Users className="size-3.5" />
-            <span className="hidden sm:inline">Manage</span>
+            <Settings className="size-3.5" />
+            Manage
           </Link>
         </div>
       )}

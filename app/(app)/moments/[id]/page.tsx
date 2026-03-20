@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { fetchMomentDetail } from './actions'
 import { MomentHeader } from './_components/moment-header'
-import { CoverPhotoSection } from './_components/cover-photo-section'
 import { TagsSection } from './_components/tags-section'
 import { MembersRow } from './_components/members-row'
 import { PostsSection } from './_components/posts-section'
@@ -23,13 +22,6 @@ export default async function MomentPage({ params }: Props) {
       {/* Collapsing header + invite banner */}
       <MomentHeader moment={moment} myRole={myRole} myStatus={myStatus} />
 
-      {/* Cover photo management (accepted editors/owner only) */}
-      <CoverPhotoSection
-        momentId={moment.id}
-        currentUrl={moment.coverPhotoUrl}
-        canEdit={canEdit}
-      />
-
       {/* Tags */}
       <TagsSection
         momentId={moment.id}
@@ -37,8 +29,8 @@ export default async function MomentPage({ params }: Props) {
         canEdit={canEdit}
       />
 
-      {/* Members row */}
-      <MembersRow moment={moment} myRole={myRole} myStatus={myStatus} />
+      {/* Members row + action buttons */}
+      <MembersRow moment={moment} myRole={myRole} myStatus={myStatus} canEdit={canEdit} />
 
       {/* Posts & media */}
       <PostsSection
