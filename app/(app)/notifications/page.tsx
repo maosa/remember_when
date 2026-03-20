@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/lib/button-variants'
 import { cn } from '@/lib/utils'
 import { NotificationList } from './_components/notification-list'
 
