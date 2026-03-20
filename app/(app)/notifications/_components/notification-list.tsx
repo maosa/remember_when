@@ -1,64 +1,13 @@
 'use client'
 
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Bell, UserPlus, Users, MessageSquare, LogOut, Crown, Clock } from 'lucide-react'
+import { Bell, UserPlus, Users, MessageSquare, LogOut, Crown, Clock, Check, X, Shield, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { acceptMomentInvite, declineMomentInvite } from '@/app/(app)/moments/[id]/actions'
 import type { NotificationRow } from '../page'
 
-const TYPE_CONFIG: Record<
-  string,
-  {
-    icon: React.ComponentType<{ className?: string }>
-    label: (n: NotificationRow) => string
-    href: (n: NotificationRow) => string
-  }
-> = {
-  friend_request: {
-    icon: UserPlus,
-    label: (n) => `${senderName(n)} sent you a friend request`,
-    href: () => '/friends',
-  },
-  friend_request_accepted: {
-    icon: Users,
-    label: (n) => `${senderName(n)} accepted your friend request`,
-    href: () => '/friends',
-  },
-  moment_invite: {
-    icon: Bell,
-    label: (n) => `${senderName(n)} invited you to "${momentName(n)}"`,
-    href: (n) => momentHref(n),
-  },
-  moment_invite_accepted: {
-    icon: Users,
-    label: (n) => `${senderName(n)} accepted your invite to "${momentName(n)}"`,
-    href: (n) => momentHref(n),
-  },
-  moment_invite_declined: {
-    icon: Users,
-    label: (n) => `${senderName(n)} declined your invite to "${momentName(n)}"`,
-    href: (n) => momentHref(n),
-  },
-  new_post: {
-    icon: MessageSquare,
-    label: (n) => `${senderName(n)} added a post to "${momentName(n)}"`,
-    href: (n) => momentHref(n),
-  },
-  member_left: {
-    icon: LogOut,
-    label: (n) => `${senderName(n)} left "${momentName(n)}"`,
-    href: (n) => momentHref(n),
-  },
-  ownership_transferred: {
-    icon: Crown,
-    label: (n) => `${senderName(n)} transferred ownership of "${momentName(n)}" to you`,
-    href: (n) => momentHref(n),
-  },
-  reminder: {
-    icon: Clock,
-    label: () => 'Time to capture a new moment!',
-    href: () => '/home',
-  },
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -74,9 +23,11 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(months / 12)}y ago`
 }
 
-function senderName(n: NotificationRow) {
+function senderTag(n: NotificationRow) {
   if (!n.fromUser) return 'Someone'
-  return `${n.fromUser.firstName} ${n.fromUser.lastName}`
+  const username = n.fromUser.username ? `@${n.fromUser.username}` : null
+  const fullName = `${n.fromUser.firstName} ${n.fromUser.lastName}`
+  return username ? `${username} (${fullName})` : fullName
 }
 
 function momentName(n: NotificationRow) {
@@ -86,6 +37,140 @@ function momentName(n: NotificationRow) {
 function momentHref(n: NotificationRow) {
   return n.moment ? `/moments/${n.moment.id}` : '/home'
 }
+
+// ─── Notification label helpers ───────────────────────────────────────────────
+
+function inviteLabel(n: NotificationRow): string {
+  const role = n.inviteRole ? ` as ${n.inviteRole === 'editor' ? 'Editor' : 'Reader'}` : ''
+  return `${senderTag(n)} invited you${role} on moment "${momentName(n)}"`
+}
+
+const TYPE_CONFIG: Record<
+  string,
+  {
+    icon: React.ComponentType<{ className?: string }>
+    label: (n: NotificationRow) => string
+    href: (n: NotificationRow) => string
+    actionable?: boolean
+  }
+> = {
+  friend_request_received: {
+    icon: UserPlus,
+    label: (n) => `${senderTag(n)} sent you a friend request`,
+    href: () => '/friends',
+  },
+  friend_request_accepted: {
+    icon: Users,
+    label: (n) => `${senderTag(n)} accepted your friend request`,
+    href: () => '/friends',
+  },
+  moment_invite: {
+    icon: Bell,
+    label: inviteLabel,
+    href: (n) => momentHref(n),
+    actionable: true,
+  },
+  moment_invite_accepted: {
+    icon: Users,
+    label: (n) => `${senderTag(n)} accepted your invite to "${momentName(n)}"`,
+    href: (n) => momentHref(n),
+  },
+  moment_invite_declined: {
+    icon: Users,
+    label: (n) => `${senderTag(n)} declined your invite to "${momentName(n)}"`,
+    href: (n) => momentHref(n),
+  },
+  new_post: {
+    icon: MessageSquare,
+    label: (n) => `${senderTag(n)} added a post to "${momentName(n)}"`,
+    href: (n) => momentHref(n),
+  },
+  member_left: {
+    icon: LogOut,
+    label: (n) => `${senderTag(n)} left "${momentName(n)}"`,
+    href: (n) => momentHref(n),
+  },
+  ownership_transferred: {
+    icon: Crown,
+    label: (n) => `${senderTag(n)} transferred ownership of "${momentName(n)}" to you`,
+    href: (n) => momentHref(n),
+  },
+  ownership_transferred_away: {
+    icon: Crown,
+    label: (n) => `You transferred ownership of "${momentName(n)}" to ${senderTag(n)}`,
+    href: (n) => momentHref(n),
+  },
+  role_changed: {
+    icon: Shield,
+    label: (n) => {
+      const role = n.inviteRole === 'editor' ? 'Editor' : n.inviteRole === 'reader' ? 'Reader' : 'a new role'
+      return `Your role on "${momentName(n)}" has been changed to ${role} by ${senderTag(n)}`
+    },
+    href: (n) => momentHref(n),
+  },
+  moment_deleted: {
+    icon: Trash2,
+    label: (n) => {
+      const name = (n.metadata as { moment_name?: string } | null)?.moment_name ?? 'a moment'
+      return `The moment "${name}" has been deleted by ${senderTag(n)}`
+    },
+    href: () => '/home',
+  },
+  reminder: {
+    icon: Clock,
+    label: () => 'Time to capture a new moment!',
+    href: () => '/home',
+  },
+}
+
+// ─── Accept/Decline buttons for moment_invite ─────────────────────────────────
+
+function InviteActions({ momentId }: { momentId: string }) {
+  const [isPending, startTransition] = useTransition()
+  const [outcome, setOutcome] = useState<'accepted' | 'declined' | null>(null)
+
+  if (outcome === 'accepted') {
+    return <span className="text-xs text-green-600 font-medium">Accepted</span>
+  }
+  if (outcome === 'declined') {
+    return <span className="text-xs text-muted-foreground">Declined</span>
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 mt-1.5" onClick={(e) => e.preventDefault()}>
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={() =>
+          startTransition(async () => {
+            await acceptMomentInvite(momentId)
+            setOutcome('accepted')
+          })
+        }
+        className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+      >
+        <Check className="size-3" />
+        Accept
+      </button>
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={() =>
+          startTransition(async () => {
+            await declineMomentInvite(momentId)
+            setOutcome('declined')
+          })
+        }
+        className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
+      >
+        <X className="size-3" />
+        Decline
+      </button>
+    </div>
+  )
+}
+
+// ─── List ─────────────────────────────────────────────────────────────────────
 
 interface Props {
   notifications: NotificationRow[]
@@ -108,6 +193,7 @@ export function NotificationList({ notifications }: Props) {
         if (!config) return null
         const Icon = config.icon
         const unread = !n.read
+        const isActionable = config.actionable && !!n.moment
 
         return (
           <li key={n.id}>
@@ -129,6 +215,9 @@ export function NotificationList({ notifications }: Props) {
                 <p className={cn('text-sm leading-snug', unread ? 'font-medium' : 'text-muted-foreground')}>
                   {config.label(n)}
                 </p>
+                {isActionable && (
+                  <InviteActions momentId={n.moment!.id} />
+                )}
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {timeAgo(n.createdAt)}
                 </p>

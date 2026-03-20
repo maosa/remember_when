@@ -11,19 +11,25 @@ export type NotificationType =
   | 'new_post'
   | 'member_left'
   | 'ownership_transferred'
+  | 'ownership_transferred_away'
+  | 'role_changed'
+  | 'moment_deleted'
   | 'reminder'
 
 // Maps each notification type to the column in notification_preferences that gates it.
 const TYPE_TO_PREF_COLUMN: Partial<Record<NotificationType, string>> = {
-  friend_request_received:  'friend_request_received',
-  friend_request_accepted:  'friend_request_accepted',
-  moment_invite:            'moment_invite',
-  moment_invite_accepted:   'moment_invite_response',
-  moment_invite_declined:   'moment_invite_response',
-  moment_invite_response:   'moment_invite_response',
-  new_post:                 'new_post',
-  member_left:              'member_left',
-  ownership_transferred:    'ownership_transferred',
+  friend_request_received:     'friend_request_received',
+  friend_request_accepted:     'friend_request_accepted',
+  moment_invite:               'moment_invite',
+  moment_invite_accepted:      'moment_invite_response',
+  moment_invite_declined:      'moment_invite_response',
+  moment_invite_response:      'moment_invite_response',
+  new_post:                    'new_post',
+  member_left:                 'member_left',
+  ownership_transferred:       'ownership_transferred',
+  ownership_transferred_away:  'ownership_transferred',
+  role_changed:                'ownership_transferred',
+  // moment_deleted has no preference toggle — always delivered
 }
 
 export interface NotificationPayload {
@@ -34,6 +40,10 @@ export interface NotificationPayload {
   /** The moment this notification relates to. Maps to notifications.related_moment_id */
   related_moment_id?: string
   post_id?: string
+  /** Role value carried by role_changed / moment_invite notifications */
+  invite_role?: 'editor' | 'reader'
+  /** Arbitrary metadata (e.g. moment_name after the moment is deleted) */
+  metadata?: Record<string, unknown>
 }
 
 /**
@@ -100,7 +110,17 @@ export async function sendNotifications(payloads: NotificationPayload[]): Promis
   })
 
   if (toInsert.length > 0) {
-    await admin.from('notifications').insert(toInsert)
+    await admin.from('notifications').insert(
+      toInsert.map((p) => ({
+        user_id: p.user_id,
+        type: p.type,
+        related_user_id: p.related_user_id,
+        related_moment_id: p.related_moment_id,
+        post_id: p.post_id,
+        ...(p.invite_role !== undefined && { invite_role: p.invite_role }),
+        ...(p.metadata !== undefined && { metadata: p.metadata }),
+      }))
+    )
   }
 }
 

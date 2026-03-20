@@ -11,10 +11,11 @@ import { sendNotification, sendNotifications } from '@/lib/notifications'
 
 export type MomentMemberFull = {
   id: string
-  userId: string
+  userId: string | null
   firstName: string
   lastName: string
   photoUrl: string | null
+  invitedEmail: string | null  // set when userId is null (unregistered invitee)
   role: 'editor' | 'reader'
   status: 'pending' | 'accepted' | 'declined'
   invitedBy: string | null
@@ -56,7 +57,7 @@ export async function fetchMomentDetail(
       owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
       moment_tags(id, tag),
       moment_members(
-        id, user_id, role, status, invited_by,
+        id, user_id, invited_email, role, status, invited_by,
         user:users!moment_members_user_id_fkey(id, first_name, last_name, profile_photo_url)
       )
     `)
@@ -68,7 +69,8 @@ export async function fetchMomentDetail(
   const isOwner = data.owner_id === user.id
   const rawMembers = (data.moment_members as unknown as Array<{
     id: string
-    user_id: string
+    user_id: string | null
+    invited_email: string | null
     role: 'editor' | 'reader'
     status: 'pending' | 'accepted' | 'declined'
     invited_by: string | null
@@ -118,13 +120,14 @@ export async function fetchMomentDetail(
       createdAt: data.created_at,
       tags: (data.moment_tags as unknown as Array<{ id: string; tag: string }>),
       members: rawMembers
-        .filter((m) => m.user !== null)
+        .filter((m) => m.user !== null || m.invited_email !== null)
         .map((m) => ({
           id: m.id,
           userId: m.user_id,
-          firstName: m.user!.first_name,
-          lastName: m.user!.last_name,
-          photoUrl: m.user!.profile_photo_url,
+          firstName: m.user?.first_name ?? '',
+          lastName: m.user?.last_name ?? '',
+          photoUrl: m.user?.profile_photo_url ?? null,
+          invitedEmail: m.invited_email ?? null,
           role: m.role,
           status: m.status,
           invitedBy: m.invited_by,
@@ -215,26 +218,34 @@ export async function declineMomentInvite(momentId: string): Promise<{ error?: s
 
 // ─── Invite member (post-creation) ───────────────────────────────────────────
 
+export type InviteResult =
+  | { error: string }
+  | { notFound: true }
+  | { success: 'user'; invitedUsername: string }
+  | { success: 'email_registered'; invitedUsername: string }
+  | { success: 'email_unregistered' }
+
 export async function inviteMember(
   momentId: string,
-  inviteeInput: string,    // userId or email
+  method: 'username' | 'email',
+  value: string,
   role: 'editor' | 'reader'
-): Promise<{ error?: string }> {
+): Promise<InviteResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const admin = createAdminClient()
 
-  // Verify current user has permission (owner or accepted editor)
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .single()
+  // Fetch moment + inviter profile in parallel
+  const [{ data: moment }, { data: inviterProfile }] = await Promise.all([
+    admin.from('moments').select('owner_id, name').eq('id', momentId).single(),
+    admin.from('users').select('username, first_name, last_name').eq('id', user.id).single(),
+  ])
 
   if (!moment) return { error: 'Moment not found.' }
 
+  // Verify current user has permission (owner or accepted editor)
   const isOwner = moment.owner_id === user.id
   if (!isOwner) {
     const { data: myMembership } = await admin
@@ -244,69 +255,252 @@ export async function inviteMember(
       .eq('user_id', user.id)
       .single()
 
-    // Only accepted editors can invite readers; owner can invite anyone
     if (!myMembership || myMembership.status !== 'accepted') {
       return { error: 'You do not have permission to invite members.' }
     }
-    // Editors can only invite readers
     if (myMembership.role === 'editor' && role === 'editor') {
       return { error: 'Editors can only invite readers.' }
     }
   }
 
-  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteeInput)
+  const inviterUsername = inviterProfile?.username ?? ''
+  const inviterFullName = `${inviterProfile?.first_name ?? ''} ${inviterProfile?.last_name ?? ''}`.trim()
 
-  if (!isEmail) {
-    // Treat as userId
-    const { error } = await admin.from('moment_members').upsert(
-      { moment_id: momentId, user_id: inviteeInput, role, status: 'pending', invited_by: user.id },
-      { onConflict: 'moment_id,user_id', ignoreDuplicates: true }
-    )
-    if (error) return { error: error.message }
-
-    await sendNotification({
-      user_id: inviteeInput,
-      type: 'moment_invite',
-      related_user_id: user.id,
-      related_moment_id: momentId,
-    })
-  } else {
-    const { data: existingUser } = await admin
+  if (method === 'username') {
+    const { data: targetUser } = await admin
       .from('users')
-      .select('id')
-      .eq('email', inviteeInput)
+      .select('id, username')
+      .eq('username', value.toLowerCase().replace(/^@/, ''))
       .maybeSingle()
 
-    if (existingUser) {
-      const { error } = await admin.from('moment_members').upsert(
-        { moment_id: momentId, user_id: existingUser.id, role, status: 'pending', invited_by: user.id },
-        { onConflict: 'moment_id,user_id', ignoreDuplicates: true }
-      )
-      if (error) return { error: error.message }
+    if (!targetUser) return { notFound: true }
+    if (targetUser.id === user.id) return { error: 'You cannot invite yourself.' }
 
-      await sendNotification({
-        user_id: existingUser.id,
-        type: 'moment_invite',
-        related_user_id: user.id,
-        related_moment_id: momentId,
-      })
-    } else {
-      const { data: pendingInvite } = await admin
-        .from('pending_moment_invites')
-        .insert({ moment_id: momentId, email: inviteeInput, role, invited_by: user.id })
-        .select('token')
-        .single()
+    await admin.from('moment_members').upsert(
+      { moment_id: momentId, user_id: targetUser.id, role, status: 'pending', invited_by: user.id },
+      { onConflict: 'moment_id,user_id', ignoreDuplicates: true }
+    )
 
-      if (pendingInvite) {
-        const origin = (await headers()).get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''
-        await admin.auth.admin.inviteUserByEmail(inviteeInput, {
-          redirectTo: `${origin}/auth/callback?next=/invite/${pendingInvite.token}`,
-        })
-      }
-    }
+    await sendInviteNotification({
+      admin,
+      recipientUserId: targetUser.id,
+      inviterUserId: user.id,
+      momentId,
+      role,
+    })
+
+    revalidatePath(`/moments/${momentId}`)
+    return { success: 'user', invitedUsername: targetUser.username as string }
+  }
+
+  // method === 'email'
+  const { data: existingUser } = await admin
+    .from('users')
+    .select('id, username')
+    .eq('email', value.toLowerCase())
+    .maybeSingle()
+
+  if (existingUser) {
+    if (existingUser.id === user.id) return { error: 'You cannot invite yourself.' }
+
+    await admin.from('moment_members').upsert(
+      { moment_id: momentId, user_id: existingUser.id, role, status: 'pending', invited_by: user.id },
+      { onConflict: 'moment_id,user_id', ignoreDuplicates: true }
+    )
+
+    await sendInviteNotification({
+      admin,
+      recipientUserId: existingUser.id,
+      inviterUserId: user.id,
+      momentId,
+      role,
+    })
+
+    revalidatePath(`/moments/${momentId}`)
+    return { success: 'email_registered', invitedUsername: existingUser.username as string }
+  }
+
+  // Unregistered email — create pending moment_members row + send signup invite
+  const { error: insertError } = await admin.from('moment_members').insert({
+    moment_id: momentId,
+    user_id: null,
+    invited_email: value.toLowerCase(),
+    role,
+    status: 'pending',
+    invited_by: user.id,
+  })
+  // Ignore duplicate (already invited at this email for this moment)
+  if (insertError && !insertError.message.includes('duplicate')) {
+    return { error: insertError.message }
+  }
+
+  // Also record in pending_moment_invites for the sign-up redirect token
+  const { data: pendingInvite } = await admin
+    .from('pending_moment_invites')
+    .insert({ moment_id: momentId, email: value.toLowerCase(), role, invited_by: user.id })
+    .select('token')
+    .single()
+
+  if (pendingInvite) {
+    const origin = (await headers()).get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''
+    // Send a sign-up invite email. The Supabase "Invite user" email template
+    // should be configured in the dashboard to say:
+    //   "@{inviterUsername} ({inviterFullName}) invited you as {role} on Remember When."
+    // The metadata variables below are available in the template as {{ .Data.* }}.
+    await admin.auth.admin.inviteUserByEmail(value.toLowerCase(), {
+      redirectTo: `${origin}/auth/callback?next=/invite/${pendingInvite.token}`,
+      data: {
+        inviter_username: inviterUsername,
+        inviter_full_name: inviterFullName,
+        invited_role: role,
+        moment_name: moment.name,
+      },
+    })
   }
 
   revalidatePath(`/moments/${momentId}`)
+  return { success: 'email_unregistered' }
+}
+
+// Helper: insert a moment_invite notification with the role attached
+async function sendInviteNotification({
+  admin,
+  recipientUserId,
+  inviterUserId,
+  momentId,
+  role,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any
+  recipientUserId: string
+  inviterUserId: string
+  momentId: string
+  role: 'editor' | 'reader'
+}) {
+  // Check preferences (reuse sendNotification logic but we need invite_role)
+  const { data: prefs } = await admin
+    .from('notification_preferences')
+    .select('moment_invite')
+    .eq('user_id', recipientUserId)
+    .maybeSingle()
+
+  if (prefs && prefs.moment_invite === false) return
+
+  await admin.from('notifications').insert({
+    user_id: recipientUserId,
+    type: 'moment_invite',
+    related_user_id: inviterUserId,
+    related_moment_id: momentId,
+    invite_role: role,
+  })
+}
+
+// ─── Update member role ───────────────────────────────────────────────────────
+
+export async function updateMemberRole(
+  momentId: string,
+  memberId: string,
+  newRole: 'editor' | 'reader'
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id, name')
+    .eq('id', momentId)
+    .single()
+
+  if (!moment) return { error: 'Moment not found.' }
+  if (moment.owner_id !== user.id) return { error: 'Only the owner can change member roles.' }
+
+  const { data: target } = await admin
+    .from('moment_members')
+    .select('id, user_id, role')
+    .eq('id', memberId)
+    .eq('moment_id', momentId)
+    .single()
+
+  if (!target) return { error: 'Member not found.' }
+  if (target.role === newRole) return {}
+
+  const { error } = await admin
+    .from('moment_members')
+    .update({ role: newRole })
+    .eq('id', memberId)
+
+  if (error) return { error: error.message }
+
+  // Notify the affected user (if registered)
+  if (target.user_id) {
+    await sendNotification({
+      user_id: target.user_id,
+      type: 'role_changed',
+      related_user_id: user.id,
+      related_moment_id: momentId,
+      invite_role: newRole,
+    })
+  }
+
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
+// ─── Delete moment ────────────────────────────────────────────────────────────
+
+export async function deleteMoment(momentId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id, name')
+    .eq('id', momentId)
+    .single()
+
+  if (!moment) return { error: 'Moment not found.' }
+  if (moment.owner_id !== user.id) return { error: 'Only the owner can delete this moment.' }
+
+  // Fetch accepted members before deletion so we can notify them
+  const { data: members } = await admin
+    .from('moment_members')
+    .select('user_id')
+    .eq('moment_id', momentId)
+    .eq('status', 'accepted')
+    .not('user_id', 'is', null)
+
+  const momentName = moment.name
+
+  const { error } = await admin
+    .from('moments')
+    .delete()
+    .eq('id', momentId)
+
+  if (error) return { error: error.message }
+
+  // Notify former members (moment no longer exists so we store name in metadata)
+  const recipientIds = (members ?? [])
+    .map((m) => m.user_id as string)
+    .filter((id) => id !== user.id)
+
+  if (recipientIds.length > 0) {
+    await admin.from('notifications').insert(
+      recipientIds.map((uid) => ({
+        user_id: uid,
+        type: 'moment_deleted',
+        related_user_id: user.id,
+        metadata: { moment_name: momentName },
+      }))
+    )
+  }
+
+  revalidatePath('/home')
   return {}
 }
 
@@ -1035,6 +1229,14 @@ export async function transferOwnership(
     user_id: newOwnerId,
     type: 'ownership_transferred',
     related_user_id: user.id,
+    related_moment_id: momentId,
+  })
+
+  // Notify the previous owner (confirmation)
+  await sendNotification({
+    user_id: user.id,
+    type: 'ownership_transferred_away',
+    related_user_id: newOwnerId,
     related_moment_id: momentId,
   })
 

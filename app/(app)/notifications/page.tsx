@@ -10,8 +10,10 @@ import { NotificationList } from './_components/notification-list'
 export type NotificationRow = {
   id: string
   type: string
-  fromUser: { id: string; firstName: string; lastName: string; photoUrl: string | null } | null
+  fromUser: { id: string; firstName: string; lastName: string; username: string | null; photoUrl: string | null } | null
   moment: { id: string; name: string } | null
+  inviteRole: 'editor' | 'reader' | null
+  metadata: Record<string, unknown> | null
   read: boolean
   createdAt: string
 }
@@ -33,7 +35,7 @@ export default async function NotificationsPage() {
   // Fetch notifications newest-first.
   const { data: rows } = await admin
     .from('notifications')
-    .select('id, type, read, created_at, related_user_id, related_moment_id')
+    .select('id, type, read, created_at, related_user_id, related_moment_id, invite_role, metadata')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(100)
@@ -47,8 +49,8 @@ export default async function NotificationsPage() {
 
   const [usersRes, momentsRes] = await Promise.all([
     fromUserIds.length > 0
-      ? admin.from('users').select('id, first_name, last_name, profile_photo_url').in('id', fromUserIds)
-      : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }[] }),
+      ? admin.from('users').select('id, first_name, last_name, username, profile_photo_url').in('id', fromUserIds)
+      : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; username: string | null; profile_photo_url: string | null }[] }),
     momentIds.length > 0
       ? admin.from('moments').select('id, name').in('id', momentIds)
       : Promise.resolve({ data: [] as { id: string; name: string }[] }),
@@ -64,9 +66,11 @@ export default async function NotificationsPage() {
       id: row.id,
       type: row.type,
       fromUser: u
-        ? { id: u.id, firstName: u.first_name, lastName: u.last_name, photoUrl: u.profile_photo_url }
+        ? { id: u.id, firstName: u.first_name, lastName: u.last_name, username: u.username ?? null, photoUrl: u.profile_photo_url }
         : null,
       moment: m ? { id: m.id, name: m.name } : null,
+      inviteRole: (row as { invite_role?: 'editor' | 'reader' | null }).invite_role ?? null,
+      metadata: (row as { metadata?: Record<string, unknown> | null }).metadata ?? null,
       read: row.read,
       createdAt: row.created_at,
     }

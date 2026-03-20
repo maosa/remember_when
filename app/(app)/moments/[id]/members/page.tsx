@@ -28,7 +28,7 @@ export default async function MomentMembersPage({ params }: Props) {
           >
             <ChevronLeft className="size-4" />
           </Link>
-          <h1 className="text-2xl font-semibold">Members</h1>
+          <h1 className="text-2xl font-semibold">Moment Settings</h1>
         </div>
 
         <MembersSection
