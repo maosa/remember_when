@@ -84,7 +84,7 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">
-          Hey, {firstName} 👋
+          Hey, {firstName}
         </h1>
         <CreateMomentModal />
       </div>

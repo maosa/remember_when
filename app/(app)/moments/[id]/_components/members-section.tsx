@@ -57,36 +57,79 @@ export function MembersSection({ moment, myRole, myStatus, myUserId }: Props) {
   const nonOwnerMembers = moment.members.filter((m) => m.userId !== moment.ownerId)
   const acceptedEditors = nonOwnerMembers.filter((m) => m.role === 'editor' && m.status === 'accepted')
 
-  function canRemoveThisMember(member: MomentMemberFull): boolean {
-    if (!isAccepted) return false
-    if (member.userId === myUserId) return false // use "Leave" instead
-    if (myRole === 'owner') return true
-    if (myRole === 'editor') return member.role === 'reader'
-    return false
+  const editors = nonOwnerMembers.filter((m) => m.role === 'editor')
+  const readers = nonOwnerMembers.filter((m) => m.role === 'reader')
+
+  // Owners and editors see the manage view; readers see a simple people list
+  const isManager = isAccepted && (myRole === 'owner' || myRole === 'editor')
+
+  if (!isManager) {
+    // Reader view: simple flat list, no remove buttons
+    return (
+      <section className="mx-auto max-w-3xl px-4 py-6 space-y-4">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">People</h2>
+        <ul className="space-y-2">
+          <MemberRow member={owner} isOwner canRemove={false} />
+          {nonOwnerMembers.map((m) => (
+            <MemberRow key={m.id} member={m} isOwner={false} canRemove={false} />
+          ))}
+        </ul>
+        {isAccepted && myRole !== 'owner' && (
+          <LeaveMomentDialog momentId={moment.id} />
+        )}
+      </section>
+    )
   }
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-6 space-y-4">
+    <section className="mx-auto max-w-3xl px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">People</h2>
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          Manage members
+        </h2>
         {canInvite && <InviteDialog momentId={moment.id} myRole={myRole} />}
       </div>
 
-      <ul className="space-y-2">
-        {/* Owner */}
-        <MemberRow member={owner} isOwner canRemove={false} />
+      {/* ── Editors ──────────────────────────────────────────────── */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+          <Shield className="size-3" /> Editors
+        </p>
+        <ul className="space-y-2">
+          <MemberRow member={owner} isOwner canRemove={false} />
+          {editors.map((m) => (
+            <MemberRow
+              key={m.id}
+              member={m}
+              isOwner={false}
+              // Only the owner can remove editors
+              canRemove={myRole === 'owner' && m.userId !== myUserId && m.status === 'accepted'}
+              momentId={moment.id}
+            />
+          ))}
+        </ul>
+      </div>
 
-        {/* Other members */}
-        {nonOwnerMembers.map((m) => (
-          <MemberRow
-            key={m.id}
-            member={m}
-            isOwner={false}
-            canRemove={canRemoveThisMember(m)}
-            momentId={moment.id}
-          />
-        ))}
-      </ul>
+      {/* ── Readers ──────────────────────────────────────────────── */}
+      {readers.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+            <Eye className="size-3" /> Readers
+          </p>
+          <ul className="space-y-2">
+            {readers.map((m) => (
+              <MemberRow
+                key={m.id}
+                member={m}
+                isOwner={false}
+                // Owners and editors can remove readers
+                canRemove={m.userId !== myUserId && m.status === 'accepted'}
+                momentId={moment.id}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Shareable invite link */}
       {canManageLink && (

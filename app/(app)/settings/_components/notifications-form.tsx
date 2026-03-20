@@ -139,7 +139,9 @@ export function NotificationsForm({ initialPrefs }: Props) {
             onValueChange={(v) => v && setPrefs((p) => ({ ...p, reminderCadence: v }))}
           >
             <SelectTrigger className="w-40">
-              <SelectValue />
+              <SelectValue>
+                {{ weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly', never: 'Never' }[prefs.reminderCadence] ?? prefs.reminderCadence}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="weekly">Weekly</SelectItem>

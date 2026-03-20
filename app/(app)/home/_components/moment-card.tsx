@@ -1,13 +1,14 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { MapPin, MoreHorizontal, Archive, ArchiveRestore } from 'lucide-react'
+import { MapPin, MoreHorizontal, Archive, ArchiveRestore, Pencil } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
 import { archiveMoment, unarchiveMoment, type MomentSummary } from '../actions'
+import { EditMomentModal } from '@/app/(app)/_components/edit-moment-modal'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -28,8 +29,10 @@ interface Props {
 
 export function MomentCard({ moment, currentUserId }: Props) {
   const [isPending, startTransition] = useTransition()
+  const [editOpen, setEditOpen] = useState(false)
   const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = moment.myStatus === 'pending'
+  const canEdit = moment.myStatus === 'accepted' && (moment.myRole === 'owner' || moment.myRole === 'editor')
 
   // Show up to 4 member avatars
   const displayMembers = moment.members.slice(0, 4)
@@ -151,6 +154,14 @@ export function MomentCard({ moment, currentUserId }: Props) {
             <MoreHorizontal className="size-3.5" />
           </MenuTrigger>
           <MenuContent align="end">
+            {canEdit && (
+              <MenuItem
+                onClick={(e) => { e.preventDefault(); setEditOpen(true) }}
+                className="gap-2"
+              >
+                <Pencil className="size-3.5" /> Edit moment
+              </MenuItem>
+            )}
             <MenuItem
               disabled={isPending}
               onClick={toggleArchive}
@@ -165,6 +176,23 @@ export function MomentCard({ moment, currentUserId }: Props) {
           </MenuContent>
         </Menu>
       </div>
+
+      {/* Edit modal — controlled externally so it can be opened from the menu */}
+      {canEdit && (
+        <EditMomentModal
+          moment={{
+            id: moment.id,
+            name: moment.name,
+            dateYear: moment.dateYear,
+            dateMonth: moment.dateMonth,
+            dateDay: moment.dateDay,
+            location: moment.location,
+            tags: moment.tags,
+          }}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
     </div>
   )
 }

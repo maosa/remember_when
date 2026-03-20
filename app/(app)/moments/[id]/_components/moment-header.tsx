@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { MapPin, Calendar, CheckCircle2, XCircle } from 'lucide-react'
+import { MapPin, Calendar, CheckCircle2, XCircle, MoreHorizontal, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
 import { acceptMomentInvite, declineMomentInvite, type MomentDetail } from '../actions'
+import { EditMomentModal } from '@/app/(app)/_components/edit-moment-modal'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -31,6 +33,9 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+
+  const canEdit = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
 
   const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = myStatus === 'pending'
@@ -76,8 +81,28 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
             : 'opacity-0 -translate-y-2 pointer-events-none'
         )}
       >
-        <div className="mx-auto max-w-3xl px-4 h-full flex items-center">
-          <h1 className="font-semibold text-base truncate">{moment.name}</h1>
+        <div className="mx-auto max-w-3xl px-4 h-full flex items-center gap-2">
+          <h1 className="font-semibold text-base truncate flex-1">{moment.name}</h1>
+          {canEdit && (
+            <Menu>
+              <MenuTrigger
+                render={
+                  <button
+                    type="button"
+                    className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    aria-label="Moment options"
+                  />
+                }
+              >
+                <MoreHorizontal className="size-4" />
+              </MenuTrigger>
+              <MenuContent align="end">
+                <MenuItem onClick={() => setEditOpen(true)} className="gap-2">
+                  <Pencil className="size-3.5" /> Edit moment
+                </MenuItem>
+              </MenuContent>
+            </Menu>
+          )}
         </div>
       </div>
 
@@ -108,15 +133,42 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
           )}
         >
           <div className="mx-auto max-w-3xl space-y-3">
-            {/* Name */}
-            <h1
-              className={cn(
-                'text-2xl sm:text-3xl font-bold leading-tight',
-                moment.coverPhotoUrl && 'text-white drop-shadow-sm'
+            {/* Name + edit menu */}
+            <div className="flex items-start gap-2">
+              <h1
+                className={cn(
+                  'text-2xl sm:text-3xl font-bold leading-tight flex-1',
+                  moment.coverPhotoUrl && 'text-white drop-shadow-sm'
+                )}
+              >
+                {moment.name}
+              </h1>
+              {canEdit && (
+                <Menu>
+                  <MenuTrigger
+                    render={
+                      <button
+                        type="button"
+                        className={cn(
+                          'mt-1 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors',
+                          moment.coverPhotoUrl
+                            ? 'text-white/70 hover:text-white hover:bg-white/10'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        )}
+                        aria-label="Moment options"
+                      />
+                    }
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </MenuTrigger>
+                  <MenuContent align="end">
+                    <MenuItem onClick={() => setEditOpen(true)} className="gap-2">
+                      <Pencil className="size-3.5" /> Edit moment
+                    </MenuItem>
+                  </MenuContent>
+                </Menu>
               )}
-            >
-              {moment.name}
-            </h1>
+            </div>
 
             {/* Meta */}
             <div className={cn(
@@ -142,6 +194,23 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
 
       {/* Sentinel — when this scrolls out of view the collapsed bar appears */}
       <div ref={sentinelRef} className="h-px" />
+
+      {/* Edit moment modal */}
+      {canEdit && (
+        <EditMomentModal
+          moment={{
+            id: moment.id,
+            name: moment.name,
+            dateYear: moment.dateYear,
+            dateMonth: moment.dateMonth,
+            dateDay: moment.dateDay,
+            location: moment.location,
+            tags: moment.tags.map((t) => t.tag),
+          }}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
 
       {/* ── Pending invite banner ──────────────────────────────── */}
       {isPendingInvite && (

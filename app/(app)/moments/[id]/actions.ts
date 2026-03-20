@@ -1041,3 +1041,79 @@ export async function transferOwnership(
   revalidatePath(`/moments/${momentId}`)
   return {}
 }
+
+// ─── Update moment (name, date, location, tags) ───────────────────────────────
+
+export async function updateMoment(
+  momentId: string,
+  data: {
+    name: string
+    dateYear: number | null
+    dateMonth: number | null
+    dateDay: number | null
+    location: string | null
+    tags: string[]
+  }
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const name = data.name.trim()
+  if (!name) return { error: 'Moment name is required.' }
+
+  const admin = createAdminClient()
+
+  // Verify the caller is owner or an accepted editor
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+
+  if (!moment) return { error: 'Moment not found.' }
+
+  const isOwner = moment.owner_id === user.id
+  if (!isOwner) {
+    const { data: membership } = await admin
+      .from('moment_members')
+      .select('role, status')
+      .eq('moment_id', momentId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (!membership || membership.status !== 'accepted' || membership.role === 'reader') {
+      return { error: 'You do not have permission to edit this moment.' }
+    }
+  }
+
+  // Update moment row
+  const { error: updateError } = await admin
+    .from('moments')
+    .update({
+      name,
+      date_year: data.dateYear,
+      date_month: data.dateMonth,
+      date_day: data.dateDay,
+      location: data.location?.trim() || null,
+    })
+    .eq('id', momentId)
+
+  if (updateError) return { error: updateError.message }
+
+  // Replace tags: delete existing then insert new set
+  await admin.from('moment_tags').delete().eq('moment_id', momentId)
+  if (data.tags.length > 0) {
+    await admin.from('moment_tags').insert(
+      data.tags.map((tag) => ({
+        moment_id: momentId,
+        tag: tag.trim().toLowerCase(),
+        created_by: user.id,
+      }))
+    )
+  }
+
+  revalidatePath(`/moments/${momentId}`)
+  revalidatePath('/home')
+  return {}
+}
