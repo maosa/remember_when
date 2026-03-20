@@ -453,7 +453,7 @@ export function InviteDialog({
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger render={<Button size="sm" variant="outline" />}>
         <UserPlus className="size-3.5" />
-        Invite
+        <span className="hidden sm:inline">Invite</span>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>

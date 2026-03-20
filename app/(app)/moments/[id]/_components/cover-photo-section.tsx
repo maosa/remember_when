@@ -67,7 +67,7 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button size="sm" variant="outline" />}>
         <Camera className="size-3.5" />
-        {currentUrl ? 'Change cover photo' : 'Add cover photo'}
+        <span className="hidden sm:inline">{currentUrl ? 'Change cover photo' : 'Add cover photo'}</span>
       </DialogTrigger>
 
         <DialogContent className="sm:max-w-md">

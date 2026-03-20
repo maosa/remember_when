@@ -136,7 +136,7 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
             className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
           >
             <Settings className="size-3.5" />
-            Manage
+            <span className="hidden sm:inline">Manage</span>
           </Link>
         </div>
       )}
