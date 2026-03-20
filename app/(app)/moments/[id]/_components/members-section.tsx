@@ -435,7 +435,7 @@ export function InviteDialog({
         setFeedback({
           kind: 'success_email_unregistered',
           message:
-            "No account found with that email. The invite is saved — they'll see it automatically when they sign up with this address.",
+            "No account found with that email. We've sent them an invite to join Remember When and accept your invitation.",
         })
         setInput('')
         return

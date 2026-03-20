@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification, sendNotifications } from '@/lib/notifications'
@@ -333,11 +334,27 @@ export async function inviteMember(
     return { error: insertError.message }
   }
 
-  // No transactional email service is configured, so we don't attempt to send
-  // an email here. The invite is fully persisted in moment_members.invited_email.
-  // When this person signs up with the same email address, the auth callback
-  // resolves the pending row, creates their in-app notification, and shows them
-  // the pending-invite banner on the home page.
+  // Send a sign-up invite email via Supabase Auth.
+  // The trigger now skips creating a public.users row for invite-created users
+  // (those without a username in their metadata), so this is safe to call.
+  const origin = (await headers()).get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''
+
+  const { error: emailError } = await admin.auth.admin.inviteUserByEmail(
+    value.toLowerCase(),
+    {
+      redirectTo: `${origin}/auth/callback`,
+      data: {
+        inviter_username: inviterUsername,
+        inviter_full_name: inviterFullName,
+        invited_role: role,
+        moment_name: moment.name,
+      },
+    }
+  )
+
+  if (emailError) {
+    return { error: `Could not send invite email: ${emailError.message}` }
+  }
 
   revalidatePath(`/moments/${momentId}`)
   return { success: 'email_unregistered' }
