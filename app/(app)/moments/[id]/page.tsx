@@ -3,7 +3,7 @@ import { fetchMomentDetail } from './actions'
 import { MomentHeader } from './_components/moment-header'
 import { CoverPhotoSection } from './_components/cover-photo-section'
 import { TagsSection } from './_components/tags-section'
-import { MembersSection } from './_components/members-section'
+import { MembersRow } from './_components/members-row'
 import { PostsSection } from './_components/posts-section'
 
 interface Props {
@@ -12,9 +12,9 @@ interface Props {
 
 export default async function MomentPage({ params }: Props) {
   const { id } = await params
-  const { moment, myRole, myStatus, myUserId, error } = await fetchMomentDetail(id)
+  const { moment, myRole, myStatus, error } = await fetchMomentDetail(id)
 
-  if (error || !moment || !myRole || !myStatus || !myUserId) notFound()
+  if (error || !moment || !myRole || !myStatus) notFound()
 
   const canEdit = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
 
@@ -37,8 +37,8 @@ export default async function MomentPage({ params }: Props) {
         canEdit={canEdit}
       />
 
-      {/* Members */}
-      <MembersSection moment={moment} myRole={myRole} myStatus={myStatus} myUserId={myUserId} />
+      {/* Members row */}
+      <MembersRow moment={moment} myRole={myRole} myStatus={myStatus} />
 
       {/* Posts & media */}
       <PostsSection

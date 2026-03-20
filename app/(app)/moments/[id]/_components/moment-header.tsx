@@ -117,7 +117,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
               alt={moment.name}
               className="size-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/45 to-transparent" />
           </div>
         ) : (
           <div className="h-28 bg-gradient-to-br from-muted to-muted/60" />
@@ -126,9 +126,9 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
         {/* Moment info */}
         <div
           className={cn(
-            'px-4 pb-6',
+            'px-4 pb-8',
             moment.coverPhotoUrl
-              ? 'relative -mt-16 pt-0'
+              ? 'relative -mt-28 pt-0'
               : 'pt-6'
           )}
         >

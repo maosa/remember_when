@@ -230,7 +230,7 @@ function RoleBadge({ role, status }: { role: 'editor' | 'reader'; status: string
 
 // ─── Invite dialog (by username / email) ──────────────────────────────────────
 
-function InviteDialog({ momentId, myRole }: { momentId: string; myRole: 'owner' | 'editor' | 'reader' }) {
+export function InviteDialog({ momentId, myRole }: { momentId: string; myRole: 'owner' | 'editor' | 'reader' }) {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const [role, setRole] = useState<'editor' | 'reader'>('reader')
