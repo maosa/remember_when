@@ -353,7 +353,34 @@ export async function inviteMember(
   )
 
   if (emailError) {
-    return { error: `Could not send invite email: ${emailError.message}` }
+    // Supabase rejects inviteUserByEmail when the email is already in auth.users
+    // (e.g. a previous invite created an auth entry but the user never completed
+    // their profile). Fall back to the OTP magic-link endpoint which works for
+    // existing users and honours a custom redirectTo.
+    if (emailError.message.toLowerCase().includes('already been registered')) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+      const redirectTo = encodeURIComponent(`${origin}/auth/invite-confirm`)
+      const otpRes = await fetch(
+        `${supabaseUrl}/auth/v1/otp?redirect_to=${redirectTo}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: serviceKey,
+            Authorization: `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ email: value.toLowerCase(), create_user: false }),
+        }
+      )
+      if (!otpRes.ok) {
+        const body = await otpRes.json().catch(() => ({}))
+        return { error: `Could not send sign-in link: ${body?.msg ?? otpRes.statusText}` }
+      }
+      // OTP sent successfully — treat the same as an unregistered invite
+    } else {
+      return { error: `Could not send invite email: ${emailError.message}` }
+    }
   }
 
   revalidatePath(`/moments/${momentId}`)
