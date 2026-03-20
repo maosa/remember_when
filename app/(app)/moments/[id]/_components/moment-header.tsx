@@ -117,7 +117,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
               alt={moment.name}
               className="size-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
           </div>
         ) : (
           <div className="h-28 bg-gradient-to-br from-muted to-muted/60" />
@@ -138,7 +138,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
               <h1
                 className={cn(
                   'text-2xl sm:text-3xl font-bold leading-tight flex-1',
-                  moment.coverPhotoUrl && 'text-white drop-shadow-sm'
+                  moment.coverPhotoUrl && 'text-white drop-shadow'
                 )}
               >
                 {moment.name}
@@ -173,7 +173,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
             {/* Meta */}
             <div className={cn(
               'flex flex-wrap items-center gap-x-4 gap-y-1 text-sm',
-              moment.coverPhotoUrl ? 'text-white/80' : 'text-muted-foreground'
+              moment.coverPhotoUrl ? 'text-white/90 drop-shadow' : 'text-muted-foreground'
             )}>
               {date && (
                 <span className="flex items-center gap-1.5">

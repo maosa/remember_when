@@ -18,7 +18,14 @@ const DEFAULTS: NotificationPrefs = {
   reminderCadence:             'weekly',
 }
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>
+}) {
+  const { from } = await searchParams
+  const backHref = from === 'notifications' ? '/notifications' : '/account'
+  const backLabel = from === 'notifications' ? 'Back to notifications' : 'Back to account'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -49,13 +56,13 @@ export default async function SettingsPage() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/account"
+            href={backHref}
             className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }))}
-            aria-label="Back to account"
+            aria-label={backLabel}
           >
             <ChevronLeft className="size-4" />
           </Link>
-          <h1 className="text-2xl font-semibold">Notification preferences</h1>
+          <h1 className="text-2xl font-semibold">Notification Preferences</h1>
         </div>
 
         <NotificationsForm initialPrefs={prefs} />

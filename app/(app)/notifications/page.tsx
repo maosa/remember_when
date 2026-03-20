@@ -78,7 +78,7 @@ export default async function NotificationsPage() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold">Notifications</h1>
           <Link
-            href="/settings"
+            href="/settings?from=notifications"
             className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }))}
             aria-label="Notification settings"
           >

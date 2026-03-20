@@ -159,7 +159,7 @@ export function MomentCard({ moment, currentUserId }: Props) {
                 onClick={(e) => { e.preventDefault(); setEditOpen(true) }}
                 className="gap-2"
               >
-                <Pencil className="size-3.5" /> Edit moment
+                <Pencil className="size-3.5" /> Edit
               </MenuItem>
             )}
             <MenuItem

@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { Bell, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -70,6 +72,26 @@ export default async function AccountPage() {
         <section className="space-y-4">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Security</h2>
           <ChangePasswordForm email={profile.email} />
+        </section>
+
+        <Separator />
+
+        {/* Notification preferences */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Notifications</h2>
+          <Link
+            href="/settings?from=account"
+            className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-muted transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Bell className="size-4 text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Notification Preferences</p>
+                <p className="text-xs text-muted-foreground">Manage what you get notified about</p>
+              </div>
+            </div>
+            <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+          </Link>
         </section>
 
         <Separator />
