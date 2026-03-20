@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Bell } from 'lucide-react'
+import { Bell, CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -82,6 +82,26 @@ export default async function AccountPage() {
             >
               <Bell className="size-4" />
               Manage
+            </Link>
+          </div>
+        </section>
+
+        <Separator />
+
+        {/* Plan */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Plan</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Free</p>
+              <p className="text-sm text-muted-foreground">You&apos;re on the free plan</p>
+            </div>
+            <Link
+              href="/pricing"
+              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')}
+            >
+              <CreditCard className="size-4" />
+              View plans
             </Link>
           </div>
         </section>
