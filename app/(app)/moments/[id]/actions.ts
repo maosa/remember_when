@@ -342,7 +342,7 @@ export async function inviteMember(
   const { error: emailError } = await admin.auth.admin.inviteUserByEmail(
     value.toLowerCase(),
     {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${origin}/auth/invite-confirm`,
       data: {
         inviter_username: inviterUsername,
         inviter_full_name: inviterFullName,
