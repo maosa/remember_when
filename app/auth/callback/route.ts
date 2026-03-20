@@ -32,6 +32,18 @@ export async function GET(request: NextRequest) {
       const user = sessionData.user
       const admin = createAdminClient()
 
+      // If the user has no public.users profile (ghost / invite-created user),
+      // send them to complete-profile before anything else.
+      const { data: profile } = await admin
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (!profile) {
+        return NextResponse.redirect(`${origin}/auth/complete-profile`)
+      }
+
       // Resolve any pending moment_members rows where invited_email matches
       // this user's email. This handles the unregistered-email invite flow:
       // the inviter created these rows before the user had an account.

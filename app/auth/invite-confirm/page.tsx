@@ -5,30 +5,44 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
+type Status = 'loading' | 'error_expired' | 'error_generic'
+
 /**
- * Landing page for Supabase invite-by-email links.
+ * Landing page for Supabase invite-by-email and OTP magic-link flows.
  *
- * Supabase's `inviteUserByEmail` sends the user to `redirectTo` with auth tokens
- * in the URL *hash* fragment (implicit flow). Server routes cannot read hash
- * fragments, so we need this thin client page to pick up the session, then
- * decide where to send the user:
+ * Supabase sends auth tokens in the URL *hash* fragment (implicit flow).
+ * Server routes cannot read fragments, so this client page picks up the
+ * session via onAuthStateChange and routes accordingly:
  *
- *   - Has a public.users profile → resolve invite rows + go to /home?pending_invite=true
- *   - No profile yet            → go to /auth/complete-profile to finish signup
+ *   - Hash contains #error=... → show an appropriate error immediately
+ *   - Has a public.users profile → resolve invite rows + /home?pending_invite=true
+ *   - No profile yet (ghost user) → /auth/complete-profile
  */
 export default function InviteConfirmPage() {
   const router = useRouter()
-  const [status, setStatus] = useState<'loading' | 'error'>('loading')
-  const [errorMsg, setErrorMsg] = useState('')
+  const [status, setStatus] = useState<Status>('loading')
 
   useEffect(() => {
+    // Parse the hash fragment immediately — Supabase puts errors there too.
+    const hash = window.location.hash.slice(1) // strip leading '#'
+    const params = new URLSearchParams(hash)
+    const errorCode = params.get('error_code')
+    const error = params.get('error')
+
+    if (error || errorCode) {
+      if (errorCode === 'otp_expired' || error === 'access_denied') {
+        setStatus('error_expired')
+      } else {
+        setStatus('error_generic')
+      }
+      return // don't set up the auth listener
+    }
+
     const supabase = createClient()
 
-    // onAuthStateChange fires immediately with the session recovered from the
-    // hash fragment. SIGNED_IN covers both new and returning sessions.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!session) return // wait for next event
+        if (!session) return // wait for the next event
 
         subscription.unsubscribe()
 
@@ -43,33 +57,25 @@ export default function InviteConfirmPage() {
           .maybeSingle()
 
         if (!profile) {
-          // Invited user — no profile yet. Send them to complete-profile.
+          // Ghost / invite-created user — no profile yet.
           router.replace('/auth/complete-profile')
           return
         }
 
-        // Profile exists: resolve any pending invited_email rows for this user
-        // via the API route (server-side admin access).
+        // Profile exists: resolve any pending invited_email rows.
         const res = await fetch('/api/resolve-invite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, email }),
         })
 
-        if (res.ok) {
-          const { hasPending } = await res.json()
-          router.replace(hasPending ? '/home?pending_invite=true' : '/home')
-        } else {
-          router.replace('/home')
-        }
+        const hasPending = res.ok ? (await res.json()).hasPending : false
+        router.replace(hasPending ? '/home?pending_invite=true' : '/home')
       }
     )
 
-    // Safety: if no auth state fires within 10 s, something went wrong.
-    const timeout = setTimeout(() => {
-      setStatus('error')
-      setErrorMsg('Could not verify your session. Please try signing in.')
-    }, 10_000)
+    // Safety timeout — if no auth event fires within 10 s, something went wrong.
+    const timeout = setTimeout(() => setStatus('error_generic'), 10_000)
 
     return () => {
       subscription.unsubscribe()
@@ -77,13 +83,40 @@ export default function InviteConfirmPage() {
     }
   }, [router])
 
-  if (status === 'error') {
+  if (status === 'error_expired') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="text-center space-y-4 max-w-sm">
-          <p className="text-sm text-destructive">{errorMsg}</p>
-          <a href="/login" className="text-sm underline text-muted-foreground hover:text-foreground">
-            Go to sign in
+        <div className="text-center space-y-3 max-w-sm">
+          <h2 className="font-semibold text-lg">Invite link expired</h2>
+          <p className="text-sm text-muted-foreground">
+            This link has already been used or has expired. Your invitation is
+            still saved — just sign in with your email address and it will be
+            applied automatically.
+          </p>
+          <a
+            href="/login"
+            className="inline-block mt-2 text-sm underline text-foreground hover:opacity-80"
+          >
+            Go to sign in →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  if (status === 'error_generic') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center space-y-3 max-w-sm">
+          <h2 className="font-semibold text-lg">Something went wrong</h2>
+          <p className="text-sm text-muted-foreground">
+            Could not verify your session. Please try signing in.
+          </p>
+          <a
+            href="/login"
+            className="inline-block mt-2 text-sm underline text-foreground hover:opacity-80"
+          >
+            Go to sign in →
           </a>
         </div>
       </div>
