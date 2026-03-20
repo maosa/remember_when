@@ -6,17 +6,18 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+// ─── Profile (name + username only) ────────────────────────────────────────
+
 export async function updateProfile(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const firstName = (formData.get('firstName') as string).trim()
-  const lastName = (formData.get('lastName') as string).trim()
-  const username = (formData.get('username') as string).trim().toLowerCase()
-  const newEmail = (formData.get('email') as string).trim().toLowerCase()
+  const lastName  = (formData.get('lastName')  as string).trim()
+  const username  = (formData.get('username')  as string).trim().toLowerCase()
 
-  if (!firstName || !lastName || !username || !newEmail) {
+  if (!firstName || !lastName || !username) {
     return { error: 'All fields are required.' }
   }
 
@@ -24,10 +25,9 @@ export async function updateProfile(formData: FormData) {
     return { error: 'Username must be 3–20 characters: letters, numbers, underscores only.' }
   }
 
-  // Check username uniqueness (only if changed)
   const { data: current } = await supabase
     .from('users')
-    .select('username, email')
+    .select('username')
     .eq('id', user.id)
     .single()
 
@@ -38,36 +38,56 @@ export async function updateProfile(formData: FormData) {
       .eq('username', username)
       .maybeSingle()
 
-    if (existing) {
-      return { error: 'Username is already taken.' }
-    }
+    if (existing) return { error: 'Username is already taken.' }
   }
 
-  // Update name + username in the users table
-  const { error: profileError } = await supabase
+  const { error } = await supabase
     .from('users')
     .update({ first_name: firstName, last_name: lastName, username })
     .eq('id', user.id)
 
-  if (profileError) return { error: profileError.message }
-
-  // If email changed, trigger Supabase confirmation flow
-  const emailChanged = newEmail !== user.email?.toLowerCase()
-  if (emailChanged) {
-    const origin = (await headers()).get('origin') ?? ''
-    const { error: emailError } = await supabase.auth.updateUser(
-      { email: newEmail },
-      { emailRedirectTo: `${origin}/auth/callback?next=/account` },
-    )
-    if (emailError) return { error: emailError.message }
-
-    revalidatePath('/account')
-    return { success: true, emailPending: true }
-  }
+  if (error) return { error: error.message }
 
   revalidatePath('/account')
-  return { success: true, emailPending: false }
+  return { success: true }
 }
+
+// ─── Email (requires re-auth, called after client verifies password) ────────
+
+export async function updateEmail(newEmail: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const trimmed = newEmail.trim().toLowerCase()
+  if (!trimmed) return { error: 'Email is required.' }
+
+  const origin = (await headers()).get('origin') ?? ''
+  const { error } = await supabase.auth.updateUser(
+    { email: trimmed },
+    { emailRedirectTo: `${origin}/auth/callback?next=/account` },
+  )
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/account')
+  return { success: true }
+}
+
+// ─── Password (requires re-auth, called after client verifies current pwd) ──
+
+export async function changePassword(newPassword: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) return { error: error.message }
+
+  return { success: true }
+}
+
+// ─── Avatar upload ──────────────────────────────────────────────────────────
 
 export async function updateAvatar(formData: FormData) {
   const supabase = await createClient()
@@ -90,7 +110,6 @@ export async function updateAvatar(formData: FormData) {
     .from('avatars')
     .getPublicUrl(path)
 
-  // Bust cache by appending timestamp
   const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`
 
   const { error: updateError } = await supabase
@@ -104,18 +123,43 @@ export async function updateAvatar(formData: FormData) {
   return { success: true }
 }
 
+// ─── Avatar remove ──────────────────────────────────────────────────────────
+
+export async function removeAvatar() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // Clear DB reference first so the UI updates even if storage delete fails
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({ profile_photo_url: null })
+    .eq('id', user.id)
+
+  if (updateError) return { error: updateError.message }
+
+  // Best-effort: remove all avatar files for this user from storage
+  const { data: files } = await supabase.storage.from('avatars').list(user.id)
+  if (files && files.length > 0) {
+    await supabase.storage
+      .from('avatars')
+      .remove(files.map((f) => `${user.id}/${f.name}`))
+  }
+
+  revalidatePath('/account')
+  return { success: true }
+}
+
+// ─── Delete account ─────────────────────────────────────────────────────────
+
 export async function deleteAccount() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Delete profile row (personal data)
   await supabase.from('users').delete().eq('id', user.id)
-
-  // Sign out first so the session is cleared
   await supabase.auth.signOut()
 
-  // Delete auth user via admin client
   const admin = createAdminClient()
   await admin.auth.admin.deleteUser(user.id)
 

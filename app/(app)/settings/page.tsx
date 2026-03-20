@@ -18,7 +18,7 @@ const DEFAULTS: NotificationPrefs = {
   reminderCadence:             'weekly',
 }
 
-export default async function NotificationsPage() {
+export default async function SettingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -55,7 +55,7 @@ export default async function NotificationsPage() {
           >
             <ChevronLeft className="size-4" />
           </Link>
-          <h1 className="text-2xl font-semibold">Notification settings</h1>
+          <h1 className="text-2xl font-semibold">Notification preferences</h1>
         </div>
 
         <NotificationsForm initialPrefs={prefs} />

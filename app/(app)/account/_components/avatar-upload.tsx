@@ -4,7 +4,7 @@ import { useState, useRef, useTransition } from 'react'
 import { Camera } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { updateAvatar } from '../actions'
+import { updateAvatar, removeAvatar } from '../actions'
 
 interface Props {
   currentUrl: string | null
@@ -38,6 +38,19 @@ export function AvatarUpload({ currentUrl, initials }: Props) {
     })
   }
 
+  function handleRemove() {
+    setMessage(null)
+    startTransition(async () => {
+      const result = await removeAvatar()
+      if (result?.error) {
+        setMessage({ type: 'error', text: result.error })
+      } else {
+        setPreview(null)
+        setMessage({ type: 'success', text: 'Photo removed.' })
+      }
+    })
+  }
+
   return (
     <div className="flex items-center gap-4">
       <div className="relative">
@@ -55,16 +68,29 @@ export function AvatarUpload({ currentUrl, initials }: Props) {
           <Camera className="size-3" />
         </button>
       </div>
-      <div className="space-y-1">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          disabled={isPending}
-        >
-          {isPending ? 'Uploading…' : 'Change photo'}
-        </Button>
+      <div className="space-y-1.5">
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => inputRef.current?.click()}
+            disabled={isPending}
+          >
+            {isPending ? 'Saving…' : 'Change photo'}
+          </Button>
+          {preview && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleRemove}
+              disabled={isPending}
+            >
+              Remove
+            </Button>
+          )}
+        </div>
         {message && (
           <p className={`text-xs ${message.type === 'error' ? 'text-destructive' : 'text-green-600'}`}>
             {message.text}

@@ -1,13 +1,10 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Bell, CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import { buttonVariants } from '@/lib/button-variants'
 import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
 import { ProfileForm } from './_components/profile-form'
 import { AvatarUpload } from './_components/avatar-upload'
+import { ChangePasswordForm } from './_components/change-password-form'
 import { DeleteAccountDialog } from './_components/delete-account-dialog'
 
 async function signOut() {
@@ -69,50 +66,18 @@ export default async function AccountPage() {
 
         <Separator />
 
-        {/* Notifications */}
+        {/* Security */}
         <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Notifications</h2>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Notification preferences</p>
-              <p className="text-sm text-muted-foreground">Control when and how you hear from us</p>
-            </div>
-            <Link
-              href="/account/notifications"
-              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')}
-            >
-              <Bell className="size-4" />
-              Manage
-            </Link>
-          </div>
-        </section>
-
-        <Separator />
-
-        {/* Plan */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Plan</h2>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Free</p>
-              <p className="text-sm text-muted-foreground">You&apos;re on the free plan</p>
-            </div>
-            <Link
-              href="/pricing"
-              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')}
-            >
-              <CreditCard className="size-4" />
-              View plans
-            </Link>
-          </div>
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Security</h2>
+          <ChangePasswordForm email={profile.email} />
         </section>
 
         <Separator />
 
         {/* Danger zone */}
-        <section className="space-y-4">
+        <section className="rounded-lg border border-destructive/40 p-5 space-y-4">
           <h2 className="text-sm font-medium text-destructive uppercase tracking-wide">Danger zone</h2>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium">Delete account</p>
               <p className="text-sm text-muted-foreground">Permanently remove your personal data</p>
