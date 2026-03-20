@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification, sendNotifications } from '@/lib/notifications'
@@ -224,7 +223,6 @@ export type InviteResult =
   | { success: 'user'; invitedUsername: string }
   | { success: 'email_registered'; invitedUsername: string }
   | { success: 'email_unregistered' }
-  | { success: 'email_unregistered_already_in_auth' }
 
 export async function inviteMember(
   momentId: string,
@@ -335,74 +333,11 @@ export async function inviteMember(
     return { error: insertError.message }
   }
 
-  // Record in pending_moment_invites for the sign-up redirect token.
-  // Use upsert so that re-inviting the same email reuses the existing row
-  // (and therefore the same token that was already emailed to them).
-  let token: string | null = null
-  const { data: upserted, error: upsertPendingError } = await admin
-    .from('pending_moment_invites')
-    .upsert(
-      { moment_id: momentId, email: value.toLowerCase(), role, invited_by: user.id },
-      { onConflict: 'moment_id,email', ignoreDuplicates: true }
-    )
-    .select('token')
-    .single()
-
-  if (upserted) {
-    token = upserted.token as string
-  } else {
-    // Row already existed — fetch the existing token
-    const { data: existing } = await admin
-      .from('pending_moment_invites')
-      .select('token')
-      .eq('moment_id', momentId)
-      .eq('email', value.toLowerCase())
-      .is('redeemed_at', null)
-      .maybeSingle()
-    token = (existing?.token as string | undefined) ?? null
-  }
-
-  if (!token) {
-    // All previous invites for this email were already redeemed — insert a fresh one
-    const { data: fresh } = await admin
-      .from('pending_moment_invites')
-      .insert({ moment_id: momentId, email: value.toLowerCase(), role, invited_by: user.id })
-      .select('token')
-      .single()
-    token = (fresh?.token as string | undefined) ?? null
-  }
-
-  if (token) {
-    const hdrs = await headers()
-    const origin =
-      hdrs.get('origin') ??
-      process.env.NEXT_PUBLIC_SITE_URL ??
-      ''
-
-    const { error: emailError } = await admin.auth.admin.inviteUserByEmail(
-      value.toLowerCase(),
-      {
-        redirectTo: `${origin}/auth/callback?next=/invite/${token}`,
-        data: {
-          inviter_username: inviterUsername,
-          inviter_full_name: inviterFullName,
-          invited_role: role,
-          moment_name: moment.name,
-        },
-      }
-    )
-
-    if (emailError) {
-      // "User already registered" means Supabase Auth already has a record for this
-      // email (from a prior invite). The moment_members row is already created so
-      // they'll be resolved on next login — surface a clear message instead of
-      // pretending the email was sent.
-      if (emailError.message.toLowerCase().includes('already registered')) {
-        return { success: 'email_unregistered_already_in_auth' }
-      }
-      return { error: `Could not send invite email: ${emailError.message}` }
-    }
-  }
+  // No transactional email service is configured, so we don't attempt to send
+  // an email here. The invite is fully persisted in moment_members.invited_email.
+  // When this person signs up with the same email address, the auth callback
+  // resolves the pending row, creates their in-app notification, and shows them
+  // the pending-invite banner on the home page.
 
   revalidatePath(`/moments/${momentId}`)
   return { success: 'email_unregistered' }

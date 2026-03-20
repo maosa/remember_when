@@ -377,7 +377,6 @@ type FeedbackKind =
   | 'success_user'
   | 'success_email_registered'
   | 'success_email_unregistered'
-  | 'success_email_unregistered_already_in_auth'
 
 interface InviteFeedback {
   kind: FeedbackKind
@@ -436,16 +435,7 @@ export function InviteDialog({
         setFeedback({
           kind: 'success_email_unregistered',
           message:
-            "No account found with that email. We've sent them an invite to join Remember When and accept your invitation.",
-        })
-        setInput('')
-        return
-      }
-      if (res.success === 'email_unregistered_already_in_auth') {
-        setFeedback({
-          kind: 'success_email_unregistered_already_in_auth',
-          message:
-            "This email was previously invited. Their invitation is saved — they'll see it when they log in or complete sign-up.",
+            "No account found with that email. The invite is saved — they'll see it automatically when they sign up with this address.",
         })
         setInput('')
         return
@@ -572,8 +562,7 @@ export function InviteDialog({
                     'text-sm rounded-md px-3 py-2',
                     feedback.kind === 'error' || feedback.kind === 'not_found'
                       ? 'bg-destructive/10 text-destructive'
-                      : feedback.kind === 'success_email_unregistered' ||
-                        feedback.kind === 'success_email_unregistered_already_in_auth'
+                      : feedback.kind === 'success_email_unregistered'
                       ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
                       : 'bg-green-500/10 text-green-700 dark:text-green-400'
                   )}
