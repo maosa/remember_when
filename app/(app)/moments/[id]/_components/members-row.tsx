@@ -55,7 +55,7 @@ export function MembersRow({ moment, myRole, myStatus }: Props) {
   )
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between gap-4">
+    <div className="mx-auto max-w-3xl px-4 py-3 border-b flex items-center justify-between gap-4">
 
       {/* Avatar stack + hover popover */}
       <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>

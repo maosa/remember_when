@@ -64,7 +64,7 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-4 border-b">
+    <div className="mx-auto max-w-3xl px-4 py-3 border-b">
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger render={<Button size="sm" variant="outline" className="gap-1.5" />}>
           <Camera className="size-3.5" />

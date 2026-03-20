@@ -44,7 +44,7 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
   if (tags.length === 0 && !canEdit) return null
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-4 border-b space-y-2">
+    <section className="mx-auto max-w-3xl px-4 py-3 border-b space-y-2">
       <div className="flex flex-wrap items-center gap-1.5">
         {tags.map((t) => (
           <Badge key={t.id} variant="secondary" className="gap-1 pl-2 pr-1.5">
