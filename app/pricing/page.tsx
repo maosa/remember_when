@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -30,12 +31,12 @@ export default function PricingPage() {
             Remember When
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">Sign in</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/signup">Get started</Link>
-            </Button>
+            <Link href="/login" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+              Sign in
+            </Link>
+            <Link href="/signup" className={buttonVariants({ size: 'sm' })}>
+              Get started
+            </Link>
           </div>
         </div>
       </header>
@@ -74,9 +75,9 @@ export default function PricingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className="w-full" asChild>
-                  <Link href="/signup">Get started free</Link>
-                </Button>
+                <Link href="/signup" className={cn(buttonVariants(), 'w-full justify-center')}>
+                  Get started free
+                </Link>
               </CardFooter>
             </Card>
 
