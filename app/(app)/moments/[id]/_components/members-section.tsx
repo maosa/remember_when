@@ -417,6 +417,10 @@ function InviteLinkSection({
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Invite link</span>
       </div>
 
+      <p className="text-xs text-muted-foreground">
+        Share this link to invite people to view this moment as a reader. The link expires based on the option you choose. Generating a new link will automatically invalidate the previous one.
+      </p>
+
       {link ? (
         <div className="space-y-2">
           {/* URL row */}
