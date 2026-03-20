@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendNotification } from '@/lib/notifications'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -95,13 +96,11 @@ export async function sendFriendRequest(recipientId: string): Promise<{ error?: 
 
   if (insertError) return { error: insertError.message }
 
-  // Notify the recipient (needs admin client — writing to another user's row)
-  const admin = createAdminClient()
-  await admin.from('notifications').insert({
+  // Notify the recipient
+  await sendNotification({
     user_id: recipientId,
-    type: 'friend_request',
-    from_user_id: user.id,
-    friendship_id: friendship.id,
+    type: 'friend_request_received',
+    related_user_id: user.id,
   })
 
   revalidatePath('/friends')
@@ -127,21 +126,21 @@ export async function acceptFriendRequest(friendshipId: string): Promise<{ error
   if (updateError || !friendship) return { error: updateError?.message ?? 'Request not found.' }
 
   // Notify the original requester
-  const admin = createAdminClient()
-  await admin.from('notifications').insert({
+  await sendNotification({
     user_id: friendship.requester_id,
     type: 'friend_request_accepted',
-    from_user_id: user.id,
-    friendship_id: friendshipId,
+    related_user_id: user.id,
   })
 
-  // Mark the incoming friend_request notification as read for the current user
+  // Mark the incoming friend_request_received notification as read
+  const admin = createAdminClient()
   await admin
     .from('notifications')
-    .update({ read_at: new Date().toISOString() })
-    .eq('friendship_id', friendshipId)
+    .update({ read: true })
     .eq('user_id', user.id)
-    .is('read_at', null)
+    .eq('type', 'friend_request_received')
+    .eq('related_user_id', friendship.requester_id)
+    .eq('read', false)
 
   revalidatePath('/friends')
   return {}
@@ -163,14 +162,24 @@ export async function declineFriendRequest(friendshipId: string): Promise<{ erro
 
   if (error) return { error: error.message }
 
-  // Mark the related notification as read
+  // Mark the incoming friend_request_received notification as read.
+  // Need requester_id to identify the right notification.
   const admin = createAdminClient()
-  await admin
-    .from('notifications')
-    .update({ read_at: new Date().toISOString() })
-    .eq('friendship_id', friendshipId)
-    .eq('user_id', user.id)
-    .is('read_at', null)
+  const { data: fr } = await admin
+    .from('friendships')
+    .select('requester_id')
+    .eq('id', friendshipId)
+    .single()
+
+  if (fr) {
+    await admin
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', user.id)
+      .eq('type', 'friend_request_received')
+      .eq('related_user_id', fr.requester_id)
+      .eq('read', false)
+  }
 
   revalidatePath('/friends')
   return {}
@@ -205,9 +214,9 @@ export async function markNotificationsRead(): Promise<void> {
 
   await supabase
     .from('notifications')
-    .update({ read_at: new Date().toISOString() })
+    .update({ read: true })
     .eq('user_id', user.id)
-    .is('read_at', null)
+    .eq('read', false)
 
   revalidatePath('/friends')
 }

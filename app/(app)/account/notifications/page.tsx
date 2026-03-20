@@ -4,25 +4,49 @@ import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { NotificationsForm } from './_components/notifications-form'
+import { NotificationsForm, type NotificationPrefs } from './_components/notifications-form'
+
+const DEFAULTS: NotificationPrefs = {
+  friendRequestReceived:       true,
+  friendRequestAccepted:       true,
+  momentInvite:                true,
+  momentInviteResponse:        true,
+  newPost:                     true,
+  memberLeft:                  true,
+  ownershipTransferred:        true,
+  archivedMomentNotifications: false,
+  reminderCadence:             'weekly',
+}
 
 export default async function NotificationsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  const { data: prefs } = await supabase
-    .from('users')
-    .select('notif_new_memory, notif_reactions, notif_reminders, reminder_cadence')
-    .eq('id', user!.id)
-    .single()
+  const { data: row } = await supabase
+    .from('notification_preferences')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle()
 
-  if (!prefs) redirect('/login')
+  const prefs: NotificationPrefs = row
+    ? {
+        friendRequestReceived:       row.friend_request_received,
+        friendRequestAccepted:       row.friend_request_accepted,
+        momentInvite:                row.moment_invite,
+        momentInviteResponse:        row.moment_invite_response,
+        newPost:                     row.new_post,
+        memberLeft:                  row.member_left,
+        ownershipTransferred:        row.ownership_transferred,
+        archivedMomentNotifications: row.archived_moment_notifications,
+        reminderCadence:             row.reminder_cadence,
+      }
+    : DEFAULTS
 
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-lg px-4 py-12 space-y-8">
 
-        {/* Header */}
         <div className="flex items-center gap-3">
           <Link
             href="/account"
@@ -31,21 +55,10 @@ export default async function NotificationsPage() {
           >
             <ChevronLeft className="size-4" />
           </Link>
-          <h1 className="text-2xl font-semibold">Notifications</h1>
+          <h1 className="text-2xl font-semibold">Notification settings</h1>
         </div>
 
-        <p className="text-sm text-muted-foreground">
-          No notifications are firing yet — these settings will take effect when the feature launches.
-        </p>
-
-        <NotificationsForm
-          initialPrefs={{
-            notifNewMemory: prefs.notif_new_memory,
-            notifReactions: prefs.notif_reactions,
-            notifReminders: prefs.notif_reminders,
-            reminderCadence: prefs.reminder_cadence,
-          }}
-        />
+        <NotificationsForm initialPrefs={prefs} />
 
       </div>
     </main>

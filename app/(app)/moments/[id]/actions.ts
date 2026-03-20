@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendNotification, sendNotifications } from '@/lib/notifications'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -162,11 +163,11 @@ export async function acceptMomentInvite(momentId: string): Promise<{ error?: st
     .single()
 
   if (membership?.invited_by) {
-    await admin.from('notifications').insert({
+    await sendNotification({
       user_id: membership.invited_by,
       type: 'moment_invite_accepted',
-      from_user_id: user.id,
-      moment_id: momentId,
+      related_user_id: user.id,
+      related_moment_id: momentId,
     })
   }
 
@@ -199,11 +200,11 @@ export async function declineMomentInvite(momentId: string): Promise<{ error?: s
     .single()
 
   if (membership?.invited_by) {
-    await admin.from('notifications').insert({
+    await sendNotification({
       user_id: membership.invited_by,
       type: 'moment_invite_declined',
-      from_user_id: user.id,
-      moment_id: momentId,
+      related_user_id: user.id,
+      related_moment_id: momentId,
     })
   }
 
@@ -263,11 +264,11 @@ export async function inviteMember(
     )
     if (error) return { error: error.message }
 
-    await admin.from('notifications').insert({
+    await sendNotification({
       user_id: inviteeInput,
       type: 'moment_invite',
-      from_user_id: user.id,
-      moment_id: momentId,
+      related_user_id: user.id,
+      related_moment_id: momentId,
     })
   } else {
     const { data: existingUser } = await admin
@@ -283,11 +284,11 @@ export async function inviteMember(
       )
       if (error) return { error: error.message }
 
-      await admin.from('notifications').insert({
+      await sendNotification({
         user_id: existingUser.id,
         type: 'moment_invite',
-        from_user_id: user.id,
-        moment_id: momentId,
+        related_user_id: user.id,
+        related_moment_id: momentId,
       })
     } else {
       const { data: pendingInvite } = await admin
@@ -635,12 +636,12 @@ export async function createPost(momentId: string, formData: FormData): Promise<
   if (moment.owner_id !== user.id) recipientIds.add(moment.owner_id)
 
   if (recipientIds.size > 0) {
-    await admin.from('notifications').insert(
+    await sendNotifications(
       Array.from(recipientIds).map((uid) => ({
         user_id: uid,
-        type: 'new_post',
-        from_user_id: user.id,
-        moment_id: momentId,
+        type: 'new_post' as const,
+        related_user_id: user.id,
+        related_moment_id: momentId,
         post_id: post.id,
       }))
     )
@@ -965,6 +966,14 @@ export async function leaveMoment(
   const { error } = await admin.from('moment_members').delete().eq('id', membership.id)
   if (error) return { error: error.message }
 
+  // Notify the owner that someone left
+  await sendNotification({
+    user_id: moment.owner_id,
+    type: 'member_left',
+    related_user_id: user.id,
+    related_moment_id: momentId,
+  })
+
   revalidatePath('/home')
   return {}
 }
@@ -1020,6 +1029,14 @@ export async function transferOwnership(
     .eq('id', momentId)
 
   if (error) return { error: error.message }
+
+  // Notify the new owner
+  await sendNotification({
+    user_id: newOwnerId,
+    type: 'ownership_transferred',
+    related_user_id: user.id,
+    related_moment_id: momentId,
+  })
 
   revalidatePath(`/moments/${momentId}`)
   return {}

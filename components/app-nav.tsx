@@ -12,16 +12,17 @@ interface Props {
     lastName: string
     photoUrl: string | null
   }
+  unreadCount: number
 }
 
 const NAV_ITEMS = [
-  { href: '/home',    icon: Home,  label: 'Home' },
-  { href: '/friends', icon: Users, label: 'Friends' },
-  { href: '/account/notifications', icon: Bell, label: 'Alerts' },
-  { href: '/account', icon: User,  label: 'Account' },
+  { href: '/home',          icon: Home,  label: 'Home' },
+  { href: '/friends',       icon: Users, label: 'Friends' },
+  { href: '/notifications', icon: Bell,  label: 'Alerts' },
+  { href: '/account',       icon: User,  label: 'Account' },
 ] as const
 
-export function AppNav({ user }: Props) {
+export function AppNav({ user, unreadCount }: Props) {
   const pathname = usePathname()
   const initials = `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase()
 
@@ -61,16 +62,22 @@ export function AppNav({ user }: Props) {
 
         <div className="flex items-center gap-1.5">
           <Link
-            href="/account/notifications"
+            href="/notifications"
             className={cn(
-              'flex items-center justify-center size-9 rounded-md transition-colors',
-              isActive('/account/notifications')
+              'relative flex items-center justify-center size-9 rounded-md transition-colors',
+              isActive('/notifications')
                 ? 'text-foreground bg-muted'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             )}
             aria-label="Notifications"
           >
             <Bell className="size-4.5" />
+            {unreadCount > 0 && (
+              <span
+                className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary"
+                aria-label={`${unreadCount} unread`}
+              />
+            )}
           </Link>
 
           <Link href="/account" aria-label="Account">
@@ -87,6 +94,7 @@ export function AppNav({ user }: Props) {
         {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = isActive(href)
           const isAccount = href === '/account'
+          const isBell = href === '/notifications'
 
           return (
             <Link
@@ -102,6 +110,13 @@ export function AppNav({ user }: Props) {
                   <AvatarImage src={user.photoUrl ?? undefined} />
                   <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
                 </Avatar>
+              ) : isBell ? (
+                <span className="relative">
+                  <Icon className="size-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary" />
+                  )}
+                </span>
               ) : (
                 <Icon className="size-5" />
               )}

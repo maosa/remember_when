@@ -9,25 +9,27 @@ export async function updateNotificationPreferences(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const notifNewMemory = formData.get('notif_new_memory') === 'on'
-  const notifReactions = formData.get('notif_reactions') === 'on'
-  const notifReminders = formData.get('notif_reminders') === 'on'
-  const reminderCadence = formData.get('reminder_cadence') as string
-
+  const cadence = formData.get('reminder_cadence') as string
   const validCadences = ['weekly', 'biweekly', 'monthly', 'never']
-  if (!validCadences.includes(reminderCadence)) {
-    return { error: 'Invalid reminder cadence.' }
-  }
+  if (!validCadences.includes(cadence)) return { error: 'Invalid reminder cadence.' }
 
   const { error } = await supabase
-    .from('users')
-    .update({
-      notif_new_memory: notifNewMemory,
-      notif_reactions: notifReactions,
-      notif_reminders: notifReminders,
-      reminder_cadence: reminderCadence,
-    })
-    .eq('id', user.id)
+    .from('notification_preferences')
+    .upsert(
+      {
+        user_id: user.id,
+        friend_request_received:     formData.get('friend_request_received')     === 'on',
+        friend_request_accepted:     formData.get('friend_request_accepted')     === 'on',
+        moment_invite:               formData.get('moment_invite')               === 'on',
+        moment_invite_response:      formData.get('moment_invite_response')      === 'on',
+        new_post:                    formData.get('new_post')                    === 'on',
+        member_left:                 formData.get('member_left')                 === 'on',
+        ownership_transferred:       formData.get('ownership_transferred')       === 'on',
+        archived_moment_notifications: formData.get('archived_moment_notifications') === 'on',
+        reminder_cadence:            cadence,
+      },
+      { onConflict: 'user_id' }
+    )
 
   if (error) return { error: error.message }
 
