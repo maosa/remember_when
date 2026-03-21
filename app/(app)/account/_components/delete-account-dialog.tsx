@@ -51,7 +51,7 @@ export function DeleteAccountDialog({ username }: Props) {
         <DialogHeader>
           <DialogTitle>Delete your account</DialogTitle>
           <DialogDescription>
-            This permanently removes your personal data. Your contributions to shared moments will remain, but your name will no longer be attached. This cannot be undone.
+            This permanently removes your personal data. Your contributions to shared moments will remain and will continue to be attributed to you. This cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
