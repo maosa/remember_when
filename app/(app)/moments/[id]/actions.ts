@@ -78,8 +78,8 @@ export async function fetchMomentDetail(
   }>)
   const myMembership = rawMembers.find((m) => m.user_id === user.id)
 
-  // Access check
-  if (!isOwner && !myMembership) return { error: 'Not found.' }
+  // Access check — declined members lose access
+  if (!isOwner && (!myMembership || myMembership.status === 'declined')) return { error: 'Not found.' }
 
   // Fetch invite link — only for owners and accepted editors
   const canManageLink =

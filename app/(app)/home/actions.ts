@@ -47,11 +47,12 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
 
   const admin = createAdminClient()
 
-  // Find all moment IDs where user is a member
+  // Find all moment IDs where user is an active member (exclude declined invites)
   const { data: myMemberships } = await admin
     .from('moment_members')
     .select('moment_id, role, status')
     .eq('user_id', user.id)
+    .neq('status', 'declined')
 
   const memberMomentIds = (myMemberships ?? []).map((m) => m.moment_id)
 
