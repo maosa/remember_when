@@ -36,6 +36,11 @@ type PendingEntry = {
   from: Friend
 }
 
+type PendingSentEntry = {
+  friendshipId: string
+  to: Friend
+}
+
 type NotificationEntry = {
   id: string
   type: 'friend_request' | 'friend_request_accepted'
@@ -45,6 +50,7 @@ type NotificationEntry = {
 
 interface Props {
   friends: FriendEntry[]
+  pendingSent: PendingSentEntry[]
   pendingReceived: PendingEntry[]
   notifications: NotificationEntry[]
 }
@@ -81,7 +87,7 @@ function UserRow({ user }: { user: Friend }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function FriendsManager({ friends, pendingReceived, notifications }: Props) {
+export function FriendsManager({ friends, pendingSent, pendingReceived, notifications }: Props) {
   const [isPending, startTransition] = useTransition()
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -161,6 +167,26 @@ export function FriendsManager({ friends, pendingReceived, notifications }: Prop
         <UserSearch />
       </section>
 
+      {/* ── Pending sent ──────────────────────────────────────── */}
+      {pendingSent.length > 0 && (
+        <>
+          <Separator />
+          <section className="space-y-4">
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              Pending
+            </h2>
+            <ul className="space-y-3">
+              {pendingSent.map(({ friendshipId, to }) => (
+                <li key={friendshipId} className="flex items-center justify-between gap-3">
+                  <UserRow user={to} />
+                  <span className="text-xs text-muted-foreground shrink-0">Request sent</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      )}
+
       {/* ── Your friends ──────────────────────────────────────── */}
       {friends.length > 0 && (
         <>
@@ -189,7 +215,7 @@ export function FriendsManager({ friends, pendingReceived, notifications }: Prop
         </>
       )}
 
-      {friends.length === 0 && pendingReceived.length === 0 && notifications.length === 0 && (
+      {friends.length === 0 && pendingSent.length === 0 && pendingReceived.length === 0 && notifications.length === 0 && (
         <div className="text-center py-12 space-y-2">
           <UserRound className="size-10 mx-auto text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground">Search above to find and add friends.</p>

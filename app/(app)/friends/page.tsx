@@ -21,6 +21,17 @@ export default async function FriendsPage() {
     .is('deleted_at', null)
     .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
 
+  // Pending requests sent by the current user
+  const { data: pendingSent } = await supabase
+    .from('friendships')
+    .select(`
+      id,
+      recipient:users!friendships_recipient_id_fkey(id, first_name, last_name, username, profile_photo_url)
+    `)
+    .eq('requester_id', user.id)
+    .eq('status', 'pending')
+    .is('deleted_at', null)
+
   // Pending requests received by the current user
   const { data: pendingReceived } = await supabase
     .from('friendships')
@@ -61,6 +72,10 @@ export default async function FriendsPage() {
         <h1 className="text-2xl font-semibold">Friends</h1>
         <FriendsManager
           friends={friends}
+          pendingSent={(pendingSent ?? []).map((r) => ({
+            friendshipId: r.id,
+            to: r.recipient as unknown as Friend,
+          }))}
           pendingReceived={(pendingReceived ?? []).map((r) => ({
             friendshipId: r.id,
             from: r.requester as unknown as Friend,
