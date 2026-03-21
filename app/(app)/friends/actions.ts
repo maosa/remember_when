@@ -88,15 +88,25 @@ export async function sendFriendRequest(recipientId: string): Promise<{ error?: 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Check for a pre-existing row between these two users (either direction)
-  const { data: existing } = await supabase
+  // Check for a pre-existing row between these two users (either direction).
+  // Two simple queries are more reliable than a nested or(and()) PostgREST expression.
+  const { data: dir1 } = await supabase
     .from('friendships')
     .select('id, status, deleted_at')
-    .or(
-      `and(requester_id.eq.${user.id},recipient_id.eq.${recipientId}),` +
-      `and(requester_id.eq.${recipientId},recipient_id.eq.${user.id})`
-    )
+    .eq('requester_id', user.id)
+    .eq('recipient_id', recipientId)
     .maybeSingle()
+
+  const { data: dir2 } = dir1
+    ? { data: null }
+    : await supabase
+        .from('friendships')
+        .select('id, status, deleted_at')
+        .eq('requester_id', recipientId)
+        .eq('recipient_id', user.id)
+        .maybeSingle()
+
+  const existing = dir1 ?? dir2
 
   if (existing) {
     const isResendable = existing.deleted_at !== null || existing.status === 'declined'
