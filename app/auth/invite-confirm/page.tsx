@@ -8,79 +8,85 @@ import { createClient } from '@/lib/supabase/client'
 type Status = 'loading' | 'error_expired' | 'error_generic'
 
 /**
- * Landing page for Supabase invite-by-email and OTP magic-link flows.
+ * Landing page for Supabase invite-by-email links (implicit / hash flow).
  *
- * Supabase sends auth tokens in the URL *hash* fragment (implicit flow).
- * Server routes cannot read fragments, so this client page picks up the
- * session via onAuthStateChange and routes accordingly:
- *
- *   - Hash contains #error=... → show an appropriate error immediately
- *   - Has a public.users profile → resolve invite rows + /home?pending_invite=true
- *   - No profile yet (ghost user) → /auth/complete-profile
+ * `createBrowserClient` from @supabase/ssr uses PKCE by default and does NOT
+ * auto-process hash-fragment tokens. We therefore:
+ *   1. Parse the hash ourselves to detect errors early.
+ *   2. Extract access_token + refresh_token and call setSession() directly.
+ *   3. Route based on whether the user already has a public.users profile.
  */
 export default function InviteConfirmPage() {
   const router = useRouter()
   const [status, setStatus] = useState<Status>('loading')
 
   useEffect(() => {
-    // Parse the hash fragment immediately — Supabase puts errors there too.
-    const hash = window.location.hash.slice(1) // strip leading '#'
-    const params = new URLSearchParams(hash)
-    const errorCode = params.get('error_code')
-    const error = params.get('error')
+    async function handleInvite() {
+      // Parse the hash fragment (strip leading '#')
+      const hash = window.location.hash.slice(1)
+      const params = new URLSearchParams(hash)
 
-    if (error || errorCode) {
-      if (errorCode === 'otp_expired' || error === 'access_denied') {
-        setStatus('error_expired')
-      } else {
+      const error     = params.get('error')
+      const errorCode = params.get('error_code')
+
+      // Surface hash errors immediately — no need to wait
+      if (error || errorCode) {
+        setStatus(
+          errorCode === 'otp_expired' || error === 'access_denied'
+            ? 'error_expired'
+            : 'error_generic'
+        )
+        return
+      }
+
+      const accessToken  = params.get('access_token')
+      const refreshToken = params.get('refresh_token')
+
+      if (!accessToken || !refreshToken) {
         setStatus('error_generic')
+        return
       }
-      return // don't set up the auth listener
+
+      const supabase = createClient()
+
+      // Manually establish the session from the hash tokens
+      const { data: { session }, error: sessionError } =
+        await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+
+      if (sessionError || !session) {
+        console.error('setSession error:', sessionError)
+        setStatus('error_expired')
+        return
+      }
+
+      const userId = session.user.id
+      const email  = session.user.email?.toLowerCase() ?? ''
+
+      // Check whether a public.users profile exists for this user
+      const { data: profile } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (!profile) {
+        // Invited user — no profile yet. Collect name + username first.
+        router.replace('/auth/complete-profile')
+        return
+      }
+
+      // Profile exists: resolve any pending invited_email rows server-side
+      const res = await fetch('/api/resolve-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, email }),
+      })
+
+      const hasPending = res.ok ? (await res.json()).hasPending : false
+      router.replace(hasPending ? '/home?pending_invite=true' : '/home')
     }
 
-    const supabase = createClient()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!session) return // wait for the next event
-
-        subscription.unsubscribe()
-
-        const userId = session.user.id
-        const email = session.user.email?.toLowerCase() ?? ''
-
-        // Check whether a public.users profile exists for this user.
-        const { data: profile } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', userId)
-          .maybeSingle()
-
-        if (!profile) {
-          // Ghost / invite-created user — no profile yet.
-          router.replace('/auth/complete-profile')
-          return
-        }
-
-        // Profile exists: resolve any pending invited_email rows.
-        const res = await fetch('/api/resolve-invite', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, email }),
-        })
-
-        const hasPending = res.ok ? (await res.json()).hasPending : false
-        router.replace(hasPending ? '/home?pending_invite=true' : '/home')
-      }
-    )
-
-    // Safety timeout — if no auth event fires within 10 s, something went wrong.
-    const timeout = setTimeout(() => setStatus('error_generic'), 10_000)
-
-    return () => {
-      subscription.unsubscribe()
-      clearTimeout(timeout)
-    }
+    handleInvite()
   }, [router])
 
   if (status === 'error_expired') {
