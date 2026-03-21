@@ -142,7 +142,10 @@ export async function fetchMomentDetail(
 
 // ─── Accept invite ────────────────────────────────────────────────────────────
 
-export async function acceptMomentInvite(momentId: string): Promise<{ error?: string; noop?: boolean }> {
+export async function acceptMomentInvite(
+  momentId: string,
+  notificationId?: string,
+): Promise<{ error?: string; noop?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -163,14 +166,34 @@ export async function acceptMomentInvite(momentId: string): Promise<{ error?: st
   // Return noop so the UI can refresh rather than optimistically updating.
   if (!updated || updated.length === 0) return { noop: true }
 
-  // Stamp all moment_invite notifications for this user+moment so the response
-  // persists even if the membership row is later deleted (ownership transfer, leaving).
-  await admin
-    .from('notifications')
-    .update({ metadata: { invite_response: 'accepted' } })
-    .eq('user_id', user.id)
-    .eq('type', 'moment_invite')
-    .eq('related_moment_id', momentId)
+  // Stamp the response on the notification so it persists even if the membership
+  // row is later deleted (ownership transfer, leaving the moment).
+  // Only stamp the specific notification that was acted on to keep each
+  // notification's response independent.
+  if (notificationId) {
+    await admin
+      .from('notifications')
+      .update({ metadata: { invite_response: 'accepted' } })
+      .eq('id', notificationId)
+  } else {
+    // Called from the moment page — stamp the most recent unstamped invite notification.
+    const { data: notif } = await admin
+      .from('notifications')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('type', 'moment_invite')
+      .eq('related_moment_id', momentId)
+      .is('metadata', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (notif) {
+      await admin
+        .from('notifications')
+        .update({ metadata: { invite_response: 'accepted' } })
+        .eq('id', notif.id)
+    }
+  }
 
   const invitedBy = updated[0]?.invited_by
   if (invitedBy) {
@@ -189,7 +212,10 @@ export async function acceptMomentInvite(momentId: string): Promise<{ error?: st
 
 // ─── Decline invite ───────────────────────────────────────────────────────────
 
-export async function declineMomentInvite(momentId: string): Promise<{ error?: string; noop?: boolean }> {
+export async function declineMomentInvite(
+  momentId: string,
+  notificationId?: string,
+): Promise<{ error?: string; noop?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -208,12 +234,29 @@ export async function declineMomentInvite(momentId: string): Promise<{ error?: s
 
   if (!updated || updated.length === 0) return { noop: true }
 
-  await admin
-    .from('notifications')
-    .update({ metadata: { invite_response: 'declined' } })
-    .eq('user_id', user.id)
-    .eq('type', 'moment_invite')
-    .eq('related_moment_id', momentId)
+  if (notificationId) {
+    await admin
+      .from('notifications')
+      .update({ metadata: { invite_response: 'declined' } })
+      .eq('id', notificationId)
+  } else {
+    const { data: notif } = await admin
+      .from('notifications')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('type', 'moment_invite')
+      .eq('related_moment_id', momentId)
+      .is('metadata', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (notif) {
+      await admin
+        .from('notifications')
+        .update({ metadata: { invite_response: 'declined' } })
+        .eq('id', notif.id)
+    }
+  }
 
   const invitedBy = updated[0]?.invited_by
   if (invitedBy) {

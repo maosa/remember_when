@@ -127,9 +127,11 @@ const TYPE_CONFIG: Record<
 // ─── Accept/Decline buttons for moment_invite ─────────────────────────────────
 
 function InviteActions({
+  notificationId,
   momentId,
   initialStatus,
 }: {
+  notificationId: string
   momentId: string
   initialStatus: 'pending' | 'accepted' | 'declined' | null
 }) {
@@ -162,7 +164,7 @@ function InviteActions({
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
-            const result = await acceptMomentInvite(momentId)
+            const result = await acceptMomentInvite(momentId, notificationId)
             if (result?.noop) { router.refresh(); return }
             if (!result?.error) setOutcome('accepted')
           })
@@ -177,7 +179,7 @@ function InviteActions({
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
-            const result = await declineMomentInvite(momentId)
+            const result = await declineMomentInvite(momentId, notificationId)
             if (result?.noop) { router.refresh(); return }
             if (!result?.error) setOutcome('declined')
           })
@@ -237,7 +239,7 @@ export function NotificationList({ notifications }: Props) {
                   {config.label(n)}
                 </p>
                 {isActionable && (
-                  <InviteActions momentId={n.moment!.id} initialStatus={n.memberStatus} />
+                  <InviteActions notificationId={n.id} momentId={n.moment!.id} initialStatus={n.memberStatus} />
                 )}
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {timeAgo(n.createdAt)}
