@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
-import { Camera, Upload } from 'lucide-react'
+import { Camera, Upload, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { updateCoverPhoto, setCoverPhotoFromUrl, fetchMomentPhotos } from '../actions'
+import { updateCoverPhoto, setCoverPhotoFromUrl, deleteCoverPhoto, fetchMomentPhotos } from '../actions'
 
 interface Props {
   momentId: string
@@ -54,6 +54,15 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
     })
   }
 
+  function handleDelete() {
+    setError(null)
+    startTransition(async () => {
+      const res = await deleteCoverPhoto(momentId)
+      if (res.error) setError(res.error)
+      else setOpen(false)
+    })
+  }
+
   function handleSelectExisting(url: string) {
     setError(null)
     startTransition(async () => {
@@ -67,12 +76,12 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button size="sm" variant="outline" />}>
         <Camera className="size-3.5" />
-        <span className="hidden sm:inline">{currentUrl ? 'Change cover photo' : 'Add cover photo'}</span>
+        <span className="hidden sm:inline">{currentUrl ? 'Edit cover photo' : 'Add cover photo'}</span>
       </DialogTrigger>
 
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{currentUrl ? 'Change cover photo' : 'Add cover photo'}</DialogTitle>
+            <DialogTitle>{currentUrl ? 'Edit cover photo' : 'Add cover photo'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-5 py-1">
@@ -128,6 +137,23 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
                 </div>
               )}
             </div>
+
+            {/* Delete cover photo */}
+            {currentUrl && (
+              <div className="space-y-2 border-t pt-4">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Remove</p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={isPending}
+                  onClick={handleDelete}
+                >
+                  <Trash2 className="size-3.5" />
+                  Delete cover photo
+                </Button>
+              </div>
+            )}
 
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>

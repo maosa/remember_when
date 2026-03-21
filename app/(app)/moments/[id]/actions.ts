@@ -751,6 +751,21 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
   return {}
 }
 
+export async function deleteCoverPhoto(momentId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { error } = await supabase
+    .from('moments')
+    .update({ cover_photo_url: null })
+    .eq('id', momentId)
+
+  if (error) return { error: error.message }
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
 export async function setCoverPhotoFromUrl(momentId: string, url: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
