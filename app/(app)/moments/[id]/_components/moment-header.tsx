@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { MapPin, Calendar, CheckCircle2, XCircle, MoreHorizontal, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export function MomentHeader({ moment, myRole, myStatus }: Props) {
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
@@ -57,7 +59,10 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
     setInviteError(null)
     startTransition(async () => {
       const res = await acceptMomentInvite(moment.id)
-      if (res.error) setInviteError(res.error)
+      if (res.error) { setInviteError(res.error); return }
+      // Refresh the server component so myStatus becomes 'accepted',
+      // removing the banner and unblurring content without a full navigation.
+      router.refresh()
     })
   }
 
@@ -65,7 +70,8 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
     setInviteError(null)
     startTransition(async () => {
       const res = await declineMomentInvite(moment.id)
-      if (res.error) setInviteError(res.error)
+      if (res.error) { setInviteError(res.error); return }
+      router.push('/home')
     })
   }
 
@@ -115,7 +121,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
             <img
               src={moment.coverPhotoUrl}
               alt={moment.name}
-              className="size-full object-cover"
+              className={cn('size-full object-cover', isPendingInvite && 'blur-md scale-110')}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/45 to-transparent" />
           </div>
