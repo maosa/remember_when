@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Crown, Shield, Eye, X, UserPlus, Link2, Copy, Check, Trash2,
+  Crown, PenTool, Eye, X, UserPlus, Link2, Copy, Check, Trash2,
   LogOut, RefreshCw, Pencil,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -256,11 +256,10 @@ function MemberRow({
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-medium truncate">{displayName}</span>
-            {isOwnerRow && <Crown className="size-3 text-amber-500 shrink-0" />}
-          </div>
-          {!isOwnerRow && (
+          <span className="text-sm font-medium truncate block">{displayName}</span>
+          {isOwnerRow ? (
+            <RoleBadge role="owner" status="accepted" />
+          ) : (
             <RoleBadge
               role={member.role}
               status={member.status}
@@ -292,7 +291,7 @@ function MemberRow({
                   {member.role === 'editor' ? (
                     <><Eye className="size-3.5" /> Make reader</>
                   ) : (
-                    <><Shield className="size-3.5" /> Make editor</>
+                    <><PenTool className="size-3.5" /> Make editor</>
                   )}
                 </MenuItem>
                 <MenuSeparator />
@@ -342,7 +341,7 @@ function RoleBadge({
   status,
   isUnregistered,
 }: {
-  role: 'editor' | 'reader'
+  role: 'owner' | 'editor' | 'reader'
   status: string
   isUnregistered?: boolean
 }) {
@@ -358,11 +357,9 @@ function RoleBadge({
   }
   return (
     <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
-      {role === 'editor' ? (
-        <><Shield className="size-2.5" /> Editor</>
-      ) : (
-        <><Eye className="size-2.5" /> Reader</>
-      )}
+      {role === 'owner' && <><Crown className="size-2.5" /> Owner</>}
+      {role === 'editor' && <><PenTool className="size-2.5" /> Editor</>}
+      {role === 'reader' && <><Eye className="size-2.5" /> Reader</>}
     </span>
   )
 }
@@ -469,7 +466,7 @@ export function InviteDialog({
                   <RoleButton
                     active={role === 'editor'}
                     onClick={() => setRole('editor')}
-                    icon={<Shield className="size-3.5" />}
+                    icon={<PenTool className="size-3.5" />}
                     label="Editor"
                     description="Can post and edit"
                   />
@@ -491,7 +488,7 @@ export function InviteDialog({
           <>
             <div className="space-y-4 py-1">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                {role === 'editor' ? <Shield className="size-3" /> : <Eye className="size-3" />}
+                {role === 'editor' ? <PenTool className="size-3" /> : <Eye className="size-3" />}
                 Inviting as{' '}
                 <span className="font-medium text-foreground capitalize">{role}</span>
                 <button
@@ -878,7 +875,7 @@ function TransferOwnershipSection({
             id="transfer-owner-select"
             value={newOwnerId}
             onChange={(e) => setNewOwnerId(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-8 w-full rounded-md border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {editors.map((e) => (
               <option key={e.userId} value={e.userId!}>
