@@ -29,7 +29,10 @@ const MONTHS = [
 
 // ─── Invite list item ─────────────────────────────────────────────────────────
 
-type InviteeDisplay = Invitee & {
+type InviteeDisplay = {
+  type: 'userId' | 'email'
+  value: string
+  role: 'editor' | 'reader'
   label: string
   photoUrl?: string | null
 }
@@ -92,11 +95,15 @@ export function CreateMomentModal() {
 
   function addInvitee(item: InviteeDisplay) {
     if (invitees.some((i) => i.value === item.value)) return
-    setInvitees((prev) => [...prev, item])
+    setInvitees((prev) => [...prev, { ...item, role: item.role ?? 'editor' }])
   }
 
   function removeInvitee(value: string) {
     setInvitees((prev) => prev.filter((i) => i.value !== value))
+  }
+
+  function updateInviteeRole(value: string, role: 'editor' | 'reader') {
+    setInvitees((prev) => prev.map((i) => i.value === value ? { ...i, role } : i))
   }
 
   function handleSubmit() {
@@ -111,7 +118,7 @@ export function CreateMomentModal() {
         dateDay: dateMode === 'full' && dateDay ? parseInt(dateDay) : null,
         location,
         tags,
-        invitees: invitees.map(({ type, value }) => ({ type, value })),
+        invitees: invitees.map(({ type, value, role }) => ({ type, value, role })),
       })
 
       if (result.error) {
@@ -232,6 +239,7 @@ export function CreateMomentModal() {
               invitees={invitees}
               onAdd={addInvitee}
               onRemove={removeInvitee}
+              onRoleChange={updateInviteeRole}
             />
           </div>
 
@@ -279,10 +287,12 @@ function PeopleInviteInput({
   invitees,
   onAdd,
   onRemove,
+  onRoleChange,
 }: {
   invitees: InviteeDisplay[]
   onAdd: (item: InviteeDisplay) => void
   onRemove: (value: string) => void
+  onRoleChange: (value: string, role: 'editor' | 'reader') => void
 }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Array<{ id: string; firstName: string; lastName: string; username: string; photoUrl: string | null }> | null>(null)
@@ -324,7 +334,7 @@ function PeopleInviteInput({
       e.preventDefault()
       const q = query.trim()
       if (isEmail(q)) {
-        onAdd({ type: 'email', value: q, label: q })
+        onAdd({ type: 'email', value: q, label: q, role: 'editor' })
         setQuery('')
         setResults(null)
       }
@@ -332,7 +342,7 @@ function PeopleInviteInput({
   }
 
   function selectUser(u: { id: string; firstName: string; lastName: string; username: string; photoUrl: string | null }) {
-    onAdd({ type: 'userId', value: u.id, label: `${u.firstName} ${u.lastName}`, photoUrl: u.photoUrl })
+    onAdd({ type: 'userId', value: u.id, label: `${u.firstName} ${u.lastName}`, photoUrl: u.photoUrl, role: 'editor' })
     setQuery('')
     setResults(null)
   }
@@ -341,20 +351,38 @@ function PeopleInviteInput({
     <div className="space-y-2">
       {/* Added people chips */}
       {invitees.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-col gap-1.5">
           {invitees.map((i) => (
-            <span key={i.value} className="inline-flex items-center gap-1.5 rounded-full border bg-secondary pl-1.5 pr-2 py-0.5 text-xs font-medium">
+            <div key={i.value} className="inline-flex items-center gap-2 rounded-lg border bg-secondary pl-2 pr-1.5 py-1 text-xs">
               {i.type === 'userId' && (
-                <Avatar className="size-4">
+                <Avatar className="size-5 shrink-0">
                   <AvatarImage src={i.photoUrl ?? undefined} />
-                  <AvatarFallback className="text-[8px]">{i.label[0]}</AvatarFallback>
+                  <AvatarFallback className="text-[9px]">{i.label[0]}</AvatarFallback>
                 </Avatar>
               )}
-              {i.label}
-              <button type="button" onClick={() => onRemove(i.value)} className="text-muted-foreground hover:text-foreground">
+              <span className="font-medium truncate max-w-[120px]">{i.label}</span>
+              {/* Role toggle */}
+              <div className="inline-flex rounded border border-border overflow-hidden ml-auto shrink-0">
+                {(['editor', 'reader'] as const).map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => onRoleChange(i.value, role)}
+                    className={cn(
+                      'px-2 py-0.5 capitalize transition-colors',
+                      i.role === role
+                        ? 'bg-foreground text-background'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {role === 'editor' ? 'Editor' : 'Reader'}
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={() => onRemove(i.value)} className="text-muted-foreground hover:text-foreground shrink-0">
                 <X className="size-3" />
               </button>
-            </span>
+            </div>
           ))}
         </div>
       )}
@@ -378,7 +406,7 @@ function PeopleInviteInput({
         <button
           type="button"
           onClick={() => {
-            onAdd({ type: 'email', value: query.trim(), label: query.trim() })
+            onAdd({ type: 'email', value: query.trim(), label: query.trim(), role: 'editor' })
             setQuery('')
           }}
           className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors text-left"

@@ -36,8 +36,8 @@ export type MomentSummary = {
 }
 
 export type Invitee =
-  | { type: 'userId'; value: string }
-  | { type: 'email'; value: string }
+  | { type: 'userId'; value: string; role: 'editor' | 'reader' }
+  | { type: 'email'; value: string; role: 'editor' | 'reader' }
 
 // ─── Fetch moments for home page ─────────────────────────────────────────────
 
@@ -219,7 +219,7 @@ export async function createMoment(data: {
       await admin.from('moment_members').insert({
         moment_id: moment.id,
         user_id: invitee.value,
-        role: 'editor',
+        role: invitee.role,
         status: 'pending',
         invited_by: user.id,
       })
@@ -228,7 +228,7 @@ export async function createMoment(data: {
         type: 'moment_invite',
         related_user_id: user.id,
         related_moment_id: moment.id,
-        invite_role: 'editor',
+        invite_role: invitee.role,
       })
     } else {
       // Check if email belongs to an existing user
@@ -242,7 +242,7 @@ export async function createMoment(data: {
         await admin.from('moment_members').insert({
           moment_id: moment.id,
           user_id: existingUser.id,
-          role: 'editor',
+          role: invitee.role,
           status: 'pending',
           invited_by: user.id,
         })
@@ -251,7 +251,7 @@ export async function createMoment(data: {
           type: 'moment_invite',
           related_user_id: user.id,
           related_moment_id: moment.id,
-          invite_role: 'editor',
+          invite_role: invitee.role,
         })
       } else {
         // Create a pending invite and send a sign-up email
@@ -260,7 +260,7 @@ export async function createMoment(data: {
           .insert({
             moment_id: moment.id,
             email: invitee.value,
-            role: 'editor',
+            role: invitee.role,
             invited_by: user.id,
           })
           .select('token')
