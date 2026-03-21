@@ -62,7 +62,7 @@ export default function ResetPasswordPage() {
                 minLength={8}
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 pb-2">
               <Label htmlFor="confirm">Confirm password</Label>
               <Input
                 id="confirm"
