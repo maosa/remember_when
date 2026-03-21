@@ -4,6 +4,16 @@ import { useState, useTransition } from 'react'
 import { Pencil, Trash2, Mic } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { deletePost, type PostWithMedia } from '../actions'
 import { EditPostDialog } from './edit-post-dialog'
@@ -23,6 +33,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [deleted, setDeleted] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   // Track the post's own mutable state so edits reflect immediately
   const [currentPost, setCurrentPost] = useState(post)
 
@@ -87,7 +98,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
                 size="icon"
                 className="size-7 text-muted-foreground hover:text-destructive"
                 disabled={isPending}
-                onClick={handleDelete}
+                onClick={() => setConfirmOpen(true)}
               >
                 <Trash2 className="size-3.5" />
                 <span className="sr-only">Delete post</span>
@@ -137,6 +148,25 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
       ))}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
+            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isPending}
+              onClick={handleDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {canEdit && (
         <EditPostDialog
