@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendNotification } from '@/lib/notifications'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -222,11 +223,12 @@ export async function createMoment(data: {
         status: 'pending',
         invited_by: user.id,
       })
-      await admin.from('notifications').insert({
+      await sendNotification({
         user_id: invitee.value,
         type: 'moment_invite',
-        from_user_id: user.id,
-        moment_id: moment.id,
+        related_user_id: user.id,
+        related_moment_id: moment.id,
+        invite_role: 'editor',
       })
     } else {
       // Check if email belongs to an existing user
@@ -244,11 +246,12 @@ export async function createMoment(data: {
           status: 'pending',
           invited_by: user.id,
         })
-        await admin.from('notifications').insert({
+        await sendNotification({
           user_id: existingUser.id,
           type: 'moment_invite',
-          from_user_id: user.id,
-          moment_id: moment.id,
+          related_user_id: user.id,
+          related_moment_id: moment.id,
+          invite_role: 'editor',
         })
       } else {
         // Create a pending invite and send a sign-up email
