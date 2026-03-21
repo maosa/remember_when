@@ -171,9 +171,7 @@ export default function CompleteProfilePage() {
             </div>
 
             <div className="space-y-2 pb-2">
-              <Label htmlFor="password">
-                Password <span className="text-muted-foreground text-xs font-normal">(set or update)</span>
-              </Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 name="password"
