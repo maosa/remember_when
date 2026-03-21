@@ -88,13 +88,33 @@ export async function sendFriendRequest(recipientId: string): Promise<{ error?: 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: friendship, error: insertError } = await supabase
+  // Check for a pre-existing row between these two users (either direction)
+  const { data: existing } = await supabase
     .from('friendships')
-    .insert({ requester_id: user.id, recipient_id: recipientId, status: 'pending' })
-    .select('id')
-    .single()
+    .select('id, status, deleted_at')
+    .or(
+      `and(requester_id.eq.${user.id},recipient_id.eq.${recipientId}),` +
+      `and(requester_id.eq.${recipientId},recipient_id.eq.${user.id})`
+    )
+    .maybeSingle()
 
-  if (insertError) return { error: insertError.message }
+  if (existing) {
+    const isResendable = existing.deleted_at !== null || existing.status === 'declined'
+    if (!isResendable) return { error: 'A friendship or pending request already exists.' }
+
+    const { error: updateError } = await supabase
+      .from('friendships')
+      .update({ requester_id: user.id, recipient_id: recipientId, status: 'pending', deleted_at: null })
+      .eq('id', existing.id)
+
+    if (updateError) return { error: updateError.message }
+  } else {
+    const { error: insertError } = await supabase
+      .from('friendships')
+      .insert({ requester_id: user.id, recipient_id: recipientId, status: 'pending' })
+
+    if (insertError) return { error: insertError.message }
+  }
 
   // Notify the recipient
   await sendNotification({
