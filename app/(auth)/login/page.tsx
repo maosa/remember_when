@@ -35,7 +35,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 gap-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">Remember When</CardTitle>
@@ -90,12 +90,10 @@ export default function LoginPage() {
             </p>
           </CardFooter>
         </form>
-        <div className="px-6 pb-6 flex justify-center">
-          <Link href="/pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-            See pricing plans
-          </Link>
-        </div>
       </Card>
+      <Link href="/pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+        See pricing plans
+      </Link>
     </div>
   )
 }
