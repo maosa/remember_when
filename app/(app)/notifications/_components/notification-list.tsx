@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Bell, UserPlus, Users, MessageSquare, LogOut, Crown, Clock, Check, X, Shield, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -132,6 +133,7 @@ function InviteActions({
   momentId: string
   initialStatus: 'pending' | 'accepted' | 'declined' | null
 }) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   // Local state overrides the server-fetched status once the user acts here
   const [outcome, setOutcome] = useState<'accepted' | 'declined' | null>(null)
@@ -161,6 +163,7 @@ function InviteActions({
         onClick={() =>
           startTransition(async () => {
             const result = await acceptMomentInvite(momentId)
+            if (result?.noop) { router.refresh(); return }
             if (!result?.error) setOutcome('accepted')
           })
         }
@@ -175,6 +178,7 @@ function InviteActions({
         onClick={() =>
           startTransition(async () => {
             const result = await declineMomentInvite(momentId)
+            if (result?.noop) { router.refresh(); return }
             if (!result?.error) setOutcome('declined')
           })
         }

@@ -90,9 +90,11 @@ export default async function NotificationsPage() {
       moment: m ? { id: m.id, name: m.name } : null,
       inviteRole: (row as { invite_role?: 'editor' | 'reader' | null }).invite_role ?? null,
       memberStatus: row.type === 'moment_invite' && row.related_moment_id
-        ? (memberStatusMap.get(row.related_moment_id) as 'pending' | 'accepted' | 'declined' | undefined)
-          // Fallback: if no membership row but user is now the owner, they must have accepted
-          // (transferOwnership deletes the new owner's moment_members row)
+        ? // 1st: notification's own stamped response (survives membership row deletion)
+          ((row.metadata as { invite_response?: string } | null)?.invite_response as 'accepted' | 'declined' | undefined)
+          // 2nd: current moment_members status
+          ?? (memberStatusMap.get(row.related_moment_id) as 'pending' | 'accepted' | 'declined' | undefined)
+          // 3rd: user is the current owner (transferOwnership deleted their membership row)
           ?? (momentOwnerMap.get(row.related_moment_id) === user.id ? 'accepted' : null)
         : null,
       metadata: (row as { metadata?: Record<string, unknown> | null }).metadata ?? null,
