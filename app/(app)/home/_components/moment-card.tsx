@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { MapPin, MoreHorizontal, Archive, ArchiveRestore, Pencil } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { MapPin, MoreHorizontal, Archive, ArchiveRestore, Pencil, Crown, PenTool, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
@@ -33,10 +32,6 @@ export function MomentCard({ moment, currentUserId }: Props) {
   const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = moment.myStatus === 'pending'
   const canEdit = moment.myStatus === 'accepted' && (moment.myRole === 'owner' || moment.myRole === 'editor')
-
-  // Show up to 4 member avatars
-  const displayMembers = moment.members.slice(0, 4)
-  const extraCount = Math.max(0, moment.members.length - 4)
 
   function toggleArchive(e: React.MouseEvent) {
     e.preventDefault()
@@ -84,26 +79,16 @@ export function MomentCard({ moment, currentUserId }: Props) {
 
         {/* Content */}
         <div className="p-3 space-y-2">
-          {/* Name + members */}
+          {/* Name + role */}
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-semibold text-sm leading-snug line-clamp-2 min-w-0">{moment.name}</h3>
-            {/* Member avatars */}
-            {displayMembers.length > 0 && (
-              <div className="flex items-center shrink-0 -space-x-1.5">
-                {displayMembers.map((m) => (
-                  <Avatar key={m.userId} className="size-5 ring-1 ring-background">
-                    <AvatarImage src={m.photoUrl ?? undefined} />
-                    <AvatarFallback className="text-[9px]">
-                      {m.firstName[0]}{m.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-                {extraCount > 0 && (
-                  <span className="flex size-5 items-center justify-center rounded-full bg-muted ring-1 ring-background text-[9px] font-medium text-muted-foreground">
-                    +{extraCount}
-                  </span>
-                )}
-              </div>
+            {/* Role badge — only shown for accepted members */}
+            {moment.myStatus === 'accepted' && (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                {moment.myRole === 'owner'  && <><Crown   className="size-3" /> Owner</>}
+                {moment.myRole === 'editor' && <><PenTool className="size-3" /> Editor</>}
+                {moment.myRole === 'reader' && <><Eye     className="size-3" /> Reader</>}
+              </span>
             )}
           </div>
 
