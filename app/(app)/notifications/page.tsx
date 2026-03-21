@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { buttonVariants } from '@/lib/button-variants'
 import { cn } from '@/lib/utils'
 import { NotificationList } from './_components/notification-list'
+import { MarkAllReadButton } from './_components/mark-all-read-button'
 
 export type NotificationRow = {
   id: string
@@ -25,13 +26,6 @@ export default async function NotificationsPage() {
   if (!user) redirect('/login')
 
   const admin = createAdminClient()
-
-  // Mark all unread as read before fetching so the list renders in the correct read state.
-  await admin
-    .from('notifications')
-    .update({ read: true })
-    .eq('user_id', user.id)
-    .eq('read', false)
 
   // Fetch notifications newest-first.
   const { data: rows } = await admin
@@ -79,6 +73,8 @@ export default async function NotificationsPage() {
   // moment_id → current membership status (for invite notifications)
   const memberStatusMap = new Map((memberStatusRes.data ?? []).map((r) => [r.moment_id, r.status]))
 
+  const hasUnread = (rows ?? []).some((r) => !r.read)
+
   const notifications: NotificationRow[] = (rows ?? []).map((row) => {
     const u = row.related_user_id ? usersMap.get(row.related_user_id) : null
     const m = row.related_moment_id ? momentsMap.get(row.related_moment_id) : null
@@ -104,13 +100,16 @@ export default async function NotificationsPage() {
       <div className="mx-auto max-w-lg px-4 py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold">Notifications</h1>
-          <Link
-            href="/settings?from=notifications"
-            className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }))}
-            aria-label="Notification settings"
-          >
-            <Settings className="size-4" />
-          </Link>
+          <div className="flex items-center gap-2">
+            {hasUnread && <MarkAllReadButton />}
+            <Link
+              href="/settings?from=notifications"
+              className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }))}
+              aria-label="Notification settings"
+            >
+              <Settings className="size-4" />
+            </Link>
+          </div>
         </div>
 
         <NotificationList notifications={notifications} />
