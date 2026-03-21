@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { Crown, Shield, Eye, Settings } from 'lucide-react'
+import { Crown, PenTool, Eye, Settings } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/lib/button-variants'
@@ -167,7 +167,7 @@ function PopoverRow({
       <span className="text-sm truncate flex-1">{firstName} {lastName}</span>
       <span className="flex items-center gap-0.5 text-xs text-muted-foreground shrink-0">
         {role === 'owner' && <><Crown className="size-3 text-amber-500" /> Owner</>}
-        {role === 'editor' && <><Shield className="size-3" /> Editor</>}
+        {role === 'editor' && <><PenTool className="size-3" /> Editor</>}
         {role === 'reader' && <><Eye className="size-3" /> Reader</>}
       </span>
     </div>
