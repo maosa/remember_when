@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Bell, ChevronRight } from 'lucide-react'
+import { Bell, ChevronRight, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -38,7 +38,10 @@ export default async function AccountPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Account</h1>
           <form action={signOut}>
-            <Button variant="ghost" size="sm" type="submit">Sign out</Button>
+            <Button variant="outline" size="sm" type="submit">
+              <LogOut className="size-3.5" />
+              Sign out
+            </Button>
           </form>
         </div>
 
