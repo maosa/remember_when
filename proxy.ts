@@ -35,7 +35,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/signup') ||
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/auth')
+    pathname.startsWith('/auth') ||
+    pathname === '/pricing'
 
   // Redirect unauthenticated users away from protected routes
   if (!user && !isAuthRoute) {
