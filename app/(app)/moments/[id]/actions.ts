@@ -1237,7 +1237,7 @@ export async function transferOwnership(
     user_id: user.id,
     role: 'editor',
     status: 'accepted',
-    invited_by: null,
+    invited_by: user.id,
   })
 
   if (insertError) return { error: insertError.message }
