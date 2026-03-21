@@ -125,15 +125,32 @@ const TYPE_CONFIG: Record<
 
 // ─── Accept/Decline buttons for moment_invite ─────────────────────────────────
 
-function InviteActions({ momentId }: { momentId: string }) {
+function InviteActions({
+  momentId,
+  initialStatus,
+}: {
+  momentId: string
+  initialStatus: 'pending' | 'accepted' | 'declined' | null
+}) {
   const [isPending, startTransition] = useTransition()
+  // Local state overrides the server-fetched status once the user acts here
   const [outcome, setOutcome] = useState<'accepted' | 'declined' | null>(null)
 
-  if (outcome === 'accepted') {
-    return <span className="text-xs text-green-600 font-medium">Accepted</span>
+  const resolved = outcome ?? (initialStatus !== 'pending' ? initialStatus : null)
+
+  if (resolved === 'accepted') {
+    return (
+      <span className="text-xs text-green-600 font-medium flex items-center gap-1 mt-1.5">
+        <Check className="size-3" /> You accepted this invitation
+      </span>
+    )
   }
-  if (outcome === 'declined') {
-    return <span className="text-xs text-muted-foreground">Declined</span>
+  if (resolved === 'declined') {
+    return (
+      <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1.5">
+        <X className="size-3" /> You declined this invitation
+      </span>
+    )
   }
 
   return (
@@ -216,7 +233,7 @@ export function NotificationList({ notifications }: Props) {
                   {config.label(n)}
                 </p>
                 {isActionable && (
-                  <InviteActions momentId={n.moment!.id} />
+                  <InviteActions momentId={n.moment!.id} initialStatus={n.memberStatus} />
                 )}
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {timeAgo(n.createdAt)}

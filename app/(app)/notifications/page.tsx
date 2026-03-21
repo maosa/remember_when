@@ -13,6 +13,7 @@ export type NotificationRow = {
   fromUser: { id: string; firstName: string; lastName: string; username: string | null; photoUrl: string | null } | null
   moment: { id: string; name: string } | null
   inviteRole: 'editor' | 'reader' | null
+  memberStatus: 'pending' | 'accepted' | 'declined' | null  // current status of the moment_members row
   metadata: Record<string, unknown> | null
   read: boolean
   createdAt: string
@@ -47,17 +48,36 @@ export default async function NotificationsPage() {
     ...new Set((rows ?? []).filter((r) => r.related_moment_id).map((r) => r.related_moment_id!)),
   ]
 
-  const [usersRes, momentsRes] = await Promise.all([
+  // For moment_invite notifications, find the current member status so the UI
+  // can show "You accepted/declined" instead of action buttons if already resolved.
+  const inviteMomentIds = [
+    ...new Set(
+      (rows ?? [])
+        .filter((r) => r.type === 'moment_invite' && r.related_moment_id)
+        .map((r) => r.related_moment_id!)
+    ),
+  ]
+
+  const [usersRes, momentsRes, memberStatusRes] = await Promise.all([
     fromUserIds.length > 0
       ? admin.from('users').select('id, first_name, last_name, username, profile_photo_url').in('id', fromUserIds)
       : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; username: string | null; profile_photo_url: string | null }[] }),
     momentIds.length > 0
       ? admin.from('moments').select('id, name').in('id', momentIds)
       : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    inviteMomentIds.length > 0
+      ? admin
+          .from('moment_members')
+          .select('moment_id, status')
+          .eq('user_id', user.id)
+          .in('moment_id', inviteMomentIds)
+      : Promise.resolve({ data: [] as { moment_id: string; status: string }[] }),
   ])
 
   const usersMap = new Map((usersRes.data ?? []).map((u) => [u.id, u]))
   const momentsMap = new Map((momentsRes.data ?? []).map((m) => [m.id, m]))
+  // moment_id → current membership status (for invite notifications)
+  const memberStatusMap = new Map((memberStatusRes.data ?? []).map((r) => [r.moment_id, r.status]))
 
   const notifications: NotificationRow[] = (rows ?? []).map((row) => {
     const u = row.related_user_id ? usersMap.get(row.related_user_id) : null
@@ -70,6 +90,9 @@ export default async function NotificationsPage() {
         : null,
       moment: m ? { id: m.id, name: m.name } : null,
       inviteRole: (row as { invite_role?: 'editor' | 'reader' | null }).invite_role ?? null,
+      memberStatus: row.type === 'moment_invite' && row.related_moment_id
+        ? (memberStatusMap.get(row.related_moment_id) as 'pending' | 'accepted' | 'declined' | undefined) ?? null
+        : null,
       metadata: (row as { metadata?: Record<string, unknown> | null }).metadata ?? null,
       read: row.read,
       createdAt: row.created_at,
