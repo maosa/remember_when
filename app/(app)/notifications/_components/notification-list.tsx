@@ -147,7 +147,7 @@ function InviteActions({
   }
   if (resolved === 'declined') {
     return (
-      <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1.5">
+      <span className="text-xs text-red-500 font-medium flex items-center gap-1 mt-1.5">
         <X className="size-3" /> You declined this invitation
       </span>
     )
@@ -160,8 +160,8 @@ function InviteActions({
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
-            await acceptMomentInvite(momentId)
-            setOutcome('accepted')
+            const result = await acceptMomentInvite(momentId)
+            if (!result?.error) setOutcome('accepted')
           })
         }
         className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
@@ -174,8 +174,8 @@ function InviteActions({
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
-            await declineMomentInvite(momentId)
-            setOutcome('declined')
+            const result = await declineMomentInvite(momentId)
+            if (!result?.error) setOutcome('declined')
           })
         }
         className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50 transition-colors"

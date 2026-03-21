@@ -147,7 +147,9 @@ export async function acceptMomentInvite(momentId: string): Promise<{ error?: st
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { error } = await supabase
+  const admin = createAdminClient()
+
+  const { error } = await admin
     .from('moment_members')
     .update({ status: 'accepted' })
     .eq('moment_id', momentId)
@@ -157,7 +159,6 @@ export async function acceptMomentInvite(momentId: string): Promise<{ error?: st
   if (error) return { error: error.message }
 
   // Notify the inviter
-  const admin = createAdminClient()
   const { data: membership } = await admin
     .from('moment_members')
     .select('invited_by')
@@ -175,6 +176,7 @@ export async function acceptMomentInvite(momentId: string): Promise<{ error?: st
   }
 
   revalidatePath(`/moments/${momentId}`)
+  revalidatePath('/notifications')
   return {}
 }
 
@@ -185,7 +187,9 @@ export async function declineMomentInvite(momentId: string): Promise<{ error?: s
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { error } = await supabase
+  const admin = createAdminClient()
+
+  const { error } = await admin
     .from('moment_members')
     .update({ status: 'declined' })
     .eq('moment_id', momentId)
@@ -194,7 +198,6 @@ export async function declineMomentInvite(momentId: string): Promise<{ error?: s
 
   if (error) return { error: error.message }
 
-  const admin = createAdminClient()
   const { data: membership } = await admin
     .from('moment_members')
     .select('invited_by')
@@ -213,6 +216,7 @@ export async function declineMomentInvite(momentId: string): Promise<{ error?: s
 
   revalidatePath(`/moments/${momentId}`)
   revalidatePath('/home')
+  revalidatePath('/notifications')
   return {}
 }
 
