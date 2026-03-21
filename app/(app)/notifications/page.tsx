@@ -57,8 +57,8 @@ export default async function NotificationsPage() {
       ? admin.from('users').select('id, first_name, last_name, username, profile_photo_url').in('id', fromUserIds)
       : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; username: string | null; profile_photo_url: string | null }[] }),
     momentIds.length > 0
-      ? admin.from('moments').select('id, name').in('id', momentIds)
-      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+      ? admin.from('moments').select('id, name, owner_id').in('id', momentIds)
+      : Promise.resolve({ data: [] as { id: string; name: string; owner_id: string }[] }),
     inviteMomentIds.length > 0
       ? admin
           .from('moment_members')
@@ -72,6 +72,9 @@ export default async function NotificationsPage() {
   const momentsMap = new Map((momentsRes.data ?? []).map((m) => [m.id, m]))
   // moment_id → current membership status (for invite notifications)
   const memberStatusMap = new Map((memberStatusRes.data ?? []).map((r) => [r.moment_id, r.status]))
+  // moment_id → owner_id (to handle the case where ownership was transferred to this user,
+  // which deletes their moment_members row — they should still see "You accepted")
+  const momentOwnerMap = new Map((momentsRes.data ?? []).map((m) => [m.id, (m as { id: string; name: string; owner_id: string }).owner_id]))
 
   const hasUnread = (rows ?? []).some((r) => !r.read)
 
@@ -87,7 +90,10 @@ export default async function NotificationsPage() {
       moment: m ? { id: m.id, name: m.name } : null,
       inviteRole: (row as { invite_role?: 'editor' | 'reader' | null }).invite_role ?? null,
       memberStatus: row.type === 'moment_invite' && row.related_moment_id
-        ? (memberStatusMap.get(row.related_moment_id) as 'pending' | 'accepted' | 'declined' | undefined) ?? null
+        ? (memberStatusMap.get(row.related_moment_id) as 'pending' | 'accepted' | 'declined' | undefined)
+          // Fallback: if no membership row but user is now the owner, they must have accepted
+          // (transferOwnership deletes the new owner's moment_members row)
+          ?? (momentOwnerMap.get(row.related_moment_id) === user.id ? 'accepted' : null)
         : null,
       metadata: (row as { metadata?: Record<string, unknown> | null }).metadata ?? null,
       read: row.read,
