@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Crown, PenTool, Eye, X, UserPlus, Link2, Copy, Check, Trash2,
-  LogOut, RefreshCw, Pencil,
+  LogOut, RefreshCw, Pencil, ChevronDown,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -871,18 +871,21 @@ function TransferOwnershipSection({
       <div className="flex items-end gap-3">
         <div className="flex-1 space-y-1.5">
           <Label htmlFor="transfer-owner-select">New owner</Label>
-          <select
-            id="transfer-owner-select"
-            value={newOwnerId}
-            onChange={(e) => setNewOwnerId(e.target.value)}
-            className="h-8 w-full rounded-md border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            {editors.map((e) => (
-              <option key={e.userId} value={e.userId!}>
-                {e.firstName} {e.lastName}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="transfer-owner-select"
+              value={newOwnerId}
+              onChange={(e) => setNewOwnerId(e.target.value)}
+              className="h-8 w-full appearance-none rounded-md border bg-background pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {editors.map((e) => (
+                <option key={e.userId} value={e.userId!}>
+                  {e.firstName} {e.lastName}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+          </div>
         </div>
         <Button
           variant="outline"
