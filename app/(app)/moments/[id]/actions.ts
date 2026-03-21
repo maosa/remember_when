@@ -1230,11 +1230,9 @@ export async function transferOwnership(
     return { error: 'Ownership can only be transferred to an accepted editor.' }
   }
 
-  // Remove new owner from members (they'll become the owner row)
-  await admin.from('moment_members').delete().eq('id', target.id)
-
-  // Insert current owner as accepted editor
-  await admin.from('moment_members').insert({
+  // Step 1: Insert current owner as accepted editor BEFORE making any other changes.
+  // This ensures we never end up in a state where the owner has neither ownership nor membership.
+  const { error: insertError } = await admin.from('moment_members').insert({
     moment_id: momentId,
     user_id: user.id,
     role: 'editor',
@@ -1242,6 +1240,12 @@ export async function transferOwnership(
     invited_by: null,
   })
 
+  if (insertError) return { error: insertError.message }
+
+  // Step 2: Remove the new owner from members (they become the owner via moments.owner_id).
+  await admin.from('moment_members').delete().eq('id', target.id)
+
+  // Step 3: Update owner_id.
   const { error } = await admin
     .from('moments')
     .update({ owner_id: newOwnerId })
@@ -1266,6 +1270,7 @@ export async function transferOwnership(
   })
 
   revalidatePath(`/moments/${momentId}`)
+  revalidatePath('/home')
   return {}
 }
 

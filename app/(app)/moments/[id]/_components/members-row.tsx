@@ -122,15 +122,19 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
         )}
       </div>
 
-      {/* Action buttons — editors/owners only */}
-      {canEdit && (
+      {/* Action buttons */}
+      {myStatus === 'accepted' && (
         <div className="flex items-center gap-2 shrink-0">
-          <CoverPhotoSection
-            momentId={moment.id}
-            currentUrl={moment.coverPhotoUrl}
-            canEdit={true}
-          />
-          <InviteDialog momentId={moment.id} myRole={myRole} />
+          {canEdit && (
+            <>
+              <CoverPhotoSection
+                momentId={moment.id}
+                currentUrl={moment.coverPhotoUrl}
+                canEdit={true}
+              />
+              <InviteDialog momentId={moment.id} myRole={myRole} />
+            </>
+          )}
           <Link
             href={`/moments/${moment.id}/members`}
             className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}

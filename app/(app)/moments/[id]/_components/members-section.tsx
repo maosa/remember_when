@@ -52,6 +52,11 @@ interface Props {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function MembersSection({ moment, myRole, myStatus, myUserId }: Props) {
+  // Readers see only the danger zone with a simple leave button
+  if (myRole === 'reader' && myStatus === 'accepted') {
+    return <ReaderView momentId={moment.id} />
+  }
+
   const isAccepted = myStatus === 'accepted'
   const isOwner = myRole === 'owner'
   const canManageLink = isAccepted && (isOwner || myRole === 'editor')
@@ -1092,5 +1097,70 @@ function DeleteMomentSection({
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+// ─── Reader view (danger zone only) ──────────────────────────────────────────
+
+function ReaderView({ momentId }: { momentId: string }) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+
+  function handleLeave() {
+    setError(null)
+    startTransition(async () => {
+      const res = await leaveMoment(momentId, false)
+      if (res.error) { setError(res.error); return }
+      router.push('/home')
+    })
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-4">
+      <section className="rounded-lg border border-destructive/40 p-5 space-y-4">
+        <h2 className="text-sm font-medium text-destructive uppercase tracking-wide">
+          Danger Zone
+        </h2>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Leave moment</p>
+            <p className="text-sm text-muted-foreground">You will lose access to this moment.</p>
+          </div>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setError(null) }}>
+            <DialogTrigger
+              render={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 border-destructive text-destructive hover:bg-destructive/10"
+                />
+              }
+            >
+              <LogOut className="size-3.5" />
+              Leave
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Leave this moment?</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to leave? You will lose access to this moment.
+              </p>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleLeave} disabled={isPending}>
+                  {isPending ? 'Leaving…' : 'Leave moment'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </section>
+    </div>
   )
 }
