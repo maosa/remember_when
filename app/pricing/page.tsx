@@ -137,7 +137,7 @@ export default function PricingPage() {
               </CardContent>
               <CardFooter>
                 {isAuthenticated ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="h-8 flex items-center text-sm text-muted-foreground">
                     ✓ Your current plan
                   </p>
                 ) : (
