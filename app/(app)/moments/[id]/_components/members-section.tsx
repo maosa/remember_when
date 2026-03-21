@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Crown, PenTool, Eye, X, UserPlus, Link2, Copy, Check, Trash2,
-  LogOut, RefreshCw, Pencil, ChevronDown,
+  LogOut, RefreshCw, Pencil, ChevronDown, Mail,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -347,7 +347,8 @@ function RoleBadge({
 }) {
   if (status === 'pending') {
     return (
-      <span className="text-xs text-muted-foreground">
+      <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+        <Mail className="size-2.5" />
         {isUnregistered ? 'Invite sent (not yet registered)' : 'Invited'}
       </span>
     )
