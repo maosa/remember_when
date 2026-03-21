@@ -220,6 +220,53 @@ export async function declineMomentInvite(momentId: string): Promise<{ error?: s
   return {}
 }
 
+// ─── Membership upsert helper ─────────────────────────────────────────────────
+//
+// Handles all cases when adding a user to a moment:
+//   - Already accepted → return error (don't downgrade)
+//   - Already pending  → return error (already invited)
+//   - Previously declined → reset to pending (re-invite)
+//   - No row → insert fresh
+//
+// Returns an error string on failure, or null on success.
+
+async function upsertMembership(
+  admin: ReturnType<typeof createAdminClient>,
+  momentId: string,
+  userId: string,
+  role: 'editor' | 'reader',
+  invitedBy: string
+): Promise<string | null> {
+  const { data: existing } = await admin
+    .from('moment_members')
+    .select('id, status')
+    .eq('moment_id', momentId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (existing) {
+    if (existing.status === 'accepted') return 'This person is already a member of this moment.'
+    if (existing.status === 'pending')  return 'This person has already been invited and has not yet responded.'
+    // status === 'declined' — re-invite by resetting to pending
+    const { error } = await admin
+      .from('moment_members')
+      .update({ status: 'pending', role, invited_by: invitedBy })
+      .eq('id', existing.id)
+    if (error) return error.message
+    return null
+  }
+
+  const { error } = await admin.from('moment_members').insert({
+    moment_id: momentId,
+    user_id: userId,
+    role,
+    status: 'pending',
+    invited_by: invitedBy,
+  })
+  if (error) return error.message
+  return null
+}
+
 // ─── Invite member (post-creation) ───────────────────────────────────────────
 
 export type InviteResult =
@@ -280,10 +327,8 @@ export async function inviteMember(
     if (!targetUser) return { notFound: true }
     if (targetUser.id === user.id) return { error: 'You cannot invite yourself.' }
 
-    await admin.from('moment_members').upsert(
-      { moment_id: momentId, user_id: targetUser.id, role, status: 'pending', invited_by: user.id },
-      { onConflict: 'moment_id,user_id', ignoreDuplicates: true }
-    )
+    const membershipError = await upsertMembership(admin, momentId, targetUser.id, role, user.id)
+    if (membershipError) return { error: membershipError }
 
     await sendInviteNotification({
       admin,
@@ -307,10 +352,8 @@ export async function inviteMember(
   if (existingUser) {
     if (existingUser.id === user.id) return { error: 'You cannot invite yourself.' }
 
-    await admin.from('moment_members').upsert(
-      { moment_id: momentId, user_id: existingUser.id, role, status: 'pending', invited_by: user.id },
-      { onConflict: 'moment_id,user_id', ignoreDuplicates: true }
-    )
+    const membershipError = await upsertMembership(admin, momentId, existingUser.id, role, user.id)
+    if (membershipError) return { error: membershipError }
 
     await sendInviteNotification({
       admin,
