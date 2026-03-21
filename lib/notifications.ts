@@ -16,6 +16,13 @@ export type NotificationType =
   | 'moment_deleted'
   | 'reminder'
 
+// Types that are always delivered regardless of archived-moment suppression —
+// these are direct responses to the recipient's own actions.
+const BYPASS_ARCHIVE_SUPPRESSION = new Set<NotificationType>([
+  'moment_invite_accepted',
+  'moment_invite_declined',
+])
+
 // Maps each notification type to the column in notification_preferences that gates it.
 const TYPE_TO_PREF_COLUMN: Partial<Record<NotificationType, string>> = {
   friend_request_received:     'friend_request_received',
@@ -104,7 +111,12 @@ export async function sendNotifications(payloads: NotificationPayload[]): Promis
     if (col && prefs && (prefs as Record<string, unknown>)[col] === false) return false
 
     // Suppress if the moment is archived and the user hasn't opted in to those notifications.
-    if (p.related_moment_id && archivedPairs.has(`${p.user_id}:${p.related_moment_id}`)) return false
+    // Some types bypass this (direct responses to the recipient's own actions).
+    if (
+      p.related_moment_id &&
+      !BYPASS_ARCHIVE_SUPPRESSION.has(p.type) &&
+      archivedPairs.has(`${p.user_id}:${p.related_moment_id}`)
+    ) return false
 
     return true
   })
