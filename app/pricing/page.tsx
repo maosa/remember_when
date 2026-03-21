@@ -1,11 +1,15 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { createClient } from '@/lib/supabase/client'
+import { AppNav } from '@/components/app-nav'
 
 const FREE_FEATURES = [
   'Create unlimited moments',
@@ -23,28 +27,83 @@ const PLUS_FEATURES = [
   'Priority support',
 ]
 
+type AuthState =
+  | { status: 'loading' }
+  | { status: 'unauthenticated' }
+  | { status: 'authenticated'; user: { firstName: string; lastName: string; photoUrl: string | null }; unreadCount: number }
+
 export default function PricingPage() {
+  const [auth, setAuth] = useState<AuthState>({ status: 'loading' })
+
+  useEffect(() => {
+    async function checkAuth() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        setAuth({ status: 'unauthenticated' })
+        return
+      }
+
+      const [profileRes, unreadRes] = await Promise.all([
+        supabase
+          .from('users')
+          .select('first_name, last_name, profile_photo_url')
+          .eq('id', user.id)
+          .single(),
+        supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('read', false),
+      ])
+
+      setAuth({
+        status: 'authenticated',
+        user: {
+          firstName: profileRes.data?.first_name ?? '',
+          lastName: profileRes.data?.last_name ?? '',
+          photoUrl: profileRes.data?.profile_photo_url ?? null,
+        },
+        unreadCount: unreadRes.count ?? 0,
+      })
+    }
+
+    checkAuth()
+  }, [])
+
+  const isAuthenticated = auth.status === 'authenticated'
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="text-sm font-semibold tracking-tight">
-            Remember When
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/login" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
-              Sign in
+      {/* Header — authenticated: full app nav; guest: sign-in/get-started; loading: placeholder */}
+      {auth.status === 'loading' && (
+        <header className="border-b bg-background/95 h-14 shrink-0" />
+      )}
+      {auth.status === 'unauthenticated' && (
+        <header className="border-b bg-background/95 backdrop-blur-sm shrink-0">
+          <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+            <Link href="/" className="text-sm font-semibold tracking-tight">
+              Remember When
             </Link>
-            <Link href="/signup" className={buttonVariants({ size: 'sm' })}>
-              Get started
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/login" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+                Sign in
+              </Link>
+              <Link href="/signup" className={buttonVariants({ size: 'sm' })}>
+                Get started
+              </Link>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
+      {auth.status === 'authenticated' && (
+        <AppNav user={auth.user} unreadCount={auth.unreadCount} />
+      )}
 
-      {/* Hero */}
-      <main className="flex-1">
+      {/* Main — offset for fixed AppNav when authenticated */}
+      <main className={cn('flex-1', isAuthenticated && 'md:pt-14 pb-20 md:pb-0')}>
+        {/* Hero */}
         <section className="max-w-5xl mx-auto px-6 pt-16 pb-12 text-center">
           <h1 className="text-3xl font-semibold tracking-tight mb-3">Simple, honest pricing</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
@@ -77,9 +136,15 @@ export default function PricingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Link href="/signup" className={cn(buttonVariants(), 'w-full justify-center')}>
-                  Get started free
-                </Link>
+                {isAuthenticated ? (
+                  <p className="text-sm text-muted-foreground">
+                    ✓ Your current plan
+                  </p>
+                ) : (
+                  <Link href="/signup" className={cn(buttonVariants(), 'w-full justify-center')}>
+                    Get started free
+                  </Link>
+                )}
               </CardFooter>
             </Card>
 

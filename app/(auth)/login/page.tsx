@@ -88,6 +88,9 @@ export default function LoginPage() {
                 Sign up
               </Link>
             </p>
+            <Link href="/pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              See pricing plans
+            </Link>
           </CardFooter>
         </form>
       </Card>

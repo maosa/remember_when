@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Bell, ChevronRight, LogOut } from 'lucide-react'
+import { Bell, ChevronRight, CreditCard, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -91,6 +91,26 @@ export default async function AccountPage() {
               <div>
                 <p className="text-sm font-medium">Notification Preferences</p>
                 <p className="text-xs text-muted-foreground">Manage what you get notified about</p>
+              </div>
+            </div>
+            <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+          </Link>
+        </section>
+
+        <Separator />
+
+        {/* Plans */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Plans</h2>
+          <Link
+            href="/pricing"
+            className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-muted transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <CreditCard className="size-4 text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Pricing & Plans</p>
+                <p className="text-xs text-muted-foreground">View available plans and features</p>
               </div>
             </div>
             <ChevronRight className="size-4 text-muted-foreground shrink-0" />
