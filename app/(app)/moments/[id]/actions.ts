@@ -756,12 +756,31 @@ export async function deleteCoverPhoto(momentId: string): Promise<{ error?: stri
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // Fetch current cover URL so we can decide whether to remove from storage
+  const { data: moment } = await supabase
+    .from('moments')
+    .select('cover_photo_url')
+    .eq('id', momentId)
+    .single()
+
   const { error } = await supabase
     .from('moments')
     .update({ cover_photo_url: null })
     .eq('id', momentId)
 
   if (error) return { error: error.message }
+
+  // Only remove from storage if it was uploaded directly as a cover photo
+  // (URL contains '/moment-covers/'). Post photos live in '/post-media/' and
+  // should not be deleted — they still belong to their post.
+  const coverUrl = moment?.cover_photo_url
+  if (coverUrl?.includes('/moment-covers/')) {
+    const storagePath = coverUrl.split('/moment-covers/')[1]?.split('?')[0]
+    if (storagePath) {
+      await supabase.storage.from('moment-covers').remove([storagePath])
+    }
+  }
+
   revalidatePath(`/moments/${momentId}`)
   return {}
 }
