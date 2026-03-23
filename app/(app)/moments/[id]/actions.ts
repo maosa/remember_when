@@ -6,6 +6,9 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification, sendNotifications } from '@/lib/notifications'
+import { validateCoverFile, validateMediaFile, safeExt } from '@/lib/upload'
+import { signStoragePath, signStoragePaths } from '@/lib/storage'
+import { logAuditEvent } from '@/lib/audit'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,7 +31,8 @@ export type MomentDetail = {
   dateMonth: number | null
   dateDay: number | null
   location: string | null
-  coverPhotoUrl: string | null
+  coverPhotoUrl: string | null        // signed URL for display
+  coverPhotoStoragePath: string | null // raw "{bucket}/{path}" for identity comparison
   ownerId: string
   ownerFirstName: string
   ownerLastName: string
@@ -104,6 +108,10 @@ export async function fetchMomentDetail(
 
   const owner = data.owner as unknown as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }
 
+  // Generate a signed URL for the cover photo (moment-covers / post-media are private buckets)
+  const coverStoragePath = data.cover_photo_url ?? null
+  const coverSignedUrl = coverStoragePath ? await signStoragePath(coverStoragePath) : null
+
   return {
     moment: {
       id: data.id,
@@ -112,7 +120,8 @@ export async function fetchMomentDetail(
       dateMonth: data.date_month ?? null,
       dateDay: data.date_day ?? null,
       location: data.location ?? null,
-      coverPhotoUrl: data.cover_photo_url ?? null,
+      coverPhotoUrl: coverSignedUrl,
+      coverPhotoStoragePath: coverStoragePath,
       ownerId: data.owner_id,
       ownerFirstName: owner.first_name,
       ownerLastName: owner.last_name,
@@ -560,6 +569,12 @@ export async function updateMemberRole(
 
   if (error) return { error: error.message }
 
+  void logAuditEvent(user.id, 'member_role_changed', {
+    moment_id: momentId,
+    member_id: memberId,
+    new_role: newRole,
+  })
+
   // Notify the affected user (if registered)
   if (target.user_id) {
     await sendNotification({
@@ -679,6 +694,9 @@ export async function removeMember(momentId: string, memberId: string): Promise<
     .eq('moment_id', momentId)
 
   if (error) return { error: error.message }
+
+  void logAuditEvent(user.id, 'member_removed', { moment_id: momentId, member_id: memberId })
+
   revalidatePath(`/moments/${momentId}`)
   return {}
 }
@@ -726,24 +744,25 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
   if (!file || file.size === 0) return { error: 'No file provided.' }
   if (file.size > 10 * 1024 * 1024) return { error: 'File must be under 10 MB.' }
 
-  const ext = file.name.split('.').pop()
-  const path = `${momentId}/cover.${ext}`
+  // Validate MIME type — derive extension from type, not filename
+  const mimeError = validateCoverFile(file)
+  if (mimeError) return { error: mimeError }
+
+  const ext = safeExt(file.type)
+  const filePath = `${momentId}/cover.${ext}`
 
   const { error: uploadError } = await supabase.storage
     .from('moment-covers')
-    .upload(path, file, { upsert: true })
+    .upload(filePath, file, { upsert: true })
 
   if (uploadError) return { error: uploadError.message }
 
-  const { data: { publicUrl } } = supabase.storage
-    .from('moment-covers')
-    .getPublicUrl(path)
-
-  const urlWithBust = `${publicUrl}?t=${Date.now()}`
+  // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
+  const storagePath = `moment-covers/${filePath}`
 
   const { error: updateError } = await supabase
     .from('moments')
-    .update({ cover_photo_url: urlWithBust })
+    .update({ cover_photo_url: storagePath })
     .eq('id', momentId)
 
   if (updateError) return { error: updateError.message }
@@ -771,13 +790,13 @@ export async function deleteCoverPhoto(momentId: string): Promise<{ error?: stri
   if (error) return { error: error.message }
 
   // Only remove from storage if it was uploaded directly as a cover photo
-  // (URL contains '/moment-covers/'). Post photos live in '/post-media/' and
+  // (path starts with 'moment-covers/'). Post photos live in 'post-media/' and
   // should not be deleted — they still belong to their post.
-  const coverUrl = moment?.cover_photo_url
-  if (coverUrl?.includes('/moment-covers/')) {
-    const storagePath = coverUrl.split('/moment-covers/')[1]?.split('?')[0]
-    if (storagePath) {
-      await supabase.storage.from('moment-covers').remove([storagePath])
+  const coverPath = moment?.cover_photo_url
+  if (coverPath?.startsWith('moment-covers/')) {
+    const objectPath = coverPath.slice('moment-covers/'.length)
+    if (objectPath) {
+      await supabase.storage.from('moment-covers').remove([objectPath])
     }
   }
 
@@ -785,14 +804,19 @@ export async function deleteCoverPhoto(momentId: string): Promise<{ error?: stri
   return {}
 }
 
-export async function setCoverPhotoFromUrl(momentId: string, url: string): Promise<{ error?: string }> {
+export async function setCoverPhotoFromPath(momentId: string, storagePath: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { error } = await supabase
+  // Verify caller has edit rights
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return permCheck
+
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('moments')
-    .update({ cover_photo_url: url })
+    .update({ cover_photo_url: storagePath })
     .eq('id', momentId)
 
   if (error) return { error: error.message }
@@ -800,26 +824,56 @@ export async function setCoverPhotoFromUrl(momentId: string, url: string): Promi
   return {}
 }
 
-export async function fetchMomentPhotos(momentId: string): Promise<{ urls: string[] }> {
+export async function fetchMomentPhotos(
+  momentId: string,
+): Promise<{ photos: Array<{ signedUrl: string; storagePath: string }> }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const admin = createAdminClient()
-  const { data } = await admin
-    .from('post_media')
-    .select('storage_url, post:posts!post_media_post_id_fkey(moment_id, deleted_at)')
-    .eq('media_type', 'photo')
+
+  // Verify the caller has access to this moment
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+
+  if (!moment) return { photos: [] }
+
+  if (moment.owner_id !== user.id) {
+    const { data: membership } = await admin
+      .from('moment_members')
+      .select('status')
+      .eq('moment_id', momentId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!membership || membership.status !== 'accepted') return { photos: [] }
+  }
+
+  // Fetch photos for this specific moment (filter in DB, not in JS)
+  const { data: posts } = await admin
+    .from('posts')
+    .select(`id, post_media(storage_url, deleted_at)`)
+    .eq('moment_id', momentId)
     .is('deleted_at', null)
 
-  const urls = (data ?? [])
-    .filter((row) => {
-      const post = row.post as unknown as { moment_id: string; deleted_at: string | null } | null
-      return post && post.moment_id === momentId && !post.deleted_at
-    })
-    .map((row) => row.storage_url)
+  const storagePaths: string[] = []
+  for (const post of posts ?? []) {
+    const media = post.post_media as unknown as Array<{ storage_url: string; deleted_at: string | null }>
+    for (const m of media) {
+      if (!m.deleted_at && m.storage_url) storagePaths.push(m.storage_url)
+    }
+  }
 
-  return { urls }
+  const signed = await signStoragePaths(storagePaths)
+
+  return {
+    photos: storagePaths
+      .map((p) => ({ storagePath: p, signedUrl: signed.get(p) ?? '' }))
+      .filter((p) => p.signedUrl),
+  }
 }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
@@ -864,6 +918,16 @@ export async function fetchPosts(
 
   if (error || !data) return { posts: [], currentUserId: user.id }
 
+  // Collect all media storage paths for batch signing
+  const allStoragePaths: string[] = []
+  for (const row of data) {
+    const media = row.post_media as unknown as Array<{ storage_url: string; deleted_at: string | null }>
+    for (const m of media) {
+      if (!m.deleted_at && m.storage_url) allStoragePaths.push(m.storage_url)
+    }
+  }
+  const signed = await signStoragePaths(allStoragePaths)
+
   const posts = data.map((row) => {
     const author = row.author as unknown as {
       id: string; first_name: string; last_name: string; profile_photo_url: string | null
@@ -873,7 +937,7 @@ export async function fetchPosts(
     }>).filter((m) => !m.deleted_at).map((m) => ({
       id: m.id,
       mediaType: m.media_type as 'photo' | 'video' | 'audio',
-      storageUrl: m.storage_url,
+      storageUrl: signed.get(m.storage_url) ?? m.storage_url,
     }))
 
     return {
@@ -898,7 +962,8 @@ export async function createPost(momentId: string, formData: FormData): Promise<
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const content = (formData.get('content') as string | null)?.trim() || null
+  const rawContent = (formData.get('content') as string | null)?.trim() || null
+  const content = rawContent ? rawContent.slice(0, 10_000) : null
   const files = formData.getAll('media') as File[]
   const validFiles = files.filter((f) => f && f.size > 0)
 
@@ -908,6 +973,8 @@ export async function createPost(momentId: string, formData: FormData): Promise<
 
   for (const f of validFiles) {
     if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
+    const mimeError = validateMediaFile(f)
+    if (mimeError) return { error: mimeError }
   }
 
   // Verify access: accepted member or owner
@@ -949,12 +1016,12 @@ export async function createPost(momentId: string, formData: FormData): Promise<
   if (validFiles.length > 0) {
     for (let i = 0; i < validFiles.length; i++) {
       const file = validFiles[i]
-      const ext = file.name.split('.').pop() ?? 'bin'
-      const path = `${momentId}/${post.id}/${i}.${ext}`
+      const ext = safeExt(file.type)
+      const filePath = `${momentId}/${post.id}/${i}.${ext}`
 
       const { error: uploadError } = await supabase.storage
         .from('post-media')
-        .upload(path, file, { upsert: false })
+        .upload(filePath, file, { upsert: false })
 
       if (uploadError) {
         // Best-effort cleanup: soft-delete the post
@@ -962,7 +1029,8 @@ export async function createPost(momentId: string, formData: FormData): Promise<
         return { error: `Upload failed: ${uploadError.message}` }
       }
 
-      const { data: { publicUrl } } = supabase.storage.from('post-media').getPublicUrl(path)
+      // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
+      const storagePath = `post-media/${filePath}`
 
       const mediaType = file.type.startsWith('video/')
         ? 'video'
@@ -973,7 +1041,7 @@ export async function createPost(momentId: string, formData: FormData): Promise<
       await admin.from('post_media').insert({
         post_id: post.id,
         media_type: mediaType,
-        storage_url: publicUrl,
+        storage_url: storagePath,
       })
     }
   }
@@ -1074,12 +1142,15 @@ export async function editPost(postId: string, momentId: string, formData: FormD
   if (!post || post.moment_id !== momentId) return { error: 'Post not found.' }
   if (post.author_id !== user.id) return { error: 'Only the author can edit this post.' }
 
-  const content = (formData.get('content') as string | null)?.trim() || null
+  const rawContent = (formData.get('content') as string | null)?.trim() || null
+  const content = rawContent ? rawContent.slice(0, 10_000) : null
   const removeMediaIds = formData.getAll('removeMediaId') as string[]
   const newFiles = (formData.getAll('media') as File[]).filter((f) => f && f.size > 0)
 
   for (const f of newFiles) {
     if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
+    const mimeError = validateMediaFile(f)
+    if (mimeError) return { error: mimeError }
   }
 
   // Count remaining media after removals + new uploads
@@ -1110,12 +1181,14 @@ export async function editPost(postId: string, momentId: string, formData: FormD
         .in('id', removeMediaIds)
         .eq('post_id', postId)
 
-      // Best-effort Storage deletions
+      // Best-effort Storage deletions — storage_url is now "{bucket}/{path}"
       for (const row of toRemove) {
         try {
-          const storagePath = row.storage_url.split('/post-media/')[1]?.split('?')[0]
-          if (storagePath) {
-            await supabase.storage.from('post-media').remove([storagePath])
+          const objectPath = row.storage_url.startsWith('post-media/')
+            ? row.storage_url.slice('post-media/'.length)
+            : row.storage_url.split('/post-media/')[1]?.split('?')[0] // legacy URL fallback
+          if (objectPath) {
+            await supabase.storage.from('post-media').remove([objectPath])
           }
         } catch {
           // non-fatal
@@ -1130,16 +1203,17 @@ export async function editPost(postId: string, momentId: string, formData: FormD
     const offset = Date.now()
     for (let i = 0; i < newFiles.length; i++) {
       const file = newFiles[i]
-      const ext = file.name.split('.').pop() ?? 'bin'
-      const path = `${momentId}/${postId}/${offset}-${i}.${ext}`
+      const ext = safeExt(file.type)
+      const filePath = `${momentId}/${postId}/${offset}-${i}.${ext}`
 
       const { error: uploadError } = await supabase.storage
         .from('post-media')
-        .upload(path, file, { upsert: false })
+        .upload(filePath, file, { upsert: false })
 
       if (uploadError) return { error: `Upload failed: ${uploadError.message}` }
 
-      const { data: { publicUrl } } = supabase.storage.from('post-media').getPublicUrl(path)
+      // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
+      const storagePath = `post-media/${filePath}`
 
       const mediaType = file.type.startsWith('video/')
         ? 'video'
@@ -1150,7 +1224,7 @@ export async function editPost(postId: string, momentId: string, formData: FormD
       await admin.from('post_media').insert({
         post_id: postId,
         media_type: mediaType,
-        storage_url: publicUrl,
+        storage_url: storagePath,
       })
     }
   }
@@ -1167,6 +1241,29 @@ export async function editPost(postId: string, momentId: string, formData: FormD
   return {}
 }
 
+// ─── Auth helper: owner or accepted editor ────────────────────────────────────
+
+async function assertCanEditMoment(momentId: string, userId: string): Promise<{ error?: string }> {
+  const admin = createAdminClient()
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+  if (!moment) return { error: 'Moment not found.' }
+  if (moment.owner_id === userId) return {}
+  const { data: membership } = await admin
+    .from('moment_members')
+    .select('role, status')
+    .eq('moment_id', momentId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!membership || membership.status !== 'accepted' || membership.role === 'reader') {
+    return { error: 'Permission denied.' }
+  }
+  return {}
+}
+
 // ─── Manage tags ──────────────────────────────────────────────────────────────
 
 export async function addTag(momentId: string, tag: string): Promise<{ error?: string }> {
@@ -1176,6 +1273,10 @@ export async function addTag(momentId: string, tag: string): Promise<{ error?: s
 
   const t = tag.trim().toLowerCase()
   if (!t || t.length > 20) return { error: 'Tag must be 1–20 characters.' }
+
+  // Verify caller has edit rights (admin client bypasses RLS — must check manually)
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return permCheck
 
   const admin = createAdminClient()
   const { error } = await admin
@@ -1191,6 +1292,10 @@ export async function removeTag(momentId: string, tagId: string): Promise<{ erro
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // Verify caller has edit rights (admin client bypasses RLS — must check manually)
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return permCheck
 
   const admin = createAdminClient()
   const { error } = await admin
@@ -1256,6 +1361,8 @@ export async function generateInviteLink(
 
   if (error || !data) return { error: error?.message ?? 'Failed to create link.' }
 
+  void logAuditEvent(user.id, 'invite_link_created', { moment_id: momentId, expires_in: expiresIn })
+
   revalidatePath(`/moments/${momentId}`)
   return { token: data.token as string, expiresAt: data.expires_at ?? null }
 }
@@ -1271,6 +1378,8 @@ export async function revokeInviteLink(momentId: string): Promise<{ error?: stri
   const admin = createAdminClient()
   const { error } = await admin.from('invite_links').delete().eq('moment_id', momentId)
   if (error) return { error: error.message }
+
+  void logAuditEvent(user.id, 'invite_link_revoked', { moment_id: momentId })
 
   revalidatePath(`/moments/${momentId}`)
   return {}
@@ -1404,6 +1513,11 @@ export async function transferOwnership(
     related_moment_id: momentId,
   })
 
+  void logAuditEvent(user.id, 'ownership_transferred', {
+    moment_id: momentId,
+    new_owner_id: newOwnerId,
+  })
+
   revalidatePath(`/moments/${momentId}`)
   revalidatePath('/home')
   return {}
@@ -1426,8 +1540,9 @@ export async function updateMoment(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const name = data.name.trim()
+  const name = data.name.trim().slice(0, 200)
   if (!name) return { error: 'Moment name is required.' }
+  const location = data.location?.trim().slice(0, 200) ?? null
 
   const admin = createAdminClient()
 
@@ -1462,7 +1577,7 @@ export async function updateMoment(
       date_year: data.dateYear,
       date_month: data.dateMonth,
       date_day: data.dateDay,
-      location: data.location?.trim() || null,
+      location: location || null,
     })
     .eq('id', momentId)
 

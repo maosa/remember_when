@@ -11,20 +11,21 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { updateCoverPhoto, setCoverPhotoFromUrl, deleteCoverPhoto, fetchMomentPhotos } from '../actions'
+import { updateCoverPhoto, setCoverPhotoFromPath, deleteCoverPhoto, fetchMomentPhotos } from '../actions'
 
 interface Props {
   momentId: string
-  currentUrl: string | null
+  currentUrl: string | null          // signed URL for display
+  currentStoragePath: string | null  // raw storage path for identity comparison
   canEdit: boolean
 }
 
-export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
+export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, canEdit }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [momentPhotos, setMomentPhotos] = useState<string[] | null>(null)
+  const [momentPhotos, setMomentPhotos] = useState<Array<{ signedUrl: string; storagePath: string }> | null>(null)
   const [loadingPhotos, setLoadingPhotos] = useState(false)
 
   if (!canEdit) return null
@@ -34,8 +35,8 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
     setError(null)
     if (val && momentPhotos === null) {
       setLoadingPhotos(true)
-      fetchMomentPhotos(momentId).then(({ urls }) => {
-        setMomentPhotos(urls)
+      fetchMomentPhotos(momentId).then(({ photos }) => {
+        setMomentPhotos(photos)
         setLoadingPhotos(false)
       })
     }
@@ -63,10 +64,10 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
     })
   }
 
-  function handleSelectExisting(url: string) {
+  function handleSelectExisting(storagePath: string) {
     setError(null)
     startTransition(async () => {
-      const res = await setCoverPhotoFromUrl(momentId, url)
+      const res = await setCoverPhotoFromPath(momentId, storagePath)
       if (res.error) setError(res.error)
       else setOpen(false)
     })
@@ -118,20 +119,20 @@ export function CoverPhotoSection({ momentId, currentUrl, canEdit }: Props) {
               )}
               {!loadingPhotos && momentPhotos && momentPhotos.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {momentPhotos.map((url) => (
+                  {momentPhotos.map((photo) => (
                     <button
-                      key={url}
+                      key={photo.storagePath}
                       type="button"
                       disabled={isPending}
-                      onClick={() => handleSelectExisting(url)}
+                      onClick={() => handleSelectExisting(photo.storagePath)}
                       className={cn(
                         'relative size-20 rounded-lg overflow-hidden shrink-0 ring-offset-background transition-all',
                         'hover:ring-2 hover:ring-ring hover:ring-offset-2',
-                        currentUrl === url && 'ring-2 ring-ring ring-offset-2'
+                        currentStoragePath === photo.storagePath && 'ring-2 ring-ring ring-offset-2'
                       )}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={url} alt="" className="size-full object-cover" />
+                      <img src={photo.signedUrl} alt="" className="size-full object-cover" />
                     </button>
                   ))}
                 </div>

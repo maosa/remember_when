@@ -1,6 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// CSRF protection note (Point 8):
+// Next.js App Router server actions have built-in CSRF protection:
+//   - The framework validates the Origin header on cross-origin requests.
+//   - Auth cookies are set with SameSite=Lax by @supabase/ssr (see cookiesToSet options below),
+//     which prevents them being sent in cross-site top-level navigations initiated by third parties.
+//   - State-changing operations are POST-only server actions, not plain GET routes.
+// No additional CSRF middleware is required.
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 

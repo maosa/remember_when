@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { validateAvatarFile, safeExt } from '@/lib/upload'
+import { logAuditEvent } from '@/lib/audit'
 
 // ─── Profile (name + username only) ────────────────────────────────────────
 
@@ -13,9 +15,9 @@ export async function updateProfile(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const firstName = (formData.get('firstName') as string).trim()
-  const lastName  = (formData.get('lastName')  as string).trim()
-  const username  = (formData.get('username')  as string).trim().toLowerCase()
+  const firstName = (formData.get('firstName') as string).trim().slice(0, 50)
+  const lastName  = (formData.get('lastName')  as string).trim().slice(0, 50)
+  const username  = (formData.get('username')  as string).trim().toLowerCase().slice(0, 20)
 
   if (!firstName || !lastName || !username) {
     return { error: 'All fields are required.' }
@@ -59,7 +61,7 @@ export async function updateEmail(newEmail: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const trimmed = newEmail.trim().toLowerCase()
+  const trimmed = newEmail.trim().toLowerCase().slice(0, 254)
   if (!trimmed) return { error: 'Email is required.' }
 
   const origin = (await headers()).get('origin') ?? ''
@@ -84,6 +86,9 @@ export async function changePassword(newPassword: string) {
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) return { error: error.message }
 
+  // Audit log — fire-and-forget
+  void logAuditEvent(user.id, 'password_changed')
+
   return { success: true }
 }
 
@@ -96,8 +101,13 @@ export async function updateAvatar(formData: FormData) {
 
   const file = formData.get('avatar') as File
   if (!file || file.size === 0) return { error: 'No file provided.' }
+  if (file.size > 10 * 1024 * 1024) return { error: 'File must be under 10 MB.' }
 
-  const ext = file.name.split('.').pop()
+  // Validate MIME type — derive extension from type, not filename
+  const mimeError = validateAvatarFile(file)
+  if (mimeError) return { error: mimeError }
+
+  const ext = safeExt(file.type)
   const path = `${user.id}/avatar.${ext}`
 
   const { error: uploadError } = await supabase.storage
@@ -106,6 +116,7 @@ export async function updateAvatar(formData: FormData) {
 
   if (uploadError) return { error: uploadError.message }
 
+  // Avatars bucket is public; store the public URL with cache-bust
   const { data: { publicUrl } } = supabase.storage
     .from('avatars')
     .getPublicUrl(path)
@@ -156,6 +167,9 @@ export async function deleteAccount() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // Audit log before deletion so user_id is still valid
+  await logAuditEvent(user.id, 'account_deleted')
 
   await supabase.from('users').delete().eq('id', user.id)
   await supabase.auth.signOut()

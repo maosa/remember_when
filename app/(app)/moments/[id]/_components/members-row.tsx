@@ -130,6 +130,7 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
               <CoverPhotoSection
                 momentId={moment.id}
                 currentUrl={moment.coverPhotoUrl}
+                currentStoragePath={moment.coverPhotoStoragePath}
                 canEdit={true}
               />
               <InviteDialog momentId={moment.id} myRole={myRole} />

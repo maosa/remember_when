@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -12,10 +13,22 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * Response: { hasPending: boolean }
  */
 export async function POST(request: NextRequest) {
+  // Verify the caller has a valid session — unauthenticated requests are rejected
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { userId, email } = await request.json()
 
   if (!userId || !email) {
     return NextResponse.json({ error: 'Missing userId or email' }, { status: 400 })
+  }
+
+  // Ensure the caller can only resolve their own pending invites
+  if (userId !== user.id || email.toLowerCase() !== user.email?.toLowerCase()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const admin = createAdminClient()

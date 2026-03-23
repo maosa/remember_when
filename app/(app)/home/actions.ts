@@ -6,6 +6,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification } from '@/lib/notifications'
+import { signStoragePaths } from '@/lib/storage'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,12 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
   const { data: moments, error } = await query
   if (error) return { moments: [], error: error.message }
 
+  // Batch-sign all cover photo paths (moment-covers and post-media are private buckets)
+  const coverPaths = (moments ?? [])
+    .map((m) => m.cover_photo_url)
+    .filter((p): p is string => Boolean(p))
+  const signedCovers = await signStoragePaths(coverPaths)
+
   const result: MomentSummary[] = (moments ?? []).map((m) => {
     const isOwner = m.owner_id === user.id
     const rawMembers = (m.moment_members as unknown as Array<{
@@ -92,6 +99,8 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
     const isArchived = (m.moment_archive as unknown as Array<{ user_id: string }>)
       .some((a) => a.user_id === user.id)
 
+    const coverPath = m.cover_photo_url ?? null
+
     return {
       id: m.id,
       name: m.name,
@@ -99,7 +108,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       dateMonth: m.date_month ?? null,
       dateDay: m.date_day ?? null,
       location: m.location ?? null,
-      coverPhotoUrl: m.cover_photo_url ?? null,
+      coverPhotoUrl: coverPath ? (signedCovers.get(coverPath) ?? null) : null,
       ownerId: m.owner_id,
       createdAt: m.created_at,
       tags: (m.moment_tags as unknown as Array<{ tag: string }>).map((t) => t.tag),
@@ -172,8 +181,9 @@ export async function createMoment(data: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const name = data.name.trim()
+  const name = data.name.trim().slice(0, 200)
   if (!name) return { error: 'Moment name is required.' }
+  const location = data.location?.trim().slice(0, 200) || null
 
   // Create the moment (user client so RLS owner_id check applies)
   const { data: moment, error: momentError } = await supabase
@@ -183,7 +193,7 @@ export async function createMoment(data: {
       date_year: data.dateYear ?? null,
       date_month: data.dateMonth ?? null,
       date_day: data.dateDay ?? null,
-      location: data.location?.trim() || null,
+      location,
       owner_id: user.id,
     })
     .select('id')

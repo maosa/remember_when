@@ -22,6 +22,10 @@ interface Props {
 export default async function JoinViaLinkPage({ params }: Props) {
   const { token } = await params
 
+  // Validate token is a UUID before hitting the DB (prevents unnecessary queries)
+  const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!UUID_PATTERN.test(token)) redirect('/home?join=invalid')
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(`/login?next=/join/${token}`)
