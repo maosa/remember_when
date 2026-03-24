@@ -44,27 +44,30 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/auth') ||
-    pathname === '/pricing'
+    pathname === '/pricing' ||
+    pathname === '/' // landing page — publicly accessible
+
+  // Helper: redirect while preserving any Supabase cookie updates
+  function redirectTo(destination: string): NextResponse {
+    const url = request.nextUrl.clone()
+    url.pathname = destination
+    const res = NextResponse.redirect(url)
+    // Copy refreshed session cookies so the next request is authenticated
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      res.cookies.set(cookie)
+    })
+    return res
+  }
 
   // Redirect unauthenticated users away from protected routes
   if (!user && !isAuthRoute) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectTo('/login')
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages (not the landing page —
+  // '/' is publicly accessible and authenticated users may visit it freely)
   if (user && (pathname === '/login' || pathname === '/signup')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/home'
-    return NextResponse.redirect(url)
-  }
-
-  // Redirect root to home or login
-  if (pathname === '/') {
-    const url = request.nextUrl.clone()
-    url.pathname = user ? '/home' : '/login'
-    return NextResponse.redirect(url)
+    return redirectTo('/home')
   }
 
   return supabaseResponse
