@@ -140,7 +140,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
           {/* Name */}
           <div className="space-y-1.5">
             <Label htmlFor="edit-moment-name">
-              Name <span className="text-destructive">*</span>
+              Name <span className="text-rw-danger">*</span>
             </Label>
             <Input
               id="edit-moment-name"
@@ -155,10 +155,10 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
           <div className="space-y-1.5">
             <Label>
               Date{' '}
-              <span className="text-muted-foreground text-xs font-normal">(optional)</span>
+              <span className="text-rw-text-muted text-xs font-normal">(optional)</span>
             </Label>
             {/* Mode selector */}
-            <div className="inline-flex rounded-lg border bg-muted p-0.5 gap-0.5 text-xs">
+            <div className="inline-flex rounded-lg border border-rw-border-subtle bg-rw-surface-raised p-0.5 gap-0.5 text-xs">
               {(['year', 'month-year', 'full'] as DateMode[]).map((mode) => (
                 <button
                   key={mode}
@@ -167,8 +167,8 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                   className={cn(
                     'px-2.5 py-1 rounded-md font-medium transition-colors',
                     dateMode === mode
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'bg-rw-bg text-rw-text-primary shadow-sm'
+                      : 'text-rw-text-muted hover:text-rw-text-primary'
                   )}
                 >
                   {mode === 'year' ? 'Year' : mode === 'month-year' ? 'Month + Year' : 'Full date'}
@@ -194,7 +194,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                 <select
                   value={dateMonth}
                   onChange={(e) => setDateMonth(e.target.value)}
-                  className="h-8 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-8 flex-1 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 text-sm outline-none focus-visible:border-rw-accent focus-visible:ring-2 focus-visible:ring-rw-accent/[0.12]"
                 >
                   <option value="">Month</option>
                   {MONTHS.map((m, i) => (
@@ -219,7 +219,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
           <div className="space-y-1.5">
             <Label htmlFor="edit-moment-location">
               Location{' '}
-              <span className="text-muted-foreground text-xs font-normal">(optional)</span>
+              <span className="text-rw-text-muted text-xs font-normal">(optional)</span>
             </Label>
             <Input
               id="edit-moment-location"
@@ -233,24 +233,24 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
           <div className="space-y-1.5">
             <Label>
               Tags{' '}
-              <span className="text-muted-foreground text-xs font-normal">
+              <span className="text-rw-text-muted text-xs font-normal">
                 (optional · max 20 chars)
               </span>
             </Label>
             <div
-              className="flex flex-wrap gap-1.5 rounded-lg border border-input bg-transparent px-2.5 py-2 min-h-9 cursor-text"
+              className="flex flex-wrap gap-1.5 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 min-h-9 cursor-text"
               onClick={() => document.getElementById('edit-tag-input')?.focus()}
             >
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded bg-secondary px-2 py-0.5 text-xs font-medium"
+                  className="inline-flex items-center gap-1 rounded bg-rw-surface-raised px-2 py-0.5 text-xs font-medium"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-rw-text-muted hover:text-rw-text-primary"
                   >
                     <X className="size-3" />
                   </button>
@@ -263,13 +263,13 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                 onKeyDown={handleTagKeyDown}
                 onBlur={() => addTag(tagInput)}
                 placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
-                className="min-w-24 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="min-w-24 flex-1 bg-transparent text-sm outline-none placeholder:text-rw-text-muted"
               />
             </div>
-            <p className="text-xs text-muted-foreground">Press Enter or comma to add a tag.</p>
+            <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-rw-danger">{error}</p>}
         </div>
 
         <DialogFooter>

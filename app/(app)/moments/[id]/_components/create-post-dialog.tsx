@@ -107,8 +107,8 @@ export function CreatePostDialog({ momentId }: Props) {
             rows={4}
             autoFocus
             className={cn(
-              'w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none resize-none transition-colors',
-              'placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+              'w-full rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 text-sm outline-none resize-none transition-colors',
+              'placeholder:text-rw-text-muted focus-visible:border-rw-accent/60 focus-visible:ring-3 focus-visible:ring-rw-accent/20'
             )}
           />
 
@@ -116,7 +116,7 @@ export function CreatePostDialog({ momentId }: Props) {
           {previews.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {previews.map((p, i) => (
-                <div key={i} className="relative size-40 rounded-lg overflow-hidden bg-muted shrink-0">
+                <div key={i} className="relative size-28 sm:size-40 rounded-lg overflow-hidden bg-rw-surface-raised shrink-0">
                   {p.kind === 'photo' && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.objectUrl} alt="" className="size-full object-cover" />
@@ -126,8 +126,8 @@ export function CreatePostDialog({ momentId }: Props) {
                   )}
                   {p.kind === 'audio' && (
                     <div className="size-full flex flex-col items-center justify-center gap-2 p-3">
-                      <Mic className="size-6 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground truncate max-w-full px-1">
+                      <Mic className="size-6 text-rw-text-muted" />
+                      <p className="text-xs text-rw-text-muted truncate max-w-full px-1">
                         {p.file.name}
                       </p>
                     </div>
@@ -201,10 +201,10 @@ export function CreatePostDialog({ momentId }: Props) {
                 Audio
               </Button>
             </div>
-            <span className="text-xs text-muted-foreground ml-auto">Max 100 MB per file</span>
+            <span className="text-xs text-rw-text-muted ml-auto">Max 100 MB per file</span>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-rw-danger">{error}</p>}
         </div>
 
         <DialogFooter>

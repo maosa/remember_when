@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 
@@ -107,17 +107,17 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Check your email</CardTitle>
-            <CardDescription>
-              We sent a confirmation link to <strong>{formData.email}</strong>.
+      <div className="min-h-screen flex items-center justify-center bg-rw-bg px-4" style={bgStyle}>
+        <Card className="w-full max-w-[420px] shadow-rw-modal">
+          <CardHeader className="border-b border-rw-border-subtle pb-5">
+            <h2 className="font-serif text-[22px] font-semibold text-rw-text-primary">Check your email</h2>
+            <p className="text-[14px] text-rw-text-muted mt-1">
+              We sent a confirmation link to <strong className="text-rw-text-primary">{formData.email}</strong>.
               Click it to activate your account.
-            </CardDescription>
+            </p>
           </CardHeader>
-          <CardFooter>
-            <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
+          <CardFooter className="pt-5">
+            <Link href="/login" className="text-[13px] text-rw-text-muted hover:text-rw-text-primary transition-colors">
               Back to sign in
             </Link>
           </CardFooter>
@@ -127,19 +127,26 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 gap-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">Create an account</CardTitle>
-          <CardDescription>Start capturing your moments</CardDescription>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 gap-5" style={bgStyle}>
+      <Card className="w-full max-w-[420px] shadow-rw-modal">
+        {/* Card header — wordmark + subtitle */}
+        <CardHeader className="border-b border-rw-border-subtle pb-5">
+          <h1 className="font-serif text-[22px] font-semibold text-rw-text-primary">Remember When</h1>
+          <p className="text-[14px] text-rw-text-muted mt-0.5">Start capturing your moments.</p>
         </CardHeader>
+
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="pt-5 space-y-4">
+            {/* Error banner */}
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <div className="rounded-[8px] border border-rw-danger/20 bg-rw-danger-subtle px-3.5 py-2.5 text-[13px] text-rw-danger">
+                {error}
+              </div>
             )}
+
+            {/* Name row */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="firstName">First name</Label>
                 <Input
                   id="firstName"
@@ -150,7 +157,7 @@ export default function SignupPage() {
                   required
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="lastName">Last name</Label>
                 <Input
                   id="lastName"
@@ -162,7 +169,9 @@ export default function SignupPage() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
+
+            {/* Email */}
+            <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -175,7 +184,9 @@ export default function SignupPage() {
                 autoComplete="email"
               />
             </div>
-            <div className="space-y-2">
+
+            {/* Username */}
+            <div className="space-y-1.5">
               <Label htmlFor="username">Username</Label>
               <div className="relative">
                 <Input
@@ -186,31 +197,33 @@ export default function SignupPage() {
                   onChange={handleChange}
                   required
                   autoComplete="username"
-                  className="pr-8"
+                  className="pr-9"
                 />
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                   {usernameStatus === 'checking' && (
-                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                    <Loader2 className="size-4 animate-spin text-rw-text-placeholder" />
                   )}
                   {usernameStatus === 'available' && (
-                    <CheckCircle className="size-4 text-green-500" />
+                    <CheckCircle className="size-4 text-rw-accent" />
                   )}
                   {(usernameStatus === 'taken' || usernameStatus === 'invalid') && (
-                    <XCircle className="size-4 text-destructive" />
+                    <XCircle className="size-4 text-rw-danger" />
                   )}
                 </div>
               </div>
               {usernameStatus === 'available' && (
-                <p className="text-xs text-green-600">Available</p>
+                <p className="text-[12px] text-rw-accent">Available</p>
               )}
               {usernameStatus === 'taken' && (
-                <p className="text-xs text-destructive">Already taken</p>
+                <p className="text-[12px] text-rw-danger">Already taken</p>
               )}
               {usernameStatus === 'invalid' && (
-                <p className="text-xs text-muted-foreground">3–20 characters: letters, numbers, underscores</p>
+                <p className="text-[12px] text-rw-text-muted">3–20 characters: letters, numbers, underscores</p>
               )}
             </div>
-            <div className="space-y-2 pb-2">
+
+            {/* Password */}
+            <div className="space-y-1.5 pb-1">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -224,26 +237,39 @@ export default function SignupPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-3">
+
+          <CardFooter className="flex flex-col gap-3 pt-1">
             <Button
               type="submit"
+              size="lg"
               className="w-full"
               disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
             >
               {loading ? 'Creating account…' : 'Create account'}
             </Button>
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-[13px] text-rw-text-muted text-center">
               Already have an account?{' '}
-              <Link href="/login" className="text-foreground hover:underline">
+              <Link href="/login" className="text-rw-text-primary hover:text-rw-accent transition-colors">
                 Sign in
               </Link>
             </p>
           </CardFooter>
         </form>
       </Card>
-      <Link href="/pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+
+      <Link href="/pricing" className="text-[12px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
         See pricing plans
       </Link>
     </div>
   )
+}
+
+// Warm linen background with subtle radial gradient accents — matches design system auth screens
+const bgStyle: React.CSSProperties = {
+  backgroundColor: 'var(--rw-color-bg)',
+  backgroundImage: [
+    'radial-gradient(ellipse 600px 400px at 50% -60px, rgba(212,224,218,0.45) 0%, transparent 70%)',
+    'radial-gradient(ellipse 480px 320px at -10% 90%, rgba(216,232,216,0.3) 0%, transparent 65%)',
+    'radial-gradient(ellipse 400px 280px at 110% 85%, rgba(224,232,237,0.3) 0%, transparent 65%)',
+  ].join(', '),
 }

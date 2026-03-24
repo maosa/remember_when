@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { UserRound, UserRoundCheck, UserRoundX, Search, X } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -79,7 +80,7 @@ function UserRow({ user }: { user: Friend }) {
         <p className="text-sm font-medium truncate">
           {user.first_name} {user.last_name}
         </p>
-        <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+        <p className="text-xs text-rw-text-muted truncate">@{user.username}</p>
       </div>
     </div>
   )
@@ -112,7 +113,7 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
   return (
     <div className="space-y-8">
       {actionError && (
-        <p className="text-sm text-destructive">{actionError}</p>
+        <p className="text-sm text-rw-danger">{actionError}</p>
       )}
 
       {/* ── Notifications ─────────────────────────────────────── */}
@@ -124,9 +125,9 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
       {pendingReceived.length > 0 && (
         <>
           <section className="space-y-4">
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">
               Friend requests
-              <span className="ml-2 inline-flex items-center justify-center size-5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
+              <span className="ml-2 inline-flex items-center justify-center size-5 rounded-full bg-rw-accent text-white text-[10px] font-semibold">
                 {pendingReceived.length}
               </span>
             </h2>
@@ -163,7 +164,7 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
 
       {/* ── Find friends (search) ──────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Find friends</h2>
+        <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Find friends</h2>
         <UserSearch />
       </section>
 
@@ -172,14 +173,14 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
         <>
           <Separator />
           <section className="space-y-4">
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">
               Pending
             </h2>
             <ul className="space-y-3">
               {pendingSent.map(({ friendshipId, to }) => (
                 <li key={friendshipId} className="flex items-center justify-between gap-3">
                   <UserRow user={to} />
-                  <span className="text-xs text-muted-foreground shrink-0">Request sent</span>
+                  <span className="text-xs text-rw-text-muted shrink-0">Request sent</span>
                 </li>
               ))}
             </ul>
@@ -192,7 +193,7 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
         <>
           <Separator />
           <section className="space-y-4">
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">
               Your friends ({friends.length})
             </h2>
             <ul className="space-y-3">
@@ -202,7 +203,7 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-muted-foreground shrink-0"
+                    className="text-rw-text-muted shrink-0"
                     disabled={isPending}
                     onClick={() => handleAction(() => removeFriend(friendshipId))}
                   >
@@ -216,10 +217,12 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
       )}
 
       {friends.length === 0 && pendingSent.length === 0 && pendingReceived.length === 0 && notifications.length === 0 && (
-        <div className="text-center py-12 space-y-2">
-          <UserRound className="size-10 mx-auto text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">Search above to find and add friends.</p>
-        </div>
+        <EmptyState
+          icon={<UserRound />}
+          title="No friends yet"
+          description="Search above to find and add friends."
+          className="py-12"
+        />
       )}
     </div>
   )
@@ -230,10 +233,10 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
 function NotificationsSection({ notifications }: { notifications: NotificationEntry[] }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">New</h2>
+      <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">New</h2>
       <ul className="space-y-2">
         {notifications.map((n) => (
-          <li key={n.id} className="flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-2.5">
+          <li key={n.id} className="flex items-center gap-3 rounded-lg bg-rw-blue-subtle px-3 py-2.5">
             <UserAvatar user={n.fromUser} size="sm" />
             <p className="text-sm">
               <span className="font-medium">
@@ -309,7 +312,7 @@ function UserSearch() {
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-rw-text-muted pointer-events-none" />
         <Input
           type="text"
           placeholder="Search by name or username…"
@@ -322,7 +325,7 @@ function UserSearch() {
           <button
             type="button"
             onClick={() => { setQuery(''); setResults(null) }}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-rw-text-muted hover:text-rw-text-primary"
             aria-label="Clear search"
           >
             <X className="size-4" />
@@ -331,16 +334,16 @@ function UserSearch() {
       </div>
 
       {searching && (
-        <p className="text-sm text-muted-foreground">Searching…</p>
+        <p className="text-sm text-rw-text-muted">Searching…</p>
       )}
 
       {searchError && (
-        <p className="text-sm text-destructive">{searchError}</p>
+        <p className="text-sm text-rw-danger">{searchError}</p>
       )}
 
       {results !== null && !searching && (
         results.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No users found.</p>
+          <p className="text-sm text-rw-text-muted">No users found.</p>
         ) : (
           <ul className="space-y-3">
             {results.map((u) => (
@@ -372,19 +375,19 @@ function SearchResultAction({
   const relationship = user.relationship
 
   if (relationship === 'accepted') {
-    return <span className="text-xs text-muted-foreground shrink-0">Friends</span>
+    return <span className="text-xs text-rw-text-muted shrink-0">Friends</span>
   }
 
   if (relationship === 'pending_received') {
-    return <span className="text-xs text-muted-foreground shrink-0">Sent you a request</span>
+    return <span className="text-xs text-rw-text-muted shrink-0">Sent you a request</span>
   }
 
   if (relationship === 'pending_sent' || actionState === 'sent') {
-    return <span className="text-xs text-muted-foreground shrink-0">Request sent</span>
+    return <span className="text-xs text-rw-text-muted shrink-0">Request sent</span>
   }
 
   if (actionState === 'error') {
-    return <span className="text-xs text-destructive shrink-0">Error — try again</span>
+    return <span className="text-xs text-rw-danger shrink-0">Error — try again</span>
   }
 
   return (

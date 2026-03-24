@@ -30,7 +30,8 @@ function MenuContent({
         <MenuPrimitive.Popup
           data-slot="menu-content"
           className={cn(
-            "min-w-36 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10",
+            "min-w-36 rounded-rw-popover bg-rw-bg p-1 text-rw-text-primary",
+            "shadow-rw-popover ring-1 ring-rw-border/60",
             "origin-(--transform-origin)",
             "duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
             "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
@@ -51,8 +52,8 @@ function MenuItem({
     <MenuPrimitive.Item
       data-slot="menu-item"
       className={cn(
-        "relative flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-colors select-none",
-        "focus:bg-accent focus:text-accent-foreground",
+        "relative flex cursor-default items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] outline-none transition-colors select-none",
+        "text-rw-text-primary focus:bg-rw-surface-raised",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
@@ -75,8 +76,8 @@ function MenuRadioItem({
     <MenuPrimitive.RadioItem
       data-slot="menu-radio-item"
       className={cn(
-        "relative flex cursor-default items-center gap-2 rounded-md py-1.5 pr-2 pl-7 text-sm outline-none transition-colors select-none",
-        "focus:bg-accent focus:text-accent-foreground",
+        "relative flex cursor-default items-center gap-2 rounded-md py-1.5 pr-2 pl-7 text-[13px] outline-none transition-colors select-none",
+        "text-rw-text-primary focus:bg-rw-surface-raised",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         className
       )}
@@ -97,7 +98,7 @@ function MenuSeparator({
   return (
     <MenuPrimitive.Separator
       data-slot="menu-separator"
-      className={cn("-mx-1 my-1 h-px bg-border", className)}
+      className={cn("-mx-1 my-1 h-px bg-rw-border-subtle", className)}
       {...props}
     />
   )
@@ -110,7 +111,7 @@ function MenuLabel({
   return (
     <MenuPrimitive.GroupLabel
       data-slot="menu-label"
-      className={cn("px-2 py-1 text-xs text-muted-foreground", className)}
+      className={cn("px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-rw-text-placeholder", className)}
       {...props}
     />
   )

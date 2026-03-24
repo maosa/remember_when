@@ -52,7 +52,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
   const audios = currentPost.media.filter((m) => m.mediaType === 'audio')
 
   return (
-    <article className="space-y-3 rounded-xl border bg-card p-4">
+    <article className="space-y-3 rounded-rw-card border border-rw-border-subtle bg-rw-surface shadow-rw-card p-5">
       {/* Author row */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -66,7 +66,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
             <p className="text-sm font-medium truncate">
               {currentPost.authorFirstName} {currentPost.authorLastName}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-rw-text-muted">
               {formatTimestamp(currentPost.createdAt)}
               {currentPost.editedAt && (
                 <span className="ml-1.5">
@@ -83,8 +83,8 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
             {canEdit && (
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-7 text-muted-foreground hover:text-foreground"
+                size="icon-sm"
+                className="text-rw-text-muted hover:text-rw-text-primary"
                 onClick={() => setEditOpen(true)}
               >
                 <Pencil className="size-3.5" />
@@ -94,8 +94,8 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
             {canDelete && (
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-7 text-muted-foreground hover:text-destructive"
+                size="icon-sm"
+                className="text-rw-text-muted hover:text-rw-danger"
                 disabled={isPending}
                 onClick={() => setConfirmOpen(true)}
               >
@@ -121,7 +121,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
               <img
                 src={m.storageUrl}
                 alt=""
-                className="size-40 rounded-lg object-cover bg-muted"
+                className="size-40 rounded-lg object-cover bg-rw-surface-raised"
               />
             </a>
           ))}
@@ -134,19 +134,19 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
           key={m.id}
           src={m.storageUrl}
           controls
-          className="w-full rounded-xl bg-muted max-h-72 object-contain"
+          className="w-full rounded-xl bg-rw-surface-raised max-h-72 object-contain"
         />
       ))}
 
       {/* Audio */}
       {audios.map((m) => (
-        <div key={m.id} className="flex items-center gap-3 rounded-xl border bg-muted/50 px-3 py-2.5">
-          <Mic className="size-4 text-muted-foreground shrink-0" />
+        <div key={m.id} className="flex items-center gap-3 rounded-xl border border-rw-border-subtle bg-rw-surface-raised/50 px-3 py-2.5">
+          <Mic className="size-4 text-rw-text-muted shrink-0" />
           <audio src={m.storageUrl} controls className="w-full h-8" />
         </div>
       ))}
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-xs text-rw-danger">{error}</p>}
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent showCloseButton={false}>

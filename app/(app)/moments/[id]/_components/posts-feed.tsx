@@ -5,6 +5,7 @@ import { ArrowDownUp, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { EmptyState } from '@/components/ui/empty-state'
 import { PostCard } from './post-card'
 import { CreatePostDialog } from './create-post-dialog'
 import type { PostWithMedia } from '../actions'
@@ -65,7 +66,7 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 text-xs text-muted-foreground"
+            className="gap-1.5 text-xs text-rw-text-muted"
             onClick={() => setSort((s) => (s === 'asc' ? 'desc' : 'asc'))}
           >
             <ArrowDownUp className="size-3.5" />
@@ -86,8 +87,8 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
             className={cn(
               'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
               filterAuthorId === null
-                ? 'bg-foreground text-background border-foreground'
-                : 'bg-transparent text-muted-foreground hover:text-foreground hover:border-foreground'
+                ? 'bg-rw-text-primary text-rw-bg border-rw-text-primary'
+                : 'bg-transparent text-rw-text-muted hover:text-rw-text-primary hover:border-rw-text-primary'
             )}
           >
             Everyone
@@ -100,8 +101,8 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
               className={cn(
                 'flex items-center gap-1.5 rounded-full border pl-1.5 pr-3 py-1 text-xs font-medium transition-colors',
                 filterAuthorId === a.id
-                  ? 'bg-foreground text-background border-foreground'
-                  : 'bg-transparent text-muted-foreground hover:text-foreground hover:border-foreground'
+                  ? 'bg-rw-text-primary text-rw-bg border-rw-text-primary'
+                  : 'bg-transparent text-rw-text-muted hover:text-rw-text-primary hover:border-rw-text-primary'
               )}
             >
               <Avatar className="size-4">
@@ -116,18 +117,13 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
 
       {/* Post list */}
       {sorted.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <BookOpen className="size-5 text-muted-foreground" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium">No entries yet</p>
-            <p className="text-sm text-muted-foreground">
-              {canPost ? 'Be the first to add an entry to this moment.' : 'Entries will appear here.'}
-            </p>
-          </div>
-          {canPost && <CreatePostDialog momentId={momentId} />}
-        </div>
+        <EmptyState
+          icon={<BookOpen />}
+          title="No entries yet"
+          description={canPost ? 'Be the first to add an entry to this moment.' : 'Entries will appear here.'}
+          action={canPost ? <CreatePostDialog momentId={momentId} /> : undefined}
+          className="py-16"
+        />
       ) : (
         <div className="space-y-3">
           {sorted.map((post) => (

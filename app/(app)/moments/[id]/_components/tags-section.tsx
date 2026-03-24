@@ -44,17 +44,17 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
   if (tags.length === 0 && !canEdit) return null
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-3 border-b space-y-2">
+    <section className="mx-auto max-w-[720px] px-4 md:px-6 py-3 border-b border-rw-border-subtle space-y-2">
       <div className="flex flex-wrap items-center gap-1.5">
         {tags.map((t) => (
-          <Badge key={t.id} variant="secondary" className="gap-1 pl-2 pr-1.5">
+          <Badge key={t.id} variant="default" className="gap-1 pl-2 pr-1.5">
             {t.tag}
             {canEdit && (
               <button
                 type="button"
                 onClick={() => handleRemoveTag(t.id)}
                 disabled={isPending}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-rw-accent/70 hover:text-rw-accent transition-colors"
                 aria-label={`Remove tag ${t.tag}`}
               >
                 <X className="size-2.5" />
@@ -71,13 +71,13 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
               onKeyDown={handleKeyDown}
               onBlur={() => handleAddTag(input)}
               placeholder="Add tag…"
-              className="h-6 w-24 rounded-md border border-dashed border-input bg-transparent px-2 text-xs outline-none placeholder:text-muted-foreground/60 focus:border-ring"
+              className="h-6 w-24 rounded-md border border-dashed border-rw-border bg-transparent px-2 text-xs outline-none placeholder:text-rw-text-placeholder/60 focus:border-rw-accent"
               disabled={isPending}
             />
           </div>
         )}
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-xs text-rw-danger">{error}</p>}
     </section>
   )
 }

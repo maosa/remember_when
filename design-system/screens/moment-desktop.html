@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remember When — Moment Page (Desktop)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --color-bg:              #F5F2ED;
+      --color-surface:         #EDEAE4;
+      --color-surface-raised:  #E6E2DB;
+      --color-text-primary:    #2C2A25;
+      --color-text-muted:      #7C7670;
+      --color-text-placeholder:#A8A39D;
+      --color-accent:          #5C7A6B;
+      --color-accent-hover:    #4A6659;
+      --color-accent-subtle:   #D4E0DA;
+      --color-blue:            #7C96A8;
+      --color-blue-subtle:     #E0E8ED;
+      --color-border:          #D6D1CB;
+      --color-border-subtle:   #E8E4DE;
+      --color-danger:          #C0392B;
+      --color-white:           #FFFFFF;
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+      --shadow-card:    0 1px 3px rgba(44,42,37,0.08);
+      --shadow-popover: 0 4px 16px rgba(44,42,37,0.12);
+      --shadow-sticky:  0 1px 0 rgba(44,42,37,0.08), 0 2px 12px rgba(44,42,37,0.06);
+    }
+
+    /* ============================================================
+       RESET
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       STICKY BAR — hidden until cover scrolls out of view
+       ============================================================ */
+    .sticky-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      height: 52px;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border-subtle);
+      box-shadow: var(--shadow-sticky);
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      gap: 16px;
+
+      /* Hidden state */
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .sticky-bar.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .sticky-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      padding: 4px 0;
+      transition: color 0.12s;
+      flex-shrink: 0;
+    }
+
+    .sticky-back:hover { color: var(--color-text-primary); }
+
+    .sticky-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--color-border);
+      flex-shrink: 0;
+    }
+
+    .sticky-moment-name {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--color-text-primary);
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sticky-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       COVER PHOTO
+       ============================================================ */
+    .moment-cover {
+      position: relative;
+      width: 100%;
+      height: 280px;
+      overflow: hidden;
+    }
+
+    /* Cinematic race-day dawn gradient */
+    .cover-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(175deg,
+        #141E30 0%,
+        #1E2E48 8%,
+        #2A3E5E 16%,
+        #3A5272 24%,
+        #4E6A84 32%,
+        #628090 40%,
+        #8A9E98 48%,
+        #B0A870 54%,
+        #C89840 60%,
+        #B07828 66%,
+        #885A20 72%,
+        #644018 78%,
+        #442C10 86%,
+        #2C1C08 94%,
+        #1A1008 100%
+      );
+    }
+
+    /* Subtle texture overlay */
+    .cover-texture {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 120% 60% at 30% 40%, rgba(180,160,100,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse 80% 40% at 70% 20%, rgba(100,140,180,0.14) 0%, transparent 50%);
+    }
+
+    /* The key gradient: transparent → 75% dark at bottom */
+    .cover-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(28,24,18,0.76) 0%,
+        rgba(28,24,18,0.50) 28%,
+        rgba(28,24,18,0.20) 55%,
+        rgba(28,24,18,0.04) 78%,
+        transparent 100%
+      );
+    }
+
+    /* Moment text — bottom-left */
+    .cover-text {
+      position: absolute;
+      bottom: 26px;
+      left: 32px;
+      right: 80px;
+    }
+
+    .cover-moment-name {
+      font-family: var(--font-serif);
+      font-weight: 400;
+      font-size: 34px;
+      color: #fff;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.2);
+      margin-bottom: 7px;
+    }
+
+    .cover-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .cover-meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.82);
+      text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+    }
+
+    .cover-meta-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      flex-shrink: 0;
+    }
+
+    /* Cover [...] menu — top-right */
+    .cover-menu-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 34px;
+      height: 34px;
+      background: rgba(28,24,18,0.42);
+      border: none;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.92);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 0.14s;
+    }
+
+    .cover-menu-btn:hover { background: rgba(28,24,18,0.65); }
+
+    /* Cover popover */
+    .cover-popover {
+      position: absolute;
+      top: 56px;
+      right: 16px;
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-popover);
+      padding: 5px;
+      min-width: 172px;
+      z-index: 20;
+      display: none;
+    }
+
+    .cover-popover.open { display: block; }
+
+    .pop-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 11px;
+      font-size: 13px;
+      color: var(--color-text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
+      user-select: none;
+    }
+
+    .pop-item:hover { background: var(--color-surface); }
+    .pop-item.danger { color: var(--color-danger); }
+    .pop-sep { height: 1px; background: var(--color-border-subtle); margin: 4px 0; }
+
+    /* ============================================================
+       CONTENT AREA
+       ============================================================ */
+    .page-content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ============================================================
+       META STRIP — tags + members row
+       ============================================================ */
+    .meta-strip {
+      padding: 18px 0 0;
+      border-bottom: 1px solid var(--color-border-subtle);
+      margin-bottom: 24px;
+    }
+
+    /* Tags row */
+    .tags-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 11px;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 999px;
+      line-height: 1;
+      cursor: default;
+      transition: background 0.12s;
+    }
+
+    .tag-pill:hover { background: #C4D8D0; }
+
+    .tag-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--color-accent);
+      opacity: 0.6;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      transition: opacity 0.1s;
+      line-height: 1;
+    }
+
+    .tag-remove:hover { opacity: 1; }
+
+    .tag-add {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: transparent;
+      color: var(--color-text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 999px;
+      border: 1px dashed var(--color-border);
+      cursor: pointer;
+      line-height: 1;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+    }
+
+    .tag-add:hover {
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+      background: var(--color-accent-subtle);
+    }
+
+    /* Members row */
+    .members-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 16px;
+    }
+
+    .members-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar-stack {
+      display: flex;
+      align-items: center;
+    }
+
+    .avatar {
+      border-radius: 50%;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      user-select: none;
+      border: 2px solid var(--color-bg);
+    }
+
+    .avatar-sm {
+      width: 28px;
+      height: 28px;
+      font-size: 10px;
+    }
+
+    .avatar-stack .avatar { margin-left: -8px; }
+    .avatar-stack .avatar:first-child { margin-left: 0; }
+
+    .av-teal { background: var(--color-accent-subtle);  color: var(--color-accent); }
+    .av-blue { background: var(--color-blue-subtle);    color: var(--color-blue); }
+    .av-warm { background: #EDE0D4; color: #8B6650; }
+    .av-sage { background: #D8E8D8; color: #4A7A5A; }
+    .av-dusk { background: #E8DAEA; color: #8A6090; }
+    .av-more { background: var(--color-surface-raised); color: var(--color-text-muted); font-size: 9px; }
+
+    .members-count {
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+
+    .members-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Small icon-label buttons */
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 30px;
+      padding: 0 10px;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: 7px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      white-space: nowrap;
+    }
+
+    .action-btn:hover {
+      background: var(--color-surface-raised);
+      border-color: var(--color-border);
+      color: var(--color-text-primary);
+    }
+
+    /* ============================================================
+       POSTS SECTION
+       ============================================================ */
+    .posts-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .posts-heading {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 20px;
+      color: var(--color-text-primary);
+    }
+
+    .posts-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Sort toggle (tab bar style) */
+    .sort-tabs {
+      display: inline-flex;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 7px;
+      padding: 2px;
+      gap: 1px;
+    }
+
+    .sort-tab {
+      padding: 4px 11px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      border-radius: 5px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+
+    .sort-tab.active {
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      box-shadow: 0 1px 3px rgba(44,42,37,0.1);
+    }
+
+    .btn-add-post {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 13px;
+      background: var(--color-accent);
+      color: var(--color-white);
+      border: none;
+      border-radius: 7px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.13s;
+      white-space: nowrap;
+    }
+
+    .btn-add-post:hover { background: var(--color-accent-hover); }
+
+    /* ============================================================
+       POST CARDS
+       ============================================================ */
+    .posts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .post-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      transition: box-shadow 0.16s;
+    }
+
+    .post-card:hover { box-shadow: 0 3px 12px rgba(44,42,37,0.09); }
+
+    .post-card-inner { padding: 20px 22px; }
+
+    /* Post header: avatar + name + time + menu */
+    .post-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      margin-bottom: 14px;
+    }
+
+    .post-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .post-author-info { flex: 1; min-width: 0; }
+
+    .post-author-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      line-height: 1.3;
+    }
+
+    .post-author-meta {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 1px;
+    }
+
+    .post-menu-btn {
+      width: 28px;
+      height: 28px;
+      background: none;
+      border: none;
+      border-radius: 6px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.13s, background 0.13s, color 0.13s;
+      flex-shrink: 0;
+    }
+
+    .post-card:hover .post-menu-btn { opacity: 1; }
+    .post-menu-btn:hover { background: var(--color-surface-raised); color: var(--color-text-primary); }
+
+    /* Post body text */
+    .post-text {
+      font-size: 15px;
+      color: var(--color-text-primary);
+      line-height: 1.65;
+    }
+
+    .post-text + .post-images { margin-top: 16px; }
+
+    /* Post images */
+    .post-images { border-radius: 10px; overflow: hidden; }
+
+    .post-img-single {
+      width: 100%;
+      height: 220px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .post-img-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .post-img-pair > div {
+      height: 180px;
+    }
+
+    .post-img-trio {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      grid-template-rows: 140px 140px;
+      gap: 3px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .post-img-trio > div:first-child {
+      grid-row: span 2;
+    }
+
+    /* Image gradients that evoke race photography */
+    .img-ocean-start {
+      background: linear-gradient(175deg,
+        #0A1E34 0%, #0E2848 15%,
+        #163860 28%, #1E4E7A 40%,
+        #2A6494 52%, #3A7EB0 62%,
+        #5A9EC8 72%, #7EC0E0 82%,
+        #A0D8F0 92%, #C8EEF8 100%
+      );
+    }
+
+    .img-bike-course {
+      background: linear-gradient(160deg,
+        #E8C878 0%, #D8A848 15%,
+        #C48830 28%, #B06820 40%,
+        #9C5418 52%, #884010 64%,
+        #703010 74%, #5A2408 86%,
+        #401C06 100%
+      );
+    }
+
+    .img-run-lava {
+      background: linear-gradient(170deg,
+        #F0D8A0 0%, #E0B868 15%,
+        #CC9840 28%, #B87828 42%,
+        #A45E18 56%, #8A4810 68%,
+        #6C3810 80%, #502C0A 100%
+      );
+    }
+
+    .img-finish-line {
+      background: linear-gradient(165deg,
+        #D4B880 0%, #C49450 15%,
+        #AA7030 28%, #905014 40%,
+        #7A3C0E 50%,
+        #8A5A30 60%, #A07848 70%,
+        #C0A070 80%, #D8C090 100%
+      );
+    }
+
+    .img-crowd-cheer {
+      background: linear-gradient(170deg,
+        #C8B4A0 0%, #B09080 18%,
+        #988A7A 32%, #8A7868 46%,
+        #7C6A58 58%, #6E5C4A 70%,
+        #604E3C 82%, #50402E 100%
+      );
+    }
+
+    .img-transition {
+      background: linear-gradient(155deg,
+        #A8C8D8 0%, #88A8C0 18%,
+        #6888A8 34%, #507090 50%,
+        #3A5878 64%, #284870 80%, #1A3860 100%
+      );
+    }
+
+    .img-medal {
+      background: linear-gradient(160deg,
+        #E8D490 0%, #D0B058 18%,
+        #B88C30 34%, #9A6C18 48%,
+        #7E5010 62%, #603C08 78%, #402808 100%
+      );
+    }
+
+    /* Read more link */
+    .post-read-more {
+      display: inline;
+      font-size: 15px;
+      color: var(--color-accent);
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .post-read-more:hover { text-decoration: underline; }
+
+    /* ============================================================
+       BUTTONS
+       ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 12px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.13s;
+      white-space: nowrap;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-text-primary);
+      border-color: var(--color-border);
+    }
+
+    .btn-secondary:hover { background: var(--color-surface-raised); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--color-text-muted);
+      border-color: transparent;
+    }
+
+    .btn-ghost:hover { background: var(--color-surface-raised); color: var(--color-text-primary); }
+
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       STICKY BAR (appears when cover scrolls out)
+       ============================================================ -->
+  <div class="sticky-bar" id="stickyBar">
+    <a href="#" class="sticky-back">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+      All moments
+    </a>
+    <div class="sticky-divider"></div>
+    <span class="sticky-moment-name">Our Ironman 2023</span>
+    <div class="sticky-actions">
+      <button class="btn btn-secondary" style="height:30px;font-size:12px;padding:0 10px;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+        </svg>
+        Edit cover
+      </button>
+      <button class="btn btn-secondary" style="height:30px;font-size:12px;padding:0 10px;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+        </svg>
+        Invite
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       COVER PHOTO
+       ============================================================ -->
+  <div class="moment-cover" id="momentCover">
+    <div class="cover-bg"></div>
+    <div class="cover-texture"></div>
+    <div class="cover-overlay"></div>
+
+    <!-- Moment text -->
+    <div class="cover-text">
+      <h1 class="cover-moment-name">Our Ironman 2023</h1>
+      <div class="cover-meta">
+        <span class="cover-meta-item">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+          </svg>
+          November 2023
+        </span>
+        <span class="cover-meta-dot"></span>
+        <span class="cover-meta-item">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/>
+          </svg>
+          Kona, Hawaii
+        </span>
+        <span class="cover-meta-dot"></span>
+        <span class="cover-meta-item">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          4 people
+        </span>
+      </div>
+    </div>
+
+    <!-- Cover [...] menu -->
+    <button class="cover-menu-btn" id="coverMenuBtn" aria-label="Edit moment">
+      <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+      </svg>
+    </button>
+
+    <div class="cover-popover" id="coverPopover">
+      <div class="pop-item">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        Edit details
+      </div>
+      <div class="pop-item">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Edit cover photo
+      </div>
+      <div class="pop-sep"></div>
+      <div class="pop-item">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Archive moment
+      </div>
+      <div class="pop-sep"></div>
+      <div class="pop-item danger">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Delete moment
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PAGE CONTENT
+       ============================================================ -->
+  <main class="page-content">
+
+    <!-- META STRIP -->
+    <div class="meta-strip">
+
+      <!-- Tags -->
+      <div class="tags-row">
+        <span class="tag-pill">
+          Racing
+          <button class="tag-remove" aria-label="Remove">
+            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </span>
+        <span class="tag-pill">
+          Triathlon
+          <button class="tag-remove" aria-label="Remove">
+            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </span>
+        <span class="tag-pill">
+          Milestone
+          <button class="tag-remove" aria-label="Remove">
+            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </span>
+        <button class="tag-add">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Add tag
+        </button>
+      </div>
+
+      <!-- Members + actions -->
+      <div class="members-row">
+        <div class="members-left">
+          <div class="avatar-stack">
+            <div class="avatar avatar-sm av-teal">AL</div>
+            <div class="avatar avatar-sm av-blue">MK</div>
+            <div class="avatar avatar-sm av-warm">SR</div>
+            <div class="avatar avatar-sm av-sage">JL</div>
+          </div>
+          <span class="members-count">Andreas, Maria, Sam, Jules</span>
+        </div>
+        <div class="members-actions">
+          <button class="action-btn">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+            </svg>
+            Edit cover
+          </button>
+          <button class="action-btn">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+            </svg>
+            Invite
+          </button>
+          <button class="action-btn">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Manage
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- POSTS SECTION -->
+    <div class="posts-header">
+      <h2 class="posts-heading">Posts</h2>
+      <div class="posts-controls">
+        <div class="sort-tabs">
+          <button class="sort-tab active">Newest first</button>
+          <button class="sort-tab">Oldest first</button>
+        </div>
+        <button class="btn-add-post">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Add post
+        </button>
+      </div>
+    </div>
+
+    <div class="posts-list">
+
+      <!-- Post 1 — text + two images -->
+      <article class="post-card">
+        <div class="post-card-inner">
+          <div class="post-header">
+            <div class="post-avatar av-sage" style="background:#D8E8D8;color:#4A7A5A;">JL</div>
+            <div class="post-author-info">
+              <div class="post-author-name">Jules Leclaire</div>
+              <div class="post-author-meta">Yesterday at 11:34 am</div>
+            </div>
+            <button class="post-menu-btn" aria-label="Post options">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+              </svg>
+            </button>
+          </div>
+          <p class="post-text">
+            I've been trying to find words for this for two days. Crossing that finish line — hearing them say your name over the PA in the dark, with the whole town cheering — is the kind of thing that doesn't fit inside a sentence. We all trained for this separately and somehow arrived at the same finish chute within eight minutes of each other. Eight minutes. After 140 miles.
+          </p>
+          <div class="post-images" style="margin-top:16px;">
+            <div class="post-img-pair">
+              <div class="img-finish-line"></div>
+              <div class="img-crowd-cheer"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 2 — text only, longer -->
+      <article class="post-card">
+        <div class="post-card-inner">
+          <div class="post-header">
+            <div class="post-avatar av-teal" style="background:var(--color-accent-subtle);color:var(--color-accent);">AL</div>
+            <div class="post-author-info">
+              <div class="post-author-name">Andreas Louca</div>
+              <div class="post-author-meta">Yesterday at 9:08 am</div>
+            </div>
+            <button class="post-menu-btn" aria-label="Post options">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+              </svg>
+            </button>
+          </div>
+          <p class="post-text">
+            Finally writing this down. I've been staring at the finisher's photo on my phone every morning since we got back. There's a moment in every Ironman — usually somewhere around mile 16 of the run — where you have a long, honest conversation with yourself about who you actually are. The lava fields don't let you look anywhere else. I thought about every early morning I'd spent on a trainer, every long ride in the rain, every time I told myself this was a reasonable way to spend a weekend.<br><br>
+            And then I thought about the four of us standing on that beach at 6:45am in the dark, not saying much. That's the part I'll remember longest.
+          </p>
+        </div>
+      </article>
+
+      <!-- Post 3 — single tall image + text -->
+      <article class="post-card">
+        <div class="post-card-inner">
+          <div class="post-header">
+            <div class="post-avatar av-blue" style="background:var(--color-blue-subtle);color:var(--color-blue);">MK</div>
+            <div class="post-author-info">
+              <div class="post-author-name">Maria Konstantinou</div>
+              <div class="post-author-meta">2 days ago at 7:22 pm</div>
+            </div>
+            <button class="post-menu-btn" aria-label="Post options">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+              </svg>
+            </button>
+          </div>
+          <p class="post-text">The swim start at 6:55am. The water was 78°F and glassy, and the sky was still this deep navy-purple. You could see the glow sticks on the buoys stretching out across Kailua Bay. Two thousand athletes in a line, completely silent for thirty seconds before the cannon.</p>
+          <div class="post-images" style="margin-top:14px;">
+            <div class="post-img-single img-ocean-start"></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 4 — three images + short text -->
+      <article class="post-card">
+        <div class="post-card-inner">
+          <div class="post-header">
+            <div class="post-avatar av-warm" style="background:#EDE0D4;color:#8B6650;">SR</div>
+            <div class="post-author-info">
+              <div class="post-author-name">Sam Richards</div>
+              <div class="post-author-meta">2 days ago at 2:14 pm</div>
+            </div>
+            <button class="post-menu-btn" aria-label="Post options">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+              </svg>
+            </button>
+          </div>
+          <p class="post-text">The bike course. 112 miles of lava fields, crosswinds and this absolute silence except for your tyres and the wind. I took these at T1, mile 60, and the final descent into town.</p>
+          <div class="post-images" style="margin-top:14px;">
+            <div class="post-img-trio">
+              <div class="img-bike-course"></div>
+              <div class="img-run-lava"></div>
+              <div class="img-transition"></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 5 — short text, no images -->
+      <article class="post-card">
+        <div class="post-card-inner">
+          <div class="post-header">
+            <div class="post-avatar av-teal" style="background:var(--color-accent-subtle);color:var(--color-accent);">AL</div>
+            <div class="post-author-info">
+              <div class="post-author-name">Andreas Louca</div>
+              <div class="post-author-meta">3 days ago at 10:50 pm</div>
+            </div>
+            <button class="post-menu-btn" aria-label="Post options">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+              </svg>
+            </button>
+          </div>
+          <p class="post-text">
+            We're all home. All four of us finished. Starting this moment so we have somewhere to put everything — the photos, the stories, the stuff that's too good to leave in a group chat.
+          </p>
+        </div>
+      </article>
+
+    </div><!-- /posts-list -->
+
+  </main>
+
+  <script>
+    // Sticky bar visibility on scroll
+    const cover = document.getElementById('momentCover');
+    const bar   = document.getElementById('stickyBar');
+
+    const obs = new IntersectionObserver(
+      ([entry]) => bar.classList.toggle('visible', !entry.isIntersecting),
+      { threshold: 0 }
+    );
+    obs.observe(cover);
+
+    // Cover popover toggle
+    const coverBtn = document.getElementById('coverMenuBtn');
+    const coverPop = document.getElementById('coverPopover');
+
+    coverBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      coverPop.classList.toggle('open');
+    });
+
+    document.addEventListener('click', () => coverPop.classList.remove('open'));
+  </script>
+
+</body>
+</html>

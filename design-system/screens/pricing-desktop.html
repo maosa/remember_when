@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing — Remember When Design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── TOKENS ──────────────────────────────────────────────────── */
+    :root {
+      --color-bg:            #FAFAF7;
+      --color-surface:       #FFFFFF;
+      --color-accent:        #5B8A7D;
+      --color-accent-hover:  #4A7A6D;
+      --color-accent-subtle: rgba(91, 138, 125, 0.10);
+      --color-text:          #1C1813;
+      --color-text-muted:    #7A756E;
+      --color-text-faint:    #B5B0A8;
+      --color-border:        #E8E4DC;
+      --color-border-strong: #D4CFC7;
+      --color-amber:         #C89840;
+      --color-amber-subtle:  rgba(200, 152, 64, 0.10);
+
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', sans-serif;
+
+      --radius-sm:   6px;
+      --radius-md:   10px;
+      --radius-lg:   16px;
+      --radius-xl:   22px;
+      --radius-full: 999px;
+
+      --shadow-nav:  0 1px 0 rgba(28,24,18,0.08);
+      --shadow-card: 0 2px 8px rgba(28,24,18,0.06), 0 0 0 1px rgba(28,24,18,0.06);
+      --shadow-card-hover: 0 8px 28px rgba(28,24,18,0.11), 0 0 0 1px rgba(28,24,18,0.07);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── BACKGROUND GRADIENT WASH ────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 700px 500px at 20% 0%,   rgba(200,152,64,0.07)  0%, transparent 70%),
+        radial-gradient(ellipse 600px 400px at 82% 15%,  rgba(91,138,125,0.07)  0%, transparent 65%),
+        radial-gradient(ellipse 500px 400px at 10% 90%,  rgba(91,138,125,0.05)  0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── NAV — LOGGED IN ─────────────────────────────────────────── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; height: 60px;
+      background: rgba(250,250,247,0.94);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border);
+      box-shadow: var(--shadow-nav);
+      z-index: 100;
+      display: flex; align-items: center; padding: 0 32px;
+    }
+
+    .nav-logo {
+      font-family: var(--font-serif); font-size: 18px; font-weight: 600;
+      color: var(--color-text); text-decoration: none; letter-spacing: -0.01em; flex-shrink: 0;
+    }
+
+    /* logged-in centre links */
+    .nav-centre {
+      flex: 1; display: flex; justify-content: center; gap: 4px;
+    }
+    .nav-link {
+      font-size: 14px; font-weight: 500; color: var(--color-text-muted);
+      text-decoration: none; padding: 6px 14px; border-radius: var(--radius-full);
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-link:hover { color: var(--color-text); background: rgba(28,24,18,0.05); }
+
+    .nav-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    .nav-icon-btn {
+      width: 36px; height: 36px; border-radius: var(--radius-full);
+      background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--color-text-muted); transition: background 0.15s, color 0.15s;
+    }
+    .nav-icon-btn:hover { background: rgba(28,24,18,0.06); color: var(--color-text); }
+
+    .nav-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #5B8A7D, #3A7A6A);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: white; cursor: pointer;
+    }
+
+    /* ── NAV — GUEST ─────────────────────────────────────────────── */
+    .nav-guest-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    .btn-nav-signin {
+      font-family: var(--font-sans); font-size: 13.5px; font-weight: 500;
+      color: var(--color-text-muted); background: none; border: none;
+      padding: 6px 4px; cursor: pointer; text-decoration: none;
+      transition: color 0.15s;
+    }
+    .btn-nav-signin:hover { color: var(--color-text); }
+
+    .btn-nav-cta {
+      font-family: var(--font-sans); font-size: 13.5px; font-weight: 600;
+      color: white; background: var(--color-accent);
+      border: none; border-radius: var(--radius-full);
+      padding: 8px 18px; cursor: pointer; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn-nav-cta:hover { background: var(--color-accent-hover); }
+
+    /* ── PAGE ────────────────────────────────────────────────────── */
+    .page {
+      padding-top: 60px;
+      position: relative; z-index: 1;
+    }
+
+    /* ── HERO ────────────────────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 72px 24px 56px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+      background: var(--color-accent-subtle);
+      border-radius: var(--radius-full);
+      padding: 5px 13px;
+      margin-bottom: 22px;
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(32px, 5vw, 42px);
+      font-weight: 600;
+      color: var(--color-text);
+      letter-spacing: -0.025em;
+      line-height: 1.18;
+      margin-bottom: 16px;
+    }
+
+    .hero-tagline {
+      font-size: 16px;
+      color: var(--color-text-muted);
+      line-height: 1.65;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* ── CARDS WRAPPER ───────────────────────────────────────────── */
+    .cards-wrap {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 0 24px 64px;
+      flex-wrap: wrap;
+    }
+
+    /* ── CARD BASE ───────────────────────────────────────────────── */
+    .pricing-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card);
+      padding: 32px 30px 30px;
+      width: 320px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: box-shadow 0.22s, transform 0.22s;
+    }
+    .pricing-card:hover {
+      box-shadow: var(--shadow-card-hover);
+      transform: translateY(-2px);
+    }
+
+    /* ── FREE CARD ───────────────────────────────────────────────── */
+    .card-free {
+      border: 1px solid var(--color-border);
+    }
+
+    /* ── PLUS CARD ───────────────────────────────────────────────── */
+    .card-plus {
+      border: 1px solid rgba(200,152,64,0.28);
+      background: linear-gradient(160deg, #FFFDF8 0%, #FAFAF7 100%);
+    }
+
+    /* ── BADGE ───────────────────────────────────────────────────── */
+    .card-badge {
+      position: absolute;
+      top: -1px; right: 22px;
+      background: var(--color-amber);
+      color: white;
+      font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    }
+
+    /* ── CARD HEADER ─────────────────────────────────────────────── */
+    .card-plan {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase; color: var(--color-text-faint);
+      margin-bottom: 10px;
+    }
+    .card-plus .card-plan { color: rgba(200,152,64,0.70); }
+
+    .card-price-row {
+      display: flex; align-items: baseline; gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .card-price {
+      font-family: var(--font-serif);
+      font-size: 38px; font-weight: 600;
+      color: var(--color-text); letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .card-price-dim {
+      font-family: var(--font-serif);
+      font-size: 32px; font-weight: 400;
+      color: var(--color-text-faint); letter-spacing: -0.02em;
+    }
+
+    .card-period {
+      font-size: 13px; color: var(--color-text-faint); margin-left: 2px;
+    }
+
+    .card-desc {
+      font-size: 13px; color: var(--color-text-muted);
+      line-height: 1.5; margin-bottom: 24px;
+    }
+
+    /* ── DIVIDER ─────────────────────────────────────────────────── */
+    .card-divider {
+      height: 1px; background: var(--color-border);
+      margin: 0 -30px 22px; /* bleed to edge */
+    }
+    .card-plus .card-divider { background: rgba(200,152,64,0.15); }
+
+    /* ── FEATURE LIST ────────────────────────────────────────────── */
+    .feature-list {
+      list-style: none;
+      flex: 1;
+      margin-bottom: 28px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .feature-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13.5px; color: var(--color-text); line-height: 1.4;
+    }
+
+    .feature-check {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--color-accent-subtle);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 0px;
+    }
+    .feature-check svg { stroke: var(--color-accent); }
+
+    /* muted features on plus card */
+    .feature-item.muted {
+      opacity: 0.38;
+    }
+    .feature-item.muted .feature-check {
+      background: rgba(28,24,18,0.06);
+    }
+    .feature-item.muted .feature-check svg {
+      stroke: var(--color-text-faint);
+    }
+
+    /* ── CTA BUTTONS ─────────────────────────────────────────────── */
+    .btn-cta-primary {
+      font-family: var(--font-sans); font-size: 14px; font-weight: 600;
+      color: white; background: var(--color-accent);
+      border: none; border-radius: var(--radius-full);
+      padding: 13px 24px; width: 100%; cursor: pointer;
+      transition: background 0.15s;
+      text-align: center;
+    }
+    .btn-cta-primary:hover { background: var(--color-accent-hover); }
+
+    .btn-cta-current {
+      font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+      color: var(--color-accent); background: var(--color-accent-subtle);
+      border: 1.5px solid rgba(91,138,125,0.28);
+      border-radius: var(--radius-full);
+      padding: 12px 24px; width: 100%; cursor: default;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+
+    .btn-cta-disabled {
+      font-family: var(--font-sans); font-size: 14px; font-weight: 600;
+      color: var(--color-text-faint);
+      background: rgba(28,24,18,0.04);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      padding: 13px 24px; width: 100%;
+      cursor: not-allowed; opacity: 0.60;
+      text-align: center;
+    }
+
+    /* ── FOOTNOTE ────────────────────────────────────────────────── */
+    .footnote-wrap {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    .footnote {
+      background: rgba(200,152,64,0.07);
+      border: 1px solid rgba(200,152,64,0.22);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      display: flex; gap: 18px; align-items: flex-start;
+    }
+
+    .footnote-icon {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(200,152,64,0.14);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--color-amber);
+    }
+
+    .footnote-body { flex: 1; }
+
+    .footnote-title {
+      font-family: var(--font-serif);
+      font-size: 15px; font-weight: 600;
+      color: var(--color-text); margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .footnote-text {
+      font-size: 13px; color: var(--color-text-muted); line-height: 1.65;
+    }
+
+    .footnote-text em {
+      font-style: italic;
+      color: var(--color-text);
+    }
+
+    /* ── DEMO BAR ────────────────────────────────────────────────── */
+    .demo-bar {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(28,24,18,0.90);
+      backdrop-filter: blur(14px); border-radius: var(--radius-full);
+      padding: 8px 8px 8px 16px;
+      display: flex; align-items: center; gap: 8px;
+      z-index: 200; box-shadow: 0 8px 28px rgba(28,24,18,0.30);
+    }
+    .demo-label {
+      font-size: 11px; color: rgba(255,255,255,0.40); font-weight: 500;
+      letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+    }
+    .demo-btn {
+      font-size: 11.5px; font-weight: 600; padding: 5px 13px;
+      border-radius: var(--radius-full); border: none; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.60); white-space: nowrap;
+    }
+    .demo-btn:hover  { background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.90); }
+    .demo-btn.active { background: white; color: var(--color-text); }
+
+    /* ── HIDDEN HELPER ───────────────────────────────────────────── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     NAV — logged in (default)
+═══════════════════════════════════════ -->
+<nav class="nav" id="nav-loggedin">
+  <a href="#" class="nav-logo">Remember When</a>
+  <div class="nav-centre">
+    <a href="#" class="nav-link">Home</a>
+    <a href="#" class="nav-link">Friends</a>
+  </div>
+  <div class="nav-right">
+    <button class="nav-icon-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+    <div class="nav-avatar">AL</div>
+  </div>
+</nav>
+
+<!-- NAV — guest -->
+<nav class="nav hidden" id="nav-guest">
+  <a href="#" class="nav-logo">Remember When</a>
+  <div style="flex:1;"></div>
+  <div class="nav-guest-right">
+    <a href="#" class="btn-nav-signin">Sign in</a>
+    <a href="#" class="btn-nav-cta">Get started</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     PAGE
+═══════════════════════════════════════ -->
+<main class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+      Pricing
+    </div>
+    <h1 class="hero-title">Simple,<br>honest pricing.</h1>
+    <p class="hero-tagline">
+      Remember When is free for everyone — always.
+      A Plus tier is on the way for those who want more.
+    </p>
+  </div>
+
+  <!-- CARDS -->
+  <div class="cards-wrap">
+
+    <!-- FREE CARD -->
+    <div class="pricing-card card-free">
+      <p class="card-plan">Free</p>
+      <div class="card-price-row">
+        <span class="card-price">$0</span>
+        <span class="card-period">/ month</span>
+      </div>
+      <p class="card-desc">Everything you need to start preserving your most important moments.</p>
+      <div class="card-divider"></div>
+
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Unlimited moments
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Up to 10 members per moment
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Photo uploads
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Reactions &amp; comments
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Invite links for easy sharing
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Editor &amp; Reader access control
+        </li>
+      </ul>
+
+      <!-- logged-in: current plan -->
+      <div id="cta-free-loggedin">
+        <div class="btn-cta-current">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Your current plan
+        </div>
+      </div>
+
+      <!-- guest: get started -->
+      <div id="cta-free-guest" class="hidden">
+        <button class="btn-cta-primary">Get started free</button>
+      </div>
+    </div>
+
+    <!-- PLUS CARD -->
+    <div class="pricing-card card-plus">
+      <div class="card-badge">Coming soon</div>
+      <p class="card-plan">Plus</p>
+      <div class="card-price-row">
+        <span class="card-price-dim">—</span>
+        <span class="card-period">pricing TBD</span>
+      </div>
+      <p class="card-desc" style="opacity:0.55;">For people who want to do even more with their memories.</p>
+      <div class="card-divider"></div>
+
+      <ul class="feature-list">
+        <li class="feature-item muted">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Everything in Free
+        </li>
+        <li class="feature-item muted">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Unlimited members per moment
+        </li>
+        <li class="feature-item muted">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Video uploads
+        </li>
+        <li class="feature-item muted">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Export to PDF &amp; photobook
+        </li>
+        <li class="feature-item muted">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Custom moment covers
+        </li>
+        <li class="feature-item muted">
+          <span class="feature-check">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Priority support
+        </li>
+      </ul>
+
+      <button class="btn-cta-disabled" disabled>Notify me when available</button>
+    </div>
+
+  </div><!-- /cards-wrap -->
+
+  <!-- FOOTNOTE -->
+  <div class="footnote-wrap">
+    <div class="footnote">
+      <div class="footnote-icon">
+        <!-- leaf / seed -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M12 22V12"/>
+          <path d="M5 12C5 7 8 3 12 2c4 1 7 5 7 10-2 2-4.5 3-7 3s-5-1-7-3z"/>
+        </svg>
+      </div>
+      <div class="footnote-body">
+        <p class="footnote-title">A note for early users</p>
+        <p class="footnote-text">
+          If you're here now, <em>thank you</em>. When Plus launches, early users will be
+          grandfathered in — any feature you used on Free will stay free for you, forever.
+          We're building this carefully, and we won't pull the rug.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- DEMO BAR -->
+<div class="demo-bar">
+  <span class="demo-label">Viewer</span>
+  <button class="demo-btn active" id="btn-loggedin" onclick="setUser('loggedin')">Logged in</button>
+  <button class="demo-btn"        id="btn-guest"    onclick="setUser('guest')">Guest</button>
+</div>
+
+<script>
+  function setUser(state) {
+    const isGuest = state === 'guest';
+    document.getElementById('btn-loggedin').classList.toggle('active', !isGuest);
+    document.getElementById('btn-guest').classList.toggle('active',     isGuest);
+    document.getElementById('nav-loggedin').classList.toggle('hidden',  isGuest);
+    document.getElementById('nav-guest').classList.toggle('hidden',    !isGuest);
+    document.getElementById('cta-free-loggedin').classList.toggle('hidden',  isGuest);
+    document.getElementById('cta-free-guest').classList.toggle('hidden',    !isGuest);
+  }
+</script>
+
+</body>
+</html>

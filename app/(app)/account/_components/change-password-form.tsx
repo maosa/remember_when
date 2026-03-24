@@ -63,7 +63,7 @@ export function ChangePasswordForm({ email }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {message && (
-        <p className={`text-sm ${message.type === 'error' ? 'text-destructive' : 'text-green-600'}`}>
+        <p className={`text-sm ${message.type === 'error' ? 'text-rw-danger' : 'text-rw-accent'}`}>
           {message.text}
         </p>
       )}

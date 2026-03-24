@@ -8,6 +8,7 @@ function Tabs({ ...props }: TabsPrimitive.Root.Props) {
   return <TabsPrimitive.Root data-slot="tabs" {...props} />
 }
 
+// Underline-style tab list — matches design system (no pill background)
 function TabsList({
   className,
   ...props
@@ -16,7 +17,7 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-lg bg-muted p-1 text-muted-foreground",
+        "inline-flex items-center gap-0 border-b border-rw-border-subtle",
         className
       )}
       {...props}
@@ -32,11 +33,13 @@ function TabsTrigger({
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
-        "inline-flex items-center justify-center rounded-md px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors outline-none",
-        "text-muted-foreground hover:text-foreground",
-        "focus-visible:ring-2 focus-visible:ring-ring",
+        "inline-flex items-center justify-center px-4 py-2.5 text-[14px] font-medium whitespace-nowrap transition-colors outline-none",
+        "-mb-px border-b-2 border-transparent",
+        "text-rw-text-muted hover:text-rw-text-primary",
+        "focus-visible:ring-2 focus-visible:ring-rw-accent/30 rounded-sm",
         "disabled:pointer-events-none disabled:opacity-50",
-        "data-[selected]:bg-background data-[selected]:text-foreground data-[selected]:shadow-sm",
+        // Active — accent underline, primary text
+        "data-[selected]:border-rw-accent data-[selected]:text-rw-text-primary",
         className
       )}
       {...props}

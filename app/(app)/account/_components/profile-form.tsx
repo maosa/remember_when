@@ -161,11 +161,11 @@ export function ProfileForm({ initialData }: Props) {
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
         {message && (
-          <p className={`text-sm ${message.type === 'error' ? 'text-destructive' : 'text-green-600'}`}>
+          <p className={`text-sm ${message.type === 'error' ? 'text-rw-danger' : 'text-rw-accent'}`}>
             {message.text}
           </p>
         )}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="firstName">First name</Label>
             <Input
@@ -195,7 +195,7 @@ export function ProfileForm({ initialData }: Props) {
             required
             autoComplete="email"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-rw-text-muted">
             Changing your email will send a confirmation link to the new address.
           </p>
         </div>
@@ -212,24 +212,24 @@ export function ProfileForm({ initialData }: Props) {
             />
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
               {usernameStatus === 'checking' && (
-                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                <Loader2 className="size-4 animate-spin text-rw-text-muted" />
               )}
               {usernameStatus === 'available' && (
-                <CheckCircle className="size-4 text-green-500" />
+                <CheckCircle className="size-4 text-rw-accent" />
               )}
               {(usernameStatus === 'taken' || usernameStatus === 'invalid') && (
-                <XCircle className="size-4 text-destructive" />
+                <XCircle className="size-4 text-rw-danger" />
               )}
             </div>
           </div>
           {usernameStatus === 'available' && (
-            <p className="text-xs text-green-600">Available</p>
+            <p className="text-xs text-rw-accent">Available</p>
           )}
           {usernameStatus === 'taken' && (
-            <p className="text-xs text-destructive">Already taken</p>
+            <p className="text-xs text-rw-danger">Already taken</p>
           )}
           {usernameStatus === 'invalid' && (
-            <p className="text-xs text-muted-foreground">3–20 characters: letters, numbers, underscores</p>
+            <p className="text-xs text-rw-text-muted">3–20 characters: letters, numbers, underscores</p>
           )}
         </div>
         <Button
@@ -267,7 +267,7 @@ export function ProfileForm({ initialData }: Props) {
               autoComplete="current-password"
               autoFocus
             />
-            {emailModalError && <p className="text-xs text-destructive">{emailModalError}</p>}
+            {emailModalError && <p className="text-xs text-rw-danger">{emailModalError}</p>}
           </div>
           <DialogFooter>
             <Button

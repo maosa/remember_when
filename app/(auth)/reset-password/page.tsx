@@ -39,7 +39,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-rw-bg px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">Set new password</CardTitle>
@@ -48,7 +48,7 @@ export default function ResetPasswordPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-sm text-rw-danger">{error}</p>
             )}
             <div className="space-y-2">
               <Label htmlFor="password">New password</Label>

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remember When — Log In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --color-bg:              #F5F2ED;
+      --color-surface:         #EDEAE4;
+      --color-surface-raised:  #E6E2DB;
+      --color-text-primary:    #2C2A25;
+      --color-text-muted:      #7C7670;
+      --color-text-placeholder:#A8A39D;
+      --color-accent:          #5C7A6B;
+      --color-accent-hover:    #4A6659;
+      --color-accent-subtle:   #D4E0DA;
+      --color-blue:            #7C96A8;
+      --color-blue-subtle:     #E0E8ED;
+      --color-border:          #D6D1CB;
+      --color-border-subtle:   #E8E4DE;
+      --color-danger:          #C0392B;
+      --color-danger-subtle:   #FDECEA;
+      --color-white:           #FFFFFF;
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+    }
+
+    /* ============================================================
+       RESET
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; }
+
+    /* ============================================================
+       PAGE — same linen base, gradients pulled to edges for
+       a slightly more intimate, centred feeling than sign-up
+       ============================================================ */
+    body {
+      font-family: var(--font-sans);
+      color: var(--color-text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px 72px;
+
+      background:
+        radial-gradient(ellipse 80% 60% at 15%  20%,  rgba(92,122,107,0.07)  0%, transparent 55%),
+        radial-gradient(ellipse 60% 55% at 88%  78%,  rgba(200,152,64,0.06)  0%, transparent 52%),
+        radial-gradient(ellipse 50% 45% at 50%  110%, rgba(124,150,168,0.05) 0%, transparent 48%),
+        var(--color-bg);
+    }
+
+    /* ============================================================
+       OUTER WRAPPER
+       ============================================================ */
+    .page-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 400px;   /* login is slightly narrower than sign-up */
+    }
+
+    /* ============================================================
+       AUTH CARD
+       ============================================================ */
+    .auth-card {
+      width: 100%;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 16px;
+      box-shadow:
+        0 1px 2px  rgba(44,42,37,0.04),
+        0 4px 16px rgba(44,42,37,0.08),
+        0 12px 40px rgba(44,42,37,0.08);
+      overflow: hidden;
+    }
+
+    /* ============================================================
+       CARD HEADER
+       ============================================================ */
+    .card-header {
+      text-align: center;
+      padding: 40px 36px 30px;   /* a touch more air than sign-up */
+      border-bottom: 1px solid var(--color-border-subtle);
+      position: relative;
+    }
+
+    /* Decorative accent mark above wordmark */
+    .header-mark {
+      display: inline-block;
+      width: 28px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--color-accent-subtle), var(--color-accent));
+      border-radius: 2px;
+      margin-bottom: 18px;
+      opacity: 0.7;
+    }
+
+    .wordmark {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 22px;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+    }
+
+    /* ============================================================
+       FORM BODY
+       ============================================================ */
+    .card-body {
+      padding: 30px 32px 32px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;   /* slightly looser than sign-up — fewer fields */
+    }
+
+    /* ============================================================
+       FIELD GROUP
+       ============================================================ */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    /* Label row — label left, optional link right */
+    .field-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      letter-spacing: 0.01em;
+    }
+
+    .forgot-link {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+
+    .forgot-link:hover { color: var(--color-accent); }
+
+    /* Base text input */
+    .field-input {
+      height: 42px;            /* 2px taller than sign-up — fewer fields = more room */
+      padding: 0 12px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      transition: border-color 0.14s, box-shadow 0.14s;
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .field-input::placeholder { color: var(--color-text-placeholder); }
+
+    .field-input:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.12);
+    }
+
+    .field-input.is-error {
+      border-color: var(--color-danger);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+    }
+
+    /* ============================================================
+       PASSWORD FIELD — with show/hide toggle
+       ============================================================ */
+    .password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-input {
+      height: 42px;
+      padding: 0 44px 0 12px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      transition: border-color 0.14s, box-shadow 0.14s;
+      width: 100%;
+    }
+
+    .password-input::placeholder { color: var(--color-text-placeholder); }
+
+    .password-input:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.12);
+    }
+
+    .password-input.is-error {
+      border-color: var(--color-danger);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+    }
+
+    .pw-toggle {
+      position: absolute;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      background: none;
+      border: none;
+      border-radius: 6px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .pw-toggle:hover {
+      background: var(--color-surface-raised);
+      color: var(--color-text-primary);
+    }
+
+    /* ============================================================
+       ERROR BANNER — wrong credentials
+       ============================================================ */
+    .error-banner {
+      display: none;   /* shown via JS */
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--color-danger-subtle);
+      border: 1px solid rgba(192,57,43,0.22);
+      border-radius: 9px;
+      font-size: 13px;
+      color: var(--color-danger);
+      line-height: 1.45;
+    }
+
+    .error-banner.visible { display: flex; }
+
+    .error-banner-icon {
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ============================================================
+       SUBMIT BUTTON
+       ============================================================ */
+    .btn-signin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 44px;
+      background: var(--color-accent);
+      color: var(--color-white);
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: background 0.13s, transform 0.1s;
+      margin-top: 4px;   /* a touch of extra breathing above the button */
+    }
+
+    .btn-signin:hover  { background: var(--color-accent-hover); }
+    .btn-signin:active { transform: scale(0.995); }
+
+    /* Loading state */
+    .btn-signin.loading {
+      background: var(--color-accent-hover);
+      pointer-events: none;
+    }
+
+    .btn-signin .spinner {
+      display: none;
+    }
+
+    .btn-signin.loading .btn-label { display: none; }
+    .btn-signin.loading .spinner   { display: block; }
+
+    /* ============================================================
+       BELOW-CARD LINKS
+       ============================================================ */
+    .below-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      margin-top: 24px;
+      width: 100%;
+    }
+
+    .signup-prompt {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      text-align: center;
+    }
+
+    .signup-prompt a {
+      color: var(--color-accent);
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+
+    .signup-prompt a:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* ============================================================
+       DEMO BAR
+       ============================================================ */
+    .demo-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      padding: 6px 6px 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(44,42,37,0.1);
+      font-size: 12px;
+      color: var(--color-text-muted);
+      font-family: var(--font-sans);
+      white-space: nowrap;
+      z-index: 50;
+    }
+
+    .demo-btn {
+      height: 28px;
+      padding: 0 12px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--color-text-muted);
+      transition: all 0.12s;
+    }
+
+    .demo-btn.active {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: var(--color-white);
+    }
+
+    .demo-btn:not(.active):hover {
+      background: var(--color-surface-raised);
+      color: var(--color-text-primary);
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="page-inner">
+
+    <!-- ============================================================
+         AUTH CARD
+         ============================================================ -->
+    <div class="auth-card">
+
+      <!-- Header -->
+      <div class="card-header">
+        <div class="header-mark" aria-hidden="true"></div>
+        <h1 class="wordmark">Remember When</h1>
+        <p class="subtitle">Sign in to your account.</p>
+      </div>
+
+      <!-- Form -->
+      <div class="card-body">
+        <form class="auth-form" id="loginForm" novalidate>
+
+          <!-- Email -->
+          <div class="field-group">
+            <label class="field-label" for="email">Email</label>
+            <input
+              class="field-input"
+              id="email"
+              type="email"
+              value="andreas@example.com"
+              placeholder="you@example.com"
+              autocomplete="email"
+            >
+          </div>
+
+          <!-- Password — label row has Forgot password? on the right -->
+          <div class="field-group">
+            <div class="field-label-row">
+              <label class="field-label" for="password">Password</label>
+              <a class="forgot-link" href="#" tabindex="-1">Forgot password?</a>
+            </div>
+            <div class="password-wrap">
+              <input
+                class="password-input"
+                id="password"
+                type="password"
+                value="Ironman2023!"
+                placeholder="Your password"
+                autocomplete="current-password"
+              >
+              <button
+                type="button"
+                class="pw-toggle"
+                id="pwToggle"
+                aria-label="Show password"
+              >
+                <svg id="eyeClosed" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+                <svg id="eyeOpen" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" style="display:none;">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Error banner (hidden by default, shown via demo bar) -->
+          <div class="error-banner" id="errorBanner" role="alert">
+            <span class="error-banner-icon">
+              <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </span>
+            <span>That email or password doesn't look right. Please try again.</span>
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" class="btn-signin" id="signinBtn">
+            <span class="btn-label">Sign in</span>
+            <!-- Spinner for loading state -->
+            <svg class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="9" stroke-dasharray="28" stroke-dashoffset="0" opacity="0.3"/>
+              <circle cx="12" cy="12" r="9" stroke-dasharray="10 46">
+                <animateTransform attributeName="transform" type="rotate"
+                  from="0 12 12" to="360 12 12" dur="0.75s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </button>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         BELOW-CARD LINK
+         ============================================================ -->
+    <div class="below-card">
+      <p class="signup-prompt">
+        Don't have an account? <a href="#">Sign up</a>
+      </p>
+    </div>
+
+  </div><!-- /page-inner -->
+
+  <!-- ============================================================
+       DEMO BAR — toggle form states for design reference
+       ============================================================ -->
+  <div class="demo-bar">
+    Form state:
+    <button class="demo-btn active" onclick="setState('filled')">Filled</button>
+    <button class="demo-btn" onclick="setState('empty')">Empty</button>
+    <button class="demo-btn" onclick="setState('error')">Error</button>
+    <button class="demo-btn" onclick="setState('loading')">Loading</button>
+  </div>
+
+  <script>
+    /* ── Password show / hide ───────────────────────────── */
+    const pwInput   = document.getElementById('password');
+    const pwToggle  = document.getElementById('pwToggle');
+    const eyeClosed = document.getElementById('eyeClosed');
+    const eyeOpen   = document.getElementById('eyeOpen');
+
+    pwToggle.addEventListener('click', () => {
+      const visible = pwInput.type === 'text';
+      pwInput.type            = visible ? 'password' : 'text';
+      eyeClosed.style.display = visible ? ''         : 'none';
+      eyeOpen.style.display   = visible ? 'none'     : '';
+      pwToggle.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+    });
+
+    /* ── Demo state switcher ────────────────────────────── */
+    const emailInput  = document.getElementById('email');
+    const errorBanner = document.getElementById('errorBanner');
+    const signinBtn   = document.getElementById('signinBtn');
+
+    function setState(state) {
+      // update demo buttons
+      document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // reset all
+      emailInput.classList.remove('is-error');
+      pwInput.classList.remove('is-error');
+      errorBanner.classList.remove('visible');
+      signinBtn.classList.remove('loading');
+
+      if (state === 'filled') {
+        emailInput.value = 'andreas@example.com';
+        pwInput.value    = 'Ironman2023!';
+        pwInput.type     = 'password';
+        eyeClosed.style.display = '';
+        eyeOpen.style.display   = 'none';
+      }
+
+      else if (state === 'empty') {
+        emailInput.value = '';
+        pwInput.value    = '';
+        pwInput.type     = 'password';
+        eyeClosed.style.display = '';
+        eyeOpen.style.display   = 'none';
+      }
+
+      else if (state === 'error') {
+        emailInput.value = 'andreas@example.com';
+        pwInput.value    = 'wrongpassword';
+        pwInput.type     = 'password';
+        emailInput.classList.add('is-error');
+        pwInput.classList.add('is-error');
+        errorBanner.classList.add('visible');
+        eyeClosed.style.display = '';
+        eyeOpen.style.display   = 'none';
+      }
+
+      else if (state === 'loading') {
+        emailInput.value = 'andreas@example.com';
+        pwInput.value    = 'Ironman2023!';
+        pwInput.type     = 'password';
+        signinBtn.classList.add('loading');
+      }
+    }
+  </script>
+
+</body>
+</html>

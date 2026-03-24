@@ -102,7 +102,7 @@ export default function CompleteProfilePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-rw-bg px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">Complete your profile</CardTitle>
@@ -112,11 +112,11 @@ export default function CompleteProfilePage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-rw-danger">{error}</p>}
 
             {email && (
               <div className="space-y-1">
-                <Label className="text-muted-foreground text-xs">Email</Label>
+                <Label className="text-rw-text-muted text-xs">Email</Label>
                 <p className="text-sm">{email}</p>
               </div>
             )}
@@ -160,14 +160,14 @@ export default function CompleteProfilePage() {
                   className="pr-8"
                 />
                 <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
-                  {usernameStatus === 'checking' && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
-                  {usernameStatus === 'available' && <CheckCircle className="size-4 text-green-500" />}
-                  {(usernameStatus === 'taken' || usernameStatus === 'invalid') && <XCircle className="size-4 text-destructive" />}
+                  {usernameStatus === 'checking' && <Loader2 className="size-4 animate-spin text-rw-text-muted" />}
+                  {usernameStatus === 'available' && <CheckCircle className="size-4 text-rw-accent" />}
+                  {(usernameStatus === 'taken' || usernameStatus === 'invalid') && <XCircle className="size-4 text-rw-danger" />}
                 </div>
               </div>
-              {usernameStatus === 'available' && <p className="text-xs text-green-600">Available</p>}
-              {usernameStatus === 'taken' && <p className="text-xs text-destructive">Already taken</p>}
-              {usernameStatus === 'invalid' && <p className="text-xs text-muted-foreground">3–20 characters: letters, numbers, underscores</p>}
+              {usernameStatus === 'available' && <p className="text-xs text-rw-accent">Available</p>}
+              {usernameStatus === 'taken' && <p className="text-xs text-rw-danger">Already taken</p>}
+              {usernameStatus === 'invalid' && <p className="text-xs text-rw-text-muted">3–20 characters: letters, numbers, underscores</p>}
             </div>
 
             <div className="space-y-2 pb-2">

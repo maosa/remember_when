@@ -91,17 +91,17 @@ export default function InviteConfirmPage() {
 
   if (status === 'error_expired') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-screen flex items-center justify-center bg-rw-bg px-4">
         <div className="text-center space-y-3 max-w-sm">
           <h2 className="font-semibold text-lg">Invite link expired</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-rw-text-muted">
             This link has already been used or has expired. Your invitation is
             still saved — just sign in with your email address and it will be
             applied automatically.
           </p>
           <a
             href="/login"
-            className="inline-block mt-2 text-sm underline text-foreground hover:opacity-80"
+            className="inline-block mt-2 text-sm underline text-rw-text-primary hover:opacity-80"
           >
             Go to sign in →
           </a>
@@ -112,15 +112,15 @@ export default function InviteConfirmPage() {
 
   if (status === 'error_generic') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-screen flex items-center justify-center bg-rw-bg px-4">
         <div className="text-center space-y-3 max-w-sm">
           <h2 className="font-semibold text-lg">Something went wrong</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-rw-text-muted">
             Could not verify your session. Please try signing in.
           </p>
           <a
             href="/login"
-            className="inline-block mt-2 text-sm underline text-foreground hover:opacity-80"
+            className="inline-block mt-2 text-sm underline text-rw-text-primary hover:opacity-80"
           >
             Go to sign in →
           </a>
@@ -130,8 +130,8 @@ export default function InviteConfirmPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-3 text-muted-foreground">
+    <div className="min-h-screen flex items-center justify-center bg-rw-bg">
+      <div className="flex flex-col items-center gap-3 text-rw-text-muted">
         <Loader2 className="size-6 animate-spin" />
         <p className="text-sm">Confirming your invite…</p>
       </div>

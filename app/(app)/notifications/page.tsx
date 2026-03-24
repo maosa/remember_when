@@ -104,9 +104,9 @@ export default async function NotificationsPage() {
   })
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-lg px-4 py-12">
-        <div className="flex items-center justify-between mb-8">
+    <main className="min-h-screen bg-rw-bg">
+      <div className="mx-auto max-w-[720px] px-4 md:px-6 py-12">
+        <div className="flex items-center justify-between mb-10">
           <h1 className="text-2xl font-semibold">Notifications</h1>
           <div className="flex items-center gap-2">
             {hasUnread && <MarkAllReadButton />}

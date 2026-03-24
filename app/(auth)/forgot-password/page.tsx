@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-screen flex items-center justify-center bg-rw-bg px-4">
         <Card className="w-full max-w-sm">
           <CardHeader>
             <CardTitle>Check your email</CardTitle>
@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/login" className="text-sm text-rw-text-muted hover:text-rw-text-primary">
               Back to sign in
             </Link>
           </CardFooter>
@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-rw-bg px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">Reset password</CardTitle>
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-sm text-rw-danger">{error}</p>
             )}
             <div className="space-y-2 pb-2">
               <Label htmlFor="email">Email</Label>
@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Sending…' : 'Send reset link'}
             </Button>
-            <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/login" className="text-sm text-rw-text-muted hover:text-rw-text-primary">
               Back to sign in
             </Link>
           </CardFooter>

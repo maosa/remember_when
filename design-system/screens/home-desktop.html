@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remember When — Home (Desktop)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --color-bg:              #F5F2ED;
+      --color-surface:         #EDEAE4;
+      --color-surface-raised:  #E6E2DB;
+      --color-text-primary:    #2C2A25;
+      --color-text-muted:      #7C7670;
+      --color-text-placeholder:#A8A39D;
+      --color-accent:          #5C7A6B;
+      --color-accent-hover:    #4A6659;
+      --color-accent-subtle:   #D4E0DA;
+      --color-blue:            #7C96A8;
+      --color-blue-subtle:     #E0E8ED;
+      --color-border:          #D6D1CB;
+      --color-border-subtle:   #E8E4DE;
+      --color-danger:          #C0392B;
+      --color-danger-subtle:   #FDECEA;
+      --color-white:           #FFFFFF;
+
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+
+      --shadow-card:    0 1px 3px rgba(44,42,37,0.08);
+      --shadow-nav:     0 1px 0 #E8E4DE;
+      --shadow-modal:   0 8px 32px rgba(44,42,37,0.16);
+      --shadow-popover: 0 4px 16px rgba(44,42,37,0.12);
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       NAV BAR
+       ============================================================ */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border-subtle);
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+    }
+
+    .nav-logo {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--color-text-primary);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      flex: 1;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .nav-link {
+      padding: 6px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.12s, color 0.12s;
+      letter-spacing: 0.01em;
+    }
+
+    .nav-link:hover {
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+    }
+
+    .nav-link.active {
+      color: var(--color-accent);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .nav-icon-btn {
+      width: 36px;
+      height: 36px;
+      background: none;
+      border: none;
+      border-radius: 50%;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .nav-icon-btn:hover {
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+    }
+
+    .nav-unread-dot {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 8px;
+      height: 8px;
+      background: var(--color-blue);
+      border-radius: 50%;
+      border: 2px solid var(--color-bg);
+    }
+
+    .nav-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.12s;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .nav-avatar:hover { opacity: 0.85; }
+
+    /* ============================================================
+       PAGE LAYOUT
+       ============================================================ */
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 32px 80px;
+    }
+
+    /* ============================================================
+       HEADER ROW — Greeting + New Moment button
+       ============================================================ */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .greeting {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 28px;
+      color: var(--color-text-primary);
+      line-height: 1.25;
+    }
+
+    .greeting-sub {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-muted);
+      margin-top: 5px;
+      font-weight: 400;
+    }
+
+    .btn-new-moment {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 38px;
+      padding: 0 18px;
+      background: var(--color-accent);
+      color: var(--color-white);
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.13s;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .btn-new-moment:hover { background: var(--color-accent-hover); }
+
+    /* ============================================================
+       TOOLBAR — Search + Sort
+       ============================================================ */
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 360px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-placeholder);
+      display: flex;
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px 0 36px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      transition: border-color 0.13s, box-shadow 0.13s;
+    }
+
+    .search-input::placeholder { color: var(--color-text-placeholder); }
+
+    .search-input:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.11);
+    }
+
+    .sort-select {
+      height: 38px;
+      padding: 0 34px 0 12px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237C7670' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 11px center;
+      transition: border-color 0.13s;
+      min-width: 168px;
+    }
+
+    .sort-select:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.11);
+    }
+
+    /* ============================================================
+       TABS
+       ============================================================ */
+    .tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border-bottom: 1px solid var(--color-border-subtle);
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 4px 11px;
+      margin-right: 24px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      cursor: pointer;
+      transition: color 0.13s, border-color 0.13s;
+      letter-spacing: 0.01em;
+    }
+
+    .tab-btn:hover { color: var(--color-text-primary); }
+
+    .tab-btn.active {
+      color: var(--color-accent);
+      border-bottom-color: var(--color-accent);
+    }
+
+    .tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 18px;
+      padding: 0 6px;
+      background: var(--color-surface-raised);
+      color: var(--color-text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 10px;
+    }
+
+    .tab-btn.active .tab-count {
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+    }
+
+    /* ============================================================
+       CARD GRID
+       ============================================================ */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    /* ============================================================
+       MOMENT CARD
+       ============================================================ */
+    .moment-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.18s ease, transform 0.18s ease;
+      position: relative;
+    }
+
+    .moment-card:hover {
+      box-shadow: 0 4px 20px rgba(44,42,37,0.12);
+      transform: translateY(-2px);
+    }
+
+    .moment-card:hover .card-menu {
+      opacity: 1;
+    }
+
+    /* Cover */
+    .card-cover {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+    }
+
+    .card-cover-img {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* CSS gradient "photographs" */
+    .c-forest {
+      background: linear-gradient(162deg,
+        #1E3A2E 0%, #2D5040 15%, #3A6850 28%,
+        #4A7E60 42%, #5E9470 55%,
+        #74A882 68%, #92BF98 82%, #B4D4B8 100%);
+    }
+
+    .c-coast {
+      background: linear-gradient(180deg,
+        #6BAED4 0%, #94C4E0 15%, #BDD8EC 28%,
+        #D4E8F2 40%, #E2EEF5 50%,
+        #DCCFB2 60%, #C8B890 70%,
+        #A89678 82%, #8A7860 100%);
+    }
+
+    .c-golden {
+      background: linear-gradient(158deg,
+        #F0C060 0%, #E0A030 12%, #CC8018 24%,
+        #B46010 36%, #9C4C0C 48%,
+        #7E3C0A 60%, #603008 72%,
+        #462408 84%, #301A06 100%);
+    }
+
+    .c-mountain {
+      background: linear-gradient(168deg,
+        #BCC4E8 0%, #9AA8D8 14%, #7A8EC8 26%,
+        #5C74B8 36%, #7E8FAA 46%,
+        #9EAAA0 54%, #84A080 64%,
+        #688868 74%, #4A6E50 84%, #30523A 100%);
+    }
+
+    .c-dusk {
+      background: linear-gradient(165deg,
+        #E2BDD4 0%, #CC9ABE 12%, #B078A8 24%,
+        #945894 36%, #7A4080 48%,
+        #8A7AA0 58%, #A098C0 68%,
+        #BEB8D8 80%, #D8D4EC 100%);
+    }
+
+    .c-dawn {
+      background: linear-gradient(160deg,
+        #F8D8B0 0%, #F0BCA0 14%, #E89E8E 26%,
+        #DC8078 38%, #CE6868 48%,
+        #E09090 58%, #EEB8B0 68%,
+        #F4D0C8 80%, #F9E8E4 100%);
+    }
+
+    .c-winter {
+      background: linear-gradient(170deg,
+        #D8E4F0 0%, #C0D4E8 14%, #A4C2DC 26%,
+        #8CB0D0 38%, #78A0C4 50%,
+        #A0B8CC 60%, #BED0DC 70%,
+        #D4E4EC 82%, #EAF0F4 100%);
+    }
+
+    .c-amber {
+      background: linear-gradient(155deg,
+        #D4986C 0%, #C07848 14%, #AC5C30 26%,
+        #944420 38%, #7C3010 48%,
+        #943C18 58%, #B05428 68%,
+        #C87040 80%, #DC9060 100%);
+    }
+
+    .c-sage {
+      background: linear-gradient(165deg,
+        #8FAE9A 0%, #6E9480 14%, #537A68 26%,
+        #3E6252 38%, #2E4E40 50%,
+        #4A6A58 60%, #6A8872 70%,
+        #90A898 82%, #B4C8BE 100%);
+    }
+
+    /* Gradient overlay — visible but light */
+    .card-cover-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(30,26,20,0.06) 40%,
+        rgba(30,26,20,0.58) 100%
+      );
+    }
+
+    .card-title {
+      position: absolute;
+      bottom: 13px;
+      left: 14px;
+      right: 42px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 14px;
+      color: #fff;
+      line-height: 1.35;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.28);
+    }
+
+    /* [...] menu button — top-right, visible on card hover */
+    .card-menu {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      background: rgba(30,26,20,0.46);
+      border: none;
+      border-radius: 7px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .card-menu:hover {
+      background: rgba(30,26,20,0.68);
+    }
+
+    /* Card body */
+    .card-body {
+      padding: 13px 15px 16px;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 9px;
+    }
+
+    .meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    .meta-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--color-border);
+      flex-shrink: 0;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .tag-accent {
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+    }
+
+    .tag-muted {
+      background: var(--color-surface-raised);
+      color: var(--color-text-muted);
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .role-owner {
+      background: #EDE8D4;
+      color: #7A6028;
+    }
+
+    .role-editor {
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+    }
+
+    .role-reader {
+      background: var(--color-blue-subtle);
+      color: var(--color-blue);
+    }
+
+    /* Avatar stack */
+    .avatar-stack {
+      display: flex;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--color-surface);
+      margin-left: -7px;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .avatar:first-child { margin-left: 0; }
+
+    .av-teal  { background: var(--color-accent-subtle);  color: var(--color-accent); }
+    .av-blue  { background: var(--color-blue-subtle);    color: var(--color-blue); }
+    .av-warm  { background: #EDE0D4; color: #8B6650; }
+    .av-sage  { background: #D8E8D8; color: #4A7A5A; }
+    .av-dusk  { background: #E8DAEA; color: #8A6090; }
+    .av-more  { background: var(--color-surface-raised); color: var(--color-text-muted); }
+
+    /* ============================================================
+       POPOVER MENU (hover/click on [...])
+       ============================================================ */
+    .popover {
+      position: absolute;
+      top: 44px;
+      right: 10px;
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-popover);
+      padding: 5px;
+      min-width: 164px;
+      z-index: 20;
+      display: none;
+    }
+
+    .moment-card:hover .popover-demo {
+      /* only visible on the demo card */
+      display: block;
+    }
+
+    .popover.visible { display: block; }
+
+    .popover-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: var(--color-text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .popover-item:hover { background: var(--color-surface); }
+    .popover-item.danger { color: var(--color-danger); }
+
+    .popover-sep {
+      height: 1px;
+      background: var(--color-border-subtle);
+      margin: 4px 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       NAV BAR
+       ============================================================ -->
+  <nav class="nav">
+    <a href="#" class="nav-logo">Remember When</a>
+
+    <div class="nav-links">
+      <a href="#" class="nav-link active">Home</a>
+      <a href="#" class="nav-link">Friends</a>
+    </div>
+
+    <div class="nav-actions">
+      <button class="nav-icon-btn" aria-label="Notifications">
+        <svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="nav-unread-dot"></span>
+      </button>
+      <div class="nav-avatar" aria-label="Account">AL</div>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       PAGE CONTENT
+       ============================================================ -->
+  <main class="page">
+
+    <!-- Header row -->
+    <div class="page-header">
+      <div>
+        <h1 class="greeting">Hey, Andreas.</h1>
+        <p class="greeting-sub">You have 3 moments with new activity.</p>
+      </div>
+      <button class="btn-new-moment">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        New moment
+      </button>
+    </div>
+
+    <!-- Toolbar: search + sort -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+        </span>
+        <input class="search-input" type="text" placeholder="Search moments…">
+      </div>
+      <select class="sort-select" aria-label="Sort by">
+        <option>Most recent</option>
+        <option>Oldest first</option>
+        <option>Name A–Z</option>
+        <option>Name Z–A</option>
+      </select>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-bar">
+      <button class="tab-btn active">
+        Moments
+        <span class="tab-count">9</span>
+      </button>
+      <button class="tab-btn">
+        Archived
+        <span class="tab-count">2</span>
+      </button>
+    </div>
+
+    <!-- Card grid -->
+    <div class="card-grid">
+
+      <!-- Card 1 — Owner -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="card-cover-img c-forest"></div>
+          <div class="card-cover-overlay"></div>
+          <div class="card-title">Our Ironman 2023</div>
+          <button class="card-menu" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+          <!-- Popover (shown for demo purposes on hover via CSS) -->
+          <div class="popover popover-demo">
+            <div class="popover-item">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              Edit details
+            </div>
+            <div class="popover-item">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Archive
+            </div>
+            <div class="popover-sep"></div>
+            <div class="popover-item danger">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              Delete moment
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              November 2023
+            </span>
+            <span class="meta-dot"></span>
+            <span class="meta-item">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/></svg>
+              Kona, Hawaii
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-muted">Racing</span>
+            <span class="tag tag-muted">Triathlon</span>
+            <span class="tag tag-muted">Milestone</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-owner">
+              <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+              Owner
+            </span>
+            <div class="avatar-stack">
+              <div class="avatar av-teal">AL</div>
+              <div class="avatar av-blue">MK</div>
+              <div class="avatar av-warm">SR</div>
+              <div class="avatar av-sage">JL</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 — Editor -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="card-cover-img c-coast"></div>
+          <div class="card-cover-overlay"></div>
+          <div class="card-title">Summer in Santorini</div>
+          <button class="card-menu" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              August 2022
+            </span>
+            <span class="meta-dot"></span>
+            <span class="meta-item">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/></svg>
+              Santorini, Greece
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-muted">Travel</span>
+            <span class="tag tag-muted">Summer</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-editor">Editor</span>
+            <div class="avatar-stack">
+              <div class="avatar av-dusk">KP</div>
+              <div class="avatar av-sage">JL</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 — Reader -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="card-cover-img c-golden"></div>
+          <div class="card-cover-overlay"></div>
+          <div class="card-title">Dad's 60th Birthday</div>
+          <button class="card-menu" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              March 2021
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-muted">Family</span>
+            <span class="tag tag-muted">Birthday</span>
+            <span class="tag tag-muted">Celebration</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-reader">Reader</span>
+            <div class="avatar-stack">
+              <div class="avatar av-warm">DL</div>
+              <div class="avatar av-teal">AL</div>
+              <div class="avatar av-blue">EL</div>
+              <div class="avatar av-sage">CL</div>
+              <div class="avatar av-more">+3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 — Owner -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="card-cover-img c-dusk"></div>
+          <div class="card-cover-overlay"></div>
+          <div class="card-title">New Year's Eve 2022</div>
+          <button class="card-menu" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              31 December 2022
+            </span>
+            <span class="meta-dot"></span>
+            <span class="meta-item">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/></svg>
+              Sydney, Australia
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-muted">Celebration</span>
+            <span class="tag tag-muted">Friends</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-owner">
+              <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+              Owner
+            </span>
+            <div class="avatar-stack">
+              <div class="avatar av-teal">AL</div>
+              <div class="avatar av-dusk">KP</div>
+              <div class="avatar av-blue">MK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 — Editor -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="card-cover-img c-mountain"></div>
+          <div class="card-cover-overlay"></div>
+          <div class="card-title">Alps Ski Trip</div>
+          <button class="card-menu" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              February 2023
+            </span>
+            <span class="meta-dot"></span>
+            <span class="meta-item">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/></svg>
+              Chamonix, France
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-muted">Adventure</span>
+            <span class="tag tag-muted">Winter</span>
+            <span class="tag tag-muted">Skiing</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-editor">Editor</span>
+            <div class="avatar-stack">
+              <div class="avatar av-warm">SR</div>
+              <div class="avatar av-teal">AL</div>
+              <div class="avatar av-sage">JL</div>
+              <div class="avatar av-more">+2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 — Owner -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="card-cover-img c-dawn"></div>
+          <div class="card-cover-overlay"></div>
+          <div class="card-title">Marathon Training 2022</div>
+          <button class="card-menu" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              2022
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-muted">Running</span>
+            <span class="tag tag-muted">Training</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-owner">
+              <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+              Owner
+            </span>
+            <div class="avatar-stack">
+              <div class="avatar av-teal">AL</div>
+              <div class="avatar av-blue">MK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 7 — Reader -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="card-cover-img c-winter"></div>
+          <div class="card-cover-overlay"></div>
+          <div class="card-title">Family Christmas 2023</div>
+          <button class="card-menu" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              December 2023
+            </span>
+            <span class="meta-dot"></span>
+            <span class="meta-item">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/></svg>
+              Nicosia, Cyprus
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-muted">Family</span>
+            <span class="tag tag-muted">Christmas</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-reader">Reader</span>
+            <div class="avatar-stack">
+              <div class="avatar av-warm">ML</div>
+              <div class="avatar av-teal">AL</div>
+              <div class="avatar av-sage">CL</div>
+              <div class="avatar av-blue">EL</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 8 — Editor -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="card-cover-img c-amber"></div>
+          <div class="card-cover-overlay"></div>
+          <div class="card-title">Road Trip — Route 66</div>
+          <button class="card-menu" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              September 2021
+            </span>
+            <span class="meta-dot"></span>
+            <span class="meta-item">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/></svg>
+              United States
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-muted">Travel</span>
+            <span class="tag tag-muted">Road trip</span>
+            <span class="tag tag-muted">USA</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-editor">Editor</span>
+            <div class="avatar-stack">
+              <div class="avatar av-teal">AL</div>
+              <div class="avatar av-dusk">KP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 9 — Owner -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="card-cover-img c-sage"></div>
+          <div class="card-cover-overlay"></div>
+          <div class="card-title">Camping in the Troodos</div>
+          <button class="card-menu" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="meta-item">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              July 2020
+            </span>
+            <span class="meta-dot"></span>
+            <span class="meta-item">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/></svg>
+              Troodos, Cyprus
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag tag-muted">Nature</span>
+            <span class="tag tag-muted">Camping</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-owner">
+              <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+              Owner
+            </span>
+            <div class="avatar-stack">
+              <div class="avatar av-teal">AL</div>
+              <div class="avatar av-warm">SR</div>
+              <div class="avatar av-blue">MK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /card-grid -->
+
+  </main>
+
+</body>
+</html>

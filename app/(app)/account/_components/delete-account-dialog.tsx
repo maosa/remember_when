@@ -68,7 +68,7 @@ export function DeleteAccountDialog({ username }: Props) {
             placeholder={username}
             autoComplete="off"
           />
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && <p className="text-xs text-rw-danger">{error}</p>}
         </div>
         <DialogFooter>
           <Button

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remember When — Sign Up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --color-bg:              #F5F2ED;
+      --color-surface:         #EDEAE4;
+      --color-surface-raised:  #E6E2DB;
+      --color-text-primary:    #2C2A25;
+      --color-text-muted:      #7C7670;
+      --color-text-placeholder:#A8A39D;
+      --color-accent:          #5C7A6B;
+      --color-accent-hover:    #4A6659;
+      --color-accent-subtle:   #D4E0DA;
+      --color-blue:            #7C96A8;
+      --color-blue-subtle:     #E0E8ED;
+      --color-border:          #D6D1CB;
+      --color-border-subtle:   #E8E4DE;
+      --color-danger:          #C0392B;
+      --color-danger-subtle:   #FDECEA;
+      --color-white:           #FFFFFF;
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+    }
+
+    /* ============================================================
+       RESET
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; }
+
+    /* ============================================================
+       PAGE — linen background with warm depth
+       ============================================================ */
+    body {
+      font-family: var(--font-sans);
+      color: var(--color-text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px 64px;
+
+      /* Warm linen base with very subtle glow layers */
+      background:
+        radial-gradient(ellipse 70% 55% at 50% -8%,  rgba(200,152,64,0.07)  0%, transparent 58%),
+        radial-gradient(ellipse 55% 45% at 5%  80%,  rgba(92,122,107,0.06)  0%, transparent 52%),
+        radial-gradient(ellipse 45% 50% at 96% 70%,  rgba(124,150,168,0.05) 0%, transparent 50%),
+        var(--color-bg);
+    }
+
+    /* ============================================================
+       OUTER WRAPPER — centres card + below-card links
+       ============================================================ */
+    .page-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    /* ============================================================
+       AUTH CARD
+       ============================================================ */
+    .auth-card {
+      width: 100%;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 16px;
+      box-shadow:
+        0 1px 2px rgba(44,42,37,0.04),
+        0 4px 16px rgba(44,42,37,0.08),
+        0 12px 40px rgba(44,42,37,0.08);
+      overflow: hidden;
+    }
+
+    /* ============================================================
+       CARD HEADER — wordmark + subtitle
+       ============================================================ */
+    .card-header {
+      text-align: center;
+      padding: 36px 36px 28px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .wordmark {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 22px;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+    }
+
+    /* ============================================================
+       FORM BODY
+       ============================================================ */
+    .card-body {
+      padding: 28px 32px 32px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Side-by-side name row */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Individual field */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      letter-spacing: 0.01em;
+    }
+
+    /* Base input */
+    .field-input {
+      height: 40px;
+      padding: 0 12px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      transition: border-color 0.14s, box-shadow 0.14s;
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .field-input::placeholder { color: var(--color-text-placeholder); }
+
+    .field-input:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.12);
+    }
+
+    .field-input.is-error {
+      border-color: var(--color-danger);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+    }
+
+    /* ============================================================
+       USERNAME FIELD — with @ prefix + availability indicator
+       ============================================================ */
+    .username-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .username-at {
+      position: absolute;
+      left: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+    }
+
+    .username-input {
+      height: 40px;
+      padding: 0 110px 0 28px; /* room for @ left, badge right */
+      background: var(--color-bg);
+      border: 1px solid var(--color-accent);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.12);
+      width: 100%;
+      transition: border-color 0.14s, box-shadow 0.14s;
+    }
+
+    /* Availability badge — inside input, right side */
+    .availability-badge {
+      position: absolute;
+      right: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .availability-badge.available {
+      background: rgba(92,122,107,0.12);
+      color: var(--color-accent);
+    }
+
+    .availability-badge.taken {
+      background: rgba(192,57,43,0.08);
+      color: var(--color-danger);
+    }
+
+    .username-hint {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 1px;
+    }
+
+    .username-hint .hint-handle {
+      color: var(--color-accent);
+      font-weight: 500;
+    }
+
+    /* ============================================================
+       PASSWORD FIELD — with show/hide toggle
+       ============================================================ */
+    .password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-input {
+      height: 40px;
+      padding: 0 42px 0 12px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      transition: border-color 0.14s, box-shadow 0.14s;
+      width: 100%;
+    }
+
+    .password-input::placeholder { color: var(--color-text-placeholder); }
+
+    .password-input:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.12);
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      background: none;
+      border: none;
+      border-radius: 6px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .password-toggle:hover {
+      background: var(--color-surface-raised);
+      color: var(--color-text-primary);
+    }
+
+    /* Password strength meter (shown once user starts typing) */
+    .password-strength {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
+    }
+
+    .strength-bars {
+      display: flex;
+      gap: 3px;
+      flex: 1;
+    }
+
+    .strength-bar {
+      height: 3px;
+      border-radius: 2px;
+      flex: 1;
+      background: var(--color-border-subtle);
+      transition: background 0.2s;
+    }
+
+    .strength-bar.filled-strong { background: var(--color-accent); }
+    .strength-bar.filled-medium { background: #D4A030; }
+    .strength-bar.filled-weak   { background: var(--color-danger); }
+
+    .strength-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-accent);
+      white-space: nowrap;
+    }
+
+    /* ============================================================
+       DIVIDER — subtle separator before submit
+       ============================================================ */
+    .form-divider {
+      height: 1px;
+      background: var(--color-border-subtle);
+      margin: 2px 0 0;
+    }
+
+    /* ============================================================
+       TERMS NOTE
+       ============================================================ */
+    .terms-note {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .terms-note a {
+      color: var(--color-text-muted);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .terms-note a:hover { color: var(--color-text-primary); }
+
+    /* ============================================================
+       SUBMIT BUTTON
+       ============================================================ */
+    .btn-create {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      height: 44px;
+      background: var(--color-accent);
+      color: var(--color-white);
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: background 0.13s, transform 0.1s;
+    }
+
+    .btn-create:hover {
+      background: var(--color-accent-hover);
+    }
+
+    .btn-create:active { transform: scale(0.995); }
+
+    /* ============================================================
+       BELOW-CARD LINKS
+       ============================================================ */
+    .below-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 24px;
+      width: 100%;
+    }
+
+    .signin-prompt {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      text-align: center;
+    }
+
+    .signin-prompt a {
+      color: var(--color-accent);
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+
+    .signin-prompt a:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .pricing-link {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      transition: color 0.12s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding-bottom: 1px;
+      border-bottom: 1px solid transparent;
+      transition: color 0.12s, border-color 0.12s;
+    }
+
+    .pricing-link:hover {
+      color: var(--color-text-primary);
+      border-bottom-color: var(--color-border);
+    }
+
+    /* Separator between the two below-card elements */
+    .below-card-sep {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--color-border);
+    }
+
+    /* ============================================================
+       DEMO STATES TOGGLE — for design reference only
+       ============================================================ */
+    .demo-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      padding: 6px 6px 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(44,42,37,0.1);
+      font-size: 12px;
+      color: var(--color-text-muted);
+      font-family: var(--font-sans);
+      white-space: nowrap;
+      z-index: 50;
+    }
+
+    .demo-btn {
+      height: 28px;
+      padding: 0 12px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--color-text-muted);
+      transition: all 0.12s;
+    }
+
+    .demo-btn.active {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: var(--color-white);
+    }
+
+    .demo-btn:not(.active):hover {
+      background: var(--color-surface-raised);
+      color: var(--color-text-primary);
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="page-inner">
+
+    <!-- ============================================================
+         AUTH CARD
+         ============================================================ -->
+    <div class="auth-card">
+
+      <!-- Card header -->
+      <div class="card-header">
+        <h1 class="wordmark">Remember When</h1>
+        <p class="subtitle">Start capturing your moments.</p>
+      </div>
+
+      <!-- Form -->
+      <div class="card-body">
+        <form class="auth-form" id="signupForm" novalidate>
+
+          <!-- First + Last name -->
+          <div class="form-row">
+            <div class="field-group">
+              <label class="field-label" for="first-name">First name</label>
+              <input
+                class="field-input"
+                id="first-name"
+                type="text"
+                value="Andreas"
+                placeholder="First name"
+                autocomplete="given-name"
+              >
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="last-name">Last name</label>
+              <input
+                class="field-input"
+                id="last-name"
+                type="text"
+                value="Louca"
+                placeholder="Last name"
+                autocomplete="family-name"
+              >
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="field-group">
+            <label class="field-label" for="email">Email</label>
+            <input
+              class="field-input"
+              id="email"
+              type="email"
+              value="andreas@example.com"
+              placeholder="you@example.com"
+              autocomplete="email"
+            >
+          </div>
+
+          <!-- Username -->
+          <div class="field-group">
+            <label class="field-label" for="username">Username</label>
+            <div class="username-wrap">
+              <span class="username-at" aria-hidden="true">@</span>
+              <input
+                class="username-input"
+                id="username"
+                type="text"
+                value="andreas"
+                placeholder="yourhandle"
+                autocomplete="username"
+                spellcheck="false"
+              >
+              <!-- Availability badge — toggled by demo bar below -->
+              <span class="availability-badge available" id="availBadge">
+                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Available
+              </span>
+            </div>
+            <span class="username-hint" id="usernameHint">
+              Your profile will be at <span class="hint-handle">@andreas</span>
+            </span>
+          </div>
+
+          <!-- Password -->
+          <div class="field-group">
+            <label class="field-label" for="password">Password</label>
+            <div class="password-wrap">
+              <input
+                class="password-input"
+                id="password"
+                type="password"
+                value="Ironman2023!"
+                placeholder="Create a password"
+                autocomplete="new-password"
+              >
+              <button
+                type="button"
+                class="password-toggle"
+                id="pwToggle"
+                aria-label="Show password"
+              >
+                <!-- Eye icon (closed = hidden) -->
+                <svg id="eyeClosed" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+                <!-- Eye open (shown when password is visible) -->
+                <svg id="eyeOpen" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" style="display:none;">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Password strength meter -->
+            <div class="password-strength">
+              <div class="strength-bars">
+                <div class="strength-bar filled-strong"></div>
+                <div class="strength-bar filled-strong"></div>
+                <div class="strength-bar filled-strong"></div>
+                <div class="strength-bar"></div>
+              </div>
+              <span class="strength-label">Good</span>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="form-divider"></div>
+
+          <!-- Terms note -->
+          <p class="terms-note">
+            By creating an account you agree to our
+            <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+          </p>
+
+          <!-- Submit -->
+          <button type="submit" class="btn-create">
+            Create account
+          </button>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         BELOW-CARD LINKS
+         ============================================================ -->
+    <div class="below-card">
+      <p class="signin-prompt">
+        Already have an account? <a href="#">Sign in</a>
+      </p>
+      <a href="#" class="pricing-link">
+        See pricing plans
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="m9 18 6-6-6-6"/>
+        </svg>
+      </a>
+    </div>
+
+  </div><!-- /page-inner -->
+
+  <!-- ============================================================
+       DEMO BAR — toggle username availability states
+       (design reference only, not part of the UI)
+       ============================================================ -->
+  <div class="demo-bar">
+    Username state:
+    <button class="demo-btn active" onclick="setAvailability('available')">✓ Available</button>
+    <button class="demo-btn" onclick="setAvailability('taken')">✕ Taken</button>
+    <button class="demo-btn" onclick="setAvailability('checking')">… Checking</button>
+  </div>
+
+  <script>
+    /* ── Password show/hide ───────────────────────────────── */
+    const pwInput  = document.getElementById('password');
+    const pwToggle = document.getElementById('pwToggle');
+    const eyeClosed = document.getElementById('eyeClosed');
+    const eyeOpen   = document.getElementById('eyeOpen');
+
+    pwToggle.addEventListener('click', () => {
+      const showing = pwInput.type === 'text';
+      pwInput.type    = showing ? 'password' : 'text';
+      eyeClosed.style.display = showing ? ''     : 'none';
+      eyeOpen.style.display   = showing ? 'none' : '';
+      pwToggle.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+    });
+
+    /* ── Username availability demo ──────────────────────── */
+    const badge     = document.getElementById('availBadge');
+    const hint      = document.getElementById('usernameHint');
+    const usernameInput = document.getElementById('username');
+
+    function setAvailability(state) {
+      // update demo buttons
+      document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (state === 'available') {
+        badge.className = 'availability-badge available';
+        badge.innerHTML = `
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Available`;
+        usernameInput.style.borderColor = 'var(--color-accent)';
+        usernameInput.style.boxShadow   = '0 0 0 3px rgba(92,122,107,0.12)';
+        hint.innerHTML = `Your profile will be at <span class="hint-handle">@andreas</span>`;
+        hint.style.color = '';
+      } else if (state === 'taken') {
+        badge.className = 'availability-badge taken';
+        badge.innerHTML = `
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Taken`;
+        usernameInput.style.borderColor = 'var(--color-danger)';
+        usernameInput.style.boxShadow   = '0 0 0 3px rgba(192,57,43,0.1)';
+        hint.innerHTML  = `@andreas is already taken`;
+        hint.style.color = 'var(--color-danger)';
+      } else {
+        badge.className = 'availability-badge';
+        badge.style.background = 'var(--color-surface-raised)';
+        badge.style.color = 'var(--color-text-muted)';
+        badge.innerHTML = `
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-dasharray="28" stroke-dashoffset="0">
+              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          Checking`;
+        usernameInput.style.borderColor = 'var(--color-border)';
+        usernameInput.style.boxShadow   = 'none';
+        hint.innerHTML  = 'Checking availability…';
+        hint.style.color = 'var(--color-text-muted)';
+      }
+    }
+
+    /* ── Live username → hint update ─────────────────────── */
+    usernameInput.addEventListener('input', () => {
+      const val = usernameInput.value || 'yourhandle';
+      const hintHandle = hint.querySelector('.hint-handle');
+      if (hintHandle) hintHandle.textContent = '@' + val;
+    });
+  </script>
+
+</body>
+</html>

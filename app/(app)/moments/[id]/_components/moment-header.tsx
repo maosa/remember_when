@@ -80,22 +80,23 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
       {/* ── Collapsed sticky bar ──────────────────────────────── */}
       <div
         className={cn(
-          'fixed inset-x-0 z-40 h-12 border-b bg-background/95 backdrop-blur-sm transition-all duration-200 ease-in-out',
+          'fixed inset-x-0 z-40 h-12 border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm transition-all duration-200 ease-in-out',
+          'shadow-[0_1px_0_rgba(44,42,37,0.08),_0_2px_12px_rgba(44,42,37,0.06)]',
           'top-0 md:top-14',
           collapsed
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 -translate-y-2 pointer-events-none'
         )}
       >
-        <div className="mx-auto max-w-3xl px-4 h-full flex items-center gap-2">
-          <h1 className="font-semibold text-base truncate flex-1">{moment.name}</h1>
+        <div className="mx-auto max-w-[720px] px-4 md:px-6 h-full flex items-center gap-2">
+          <h1 className="font-serif font-normal text-base truncate flex-1">{moment.name}</h1>
           {canEdit && (
             <Menu>
               <MenuTrigger
                 render={
                   <button
                     type="button"
-                    className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    className="flex size-11 md:size-7 shrink-0 items-center justify-center rounded-md text-rw-text-muted hover:text-rw-text-primary hover:bg-rw-surface-raised transition-colors"
                     aria-label="Moment options"
                   />
                 }
@@ -116,36 +117,37 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
       <div className="relative">
         {/* Cover photo */}
         {moment.coverPhotoUrl ? (
-          <div className="relative h-52 sm:h-72 overflow-hidden bg-muted">
+          <div className="relative h-52 sm:h-72 overflow-hidden bg-rw-surface-raised">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={moment.coverPhotoUrl}
               alt={moment.name}
               className={cn('size-full object-cover', isPendingInvite && 'blur-md scale-110')}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/45 to-transparent" />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(44,42,37,0.75) 0%, rgba(44,42,37,0.3) 50%, transparent 100%)' }} />
           </div>
         ) : (
-          <div className="h-28 bg-gradient-to-br from-muted to-muted/60" />
+          <div className="h-28 bg-gradient-to-br from-rw-accent-subtle via-rw-surface-raised to-rw-surface" />
         )}
 
         {/* Moment info */}
         <div
           className={cn(
-            'px-4 pb-3',
+            'px-4 md:px-6 pb-3',
             moment.coverPhotoUrl
               ? 'absolute inset-x-0 bottom-0'
               : 'pt-6'
           )}
         >
-          <div className="mx-auto max-w-3xl space-y-3">
+          <div className="mx-auto max-w-[720px] space-y-3">
             {/* Name + edit menu */}
             <div className="flex items-start gap-2">
               <h1
                 className={cn(
-                  'text-2xl sm:text-3xl font-bold leading-tight flex-1',
-                  moment.coverPhotoUrl && 'text-white drop-shadow'
+                  'text-2xl sm:text-3xl font-normal leading-tight flex-1',
+                  moment.coverPhotoUrl && 'text-white'
                 )}
+                style={moment.coverPhotoUrl ? { textShadow: '0 1px 4px rgba(44,42,37,0.5)' } : undefined}
               >
                 {moment.name}
               </h1>
@@ -156,10 +158,10 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
                       <button
                         type="button"
                         className={cn(
-                          'mt-1 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors',
+                          'mt-1 flex size-11 md:size-8 shrink-0 items-center justify-center rounded-md transition-colors',
                           moment.coverPhotoUrl
                             ? 'text-white/70 hover:text-white hover:bg-white/10'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                            : 'text-rw-text-muted hover:text-rw-text-primary hover:bg-rw-surface-raised'
                         )}
                         aria-label="Moment options"
                       />
@@ -177,10 +179,13 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
             </div>
 
             {/* Meta */}
-            <div className={cn(
-              'flex flex-wrap items-center gap-x-4 gap-y-1 text-sm',
-              moment.coverPhotoUrl ? 'text-white/90 drop-shadow' : 'text-muted-foreground'
-            )}>
+            <div
+              className={cn(
+                'flex flex-wrap items-center gap-x-4 gap-y-1 text-sm',
+                moment.coverPhotoUrl ? 'text-white/90' : 'text-rw-text-muted'
+              )}
+              style={moment.coverPhotoUrl ? { textShadow: '0 1px 4px rgba(44,42,37,0.5)' } : undefined}
+            >
               {date && (
                 <span className="flex items-center gap-1.5">
                   <Calendar className="size-3.5 shrink-0" />
@@ -220,15 +225,15 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
 
       {/* ── Pending invite banner ──────────────────────────────── */}
       {isPendingInvite && (
-        <div className="mx-auto max-w-3xl px-4 py-4">
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+        <div className="mx-auto max-w-[720px] px-4 md:px-6 py-4">
+          <div className="rounded-xl border border-rw-accent/20 bg-rw-accent-subtle/40 p-4 space-y-3">
             <div className="space-y-1">
               <p className="font-medium text-sm">You've been invited to this moment</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-rw-text-muted">
                 Invited by {moment.ownerFirstName} {moment.ownerLastName}
               </p>
             </div>
-            {inviteError && <p className="text-sm text-destructive">{inviteError}</p>}
+            {inviteError && <p className="text-sm text-rw-danger">{inviteError}</p>}
             <div className="flex gap-2">
               <Button size="sm" disabled={isPending} onClick={handleAccept}>
                 <CheckCircle2 className="size-3.5" />

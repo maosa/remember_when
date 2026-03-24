@@ -75,15 +75,15 @@ export default function PricingPage() {
   const isAuthenticated = auth.status === 'authenticated'
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-rw-bg flex flex-col">
       {/* Header — authenticated: full app nav; guest: sign-in/get-started; loading: placeholder */}
       {auth.status === 'loading' && (
-        <header className="border-b bg-background/95 h-14 shrink-0" />
+        <header className="border-b border-rw-border-subtle bg-rw-bg/95 h-14 shrink-0" />
       )}
       {auth.status === 'unauthenticated' && (
-        <header className="border-b bg-background/95 backdrop-blur-sm shrink-0">
-          <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-            <Link href="/" className="text-sm font-semibold tracking-tight">
+        <header className="border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm shrink-0">
+          <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
+            <Link href="/" className="font-serif text-[18px] font-semibold tracking-tight">
               Remember When
             </Link>
             <div className="flex items-center gap-2">
@@ -104,32 +104,34 @@ export default function PricingPage() {
       {/* Main — offset for fixed AppNav when authenticated */}
       <main className={cn('flex-1', isAuthenticated && 'md:pt-14 pb-20 md:pb-0')}>
         {/* Hero */}
-        <section className="max-w-5xl mx-auto px-6 pt-16 pb-12 text-center">
+        <section className="max-w-[1100px] mx-auto px-6 pt-16 pb-12 text-center">
           <h1 className="text-3xl font-semibold tracking-tight mb-3">Simple, honest pricing</h1>
-          <p className="text-muted-foreground max-w-md mx-auto">
+          <p className="text-rw-text-muted max-w-md mx-auto">
             Start for free and keep your memories forever. Storage-based plans coming as Remember When grows.
           </p>
         </section>
 
         {/* Tiers */}
-        <section className="max-w-3xl mx-auto px-6 pb-20">
+        <section className="max-w-[720px] mx-auto px-6 pb-20">
           <div className="grid md:grid-cols-2 gap-4">
 
             {/* Free tier */}
             <Card className="flex flex-col">
               <CardHeader>
-                <CardTitle className="text-lg">Free</CardTitle>
-                <CardDescription>For everyone, forever</CardDescription>
+                <p className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted">Free</p>
+                <CardTitle className="text-lg">For everyone, forever</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 space-y-6">
                 <div>
                   <span className="text-4xl font-semibold tracking-tight">$0</span>
-                  <span className="text-muted-foreground text-sm ml-1">/ month</span>
+                  <span className="text-rw-text-muted text-sm ml-1">/ month</span>
                 </div>
                 <ul className="space-y-2.5">
                   {FREE_FEATURES.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm">
-                      <Check className="size-4 mt-px shrink-0 text-foreground" />
+                      <span className="mt-px shrink-0 flex size-4 items-center justify-center rounded-full bg-rw-accent-subtle">
+                        <Check className="size-2.5 text-rw-accent" />
+                      </span>
                       <span>{f}</span>
                     </li>
                   ))}
@@ -137,7 +139,7 @@ export default function PricingPage() {
               </CardContent>
               <CardFooter>
                 {isAuthenticated ? (
-                  <p className="h-8 flex items-center text-sm text-muted-foreground">
+                  <p className="h-8 flex items-center text-sm text-rw-text-muted">
                     ✓ Your current plan
                   </p>
                 ) : (
@@ -149,22 +151,22 @@ export default function PricingPage() {
             </Card>
 
             {/* Plus tier — placeholder */}
-            <Card className="flex flex-col">
+            <Card className="flex flex-col border-[rgba(200,152,64,0.28)] bg-gradient-to-b from-[rgba(200,152,64,0.04)] to-transparent">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Plus</CardTitle>
+                  <p className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted">Plus</p>
                   <Badge variant="muted">Coming soon</Badge>
                 </div>
-                <CardDescription>For families who love sharing</CardDescription>
+                <CardTitle className="text-lg">For families who love sharing</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 space-y-6">
                 <div>
-                  <span className="text-4xl font-semibold tracking-tight text-muted-foreground">TBD</span>
-                  <span className="text-muted-foreground text-sm ml-1">/ month</span>
+                  <span className="text-4xl font-semibold tracking-tight text-rw-text-muted">TBD</span>
+                  <span className="text-rw-text-muted text-sm ml-1">/ month</span>
                 </div>
                 <ul className="space-y-2.5">
                   {PLUS_FEATURES.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-rw-text-muted opacity-60">
                       <Check className="size-4 mt-px shrink-0" />
                       <span>{f}</span>
                     </li>
@@ -180,7 +182,7 @@ export default function PricingPage() {
 
           </div>
 
-          <p className="text-center text-xs text-muted-foreground mt-8">
+          <p className="text-center text-xs text-rw-text-muted mt-8">
             Free tier storage caps will be introduced gradually.{' '}
             Early users are grandfathered in at launch-era limits.
           </p>

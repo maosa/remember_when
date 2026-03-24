@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remember When — Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      /* Colour palette */
+      --color-bg:              #F5F2ED;
+      --color-surface:         #EDEAE4;
+      --color-surface-raised:  #E6E2DB;
+      --color-text-primary:    #2C2A25;
+      --color-text-muted:      #7C7670;
+      --color-text-placeholder:#A8A39D;
+      --color-accent:          #5C7A6B;
+      --color-accent-hover:    #4A6659;
+      --color-accent-subtle:   #D4E0DA;
+      --color-blue:            #7C96A8;
+      --color-blue-subtle:     #E0E8ED;
+      --color-border:          #D6D1CB;
+      --color-border-subtle:   #E8E4DE;
+      --color-danger:          #C0392B;
+      --color-danger-subtle:   #FDECEA;
+      --color-white:           #FFFFFF;
+
+      /* Typography */
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+
+      /* Shadows */
+      --shadow-card:    0 1px 3px rgba(44,42,37,0.08);
+      --shadow-modal:   0 8px 32px rgba(44,42,37,0.16);
+      --shadow-popover: 0 4px 16px rgba(44,42,37,0.12);
+
+      /* Border radii */
+      --radius-card:    12px;
+      --radius-button:   8px;
+      --radius-input:    8px;
+      --radius-pill:   999px;
+      --radius-modal:   16px;
+      --radius-popover: 10px;
+      --radius-image:   10px;
+    }
+
+    /* ============================================================
+       BASE RESET
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-size: 15px;
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       LAYOUT
+       ============================================================ */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--color-surface);
+      border-right: 1px solid var(--color-border);
+      padding: 32px 0 48px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-logo {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--color-text-primary);
+      padding: 0 24px 28px;
+      border-bottom: 1px solid var(--color-border-subtle);
+      margin-bottom: 20px;
+      line-height: 1.3;
+    }
+
+    .sidebar-logo span {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-placeholder);
+      padding: 14px 24px 5px;
+    }
+
+    .sidebar-nav { list-style: none; padding: 0 10px; }
+
+    .sidebar-nav li a {
+      display: block;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.12s ease;
+      letter-spacing: 0.01em;
+    }
+
+    .sidebar-nav li a:hover {
+      color: var(--color-text-primary);
+      background: var(--color-surface-raised);
+    }
+
+    .main {
+      flex: 1;
+      padding: 64px 72px 120px;
+      max-width: 920px;
+    }
+
+    /* ============================================================
+       PAGE HEADER
+       ============================================================ */
+    .page-header {
+      margin-bottom: 72px;
+      padding-bottom: 48px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .page-header-eyebrow {
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-accent);
+      margin-bottom: 14px;
+    }
+
+    .page-header-title {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 40px;
+      color: var(--color-text-primary);
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    .page-header-desc {
+      font-size: 15px;
+      color: var(--color-text-muted);
+      max-width: 500px;
+      line-height: 1.7;
+    }
+
+    /* ============================================================
+       SECTION STRUCTURE
+       ============================================================ */
+    .ds-section {
+      margin-bottom: 88px;
+      scroll-margin-top: 32px;
+    }
+
+    .ds-section-header {
+      margin-bottom: 36px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .ds-section-title {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 24px;
+      color: var(--color-text-primary);
+      line-height: 1.3;
+    }
+
+    .ds-section-desc {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+
+    .ds-subsection { margin-bottom: 36px; }
+
+    .ds-subsection-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-placeholder);
+      margin-bottom: 16px;
+    }
+
+    .ds-demo-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .ds-demo-block {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .ds-demo-block + .ds-demo-block { margin-top: 12px; }
+
+    /* ============================================================
+       COLOURS
+       ============================================================ */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .color-swatch {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    .color-swatch-body { height: 56px; }
+
+    .color-swatch-info {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      padding: 9px 11px;
+    }
+
+    .color-swatch-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 1px;
+    }
+
+    .color-swatch-token {
+      font-size: 9px;
+      color: var(--color-text-muted);
+      font-family: 'Courier New', monospace;
+    }
+
+    .color-swatch-hex {
+      font-size: 9px;
+      color: var(--color-text-placeholder);
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ============================================================
+       TYPOGRAPHY
+       ============================================================ */
+    .type-scale > * + * {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--color-border-subtle);
+    }
+
+    .type-sample-row {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+    }
+
+    .type-sample-meta {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-text-placeholder);
+      min-width: 180px;
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       BUTTONS
+       ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 14px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      border-radius: var(--radius-button);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.14s ease;
+      text-decoration: none;
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    .btn-sm {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .btn-primary {
+      background: var(--color-accent);
+      color: var(--color-white);
+      border-color: var(--color-accent);
+    }
+    .btn-primary:hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-text-primary);
+      border-color: var(--color-border);
+    }
+    .btn-secondary:hover { background: var(--color-surface-raised); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--color-text-muted);
+      border-color: transparent;
+    }
+    .btn-ghost:hover { background: var(--color-surface-raised); color: var(--color-text-primary); }
+
+    .btn-destructive {
+      background: var(--color-danger);
+      color: var(--color-white);
+      border-color: var(--color-danger);
+    }
+    .btn-destructive:hover { background: #a93226; border-color: #a93226; }
+
+    .btn-destructive-outline {
+      background: var(--color-danger-subtle);
+      color: var(--color-danger);
+      border-color: var(--color-danger);
+    }
+    .btn-destructive-outline:hover { background: #fad7d4; }
+
+    /* ============================================================
+       INPUT FIELDS
+       ============================================================ */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      letter-spacing: 0.01em;
+    }
+
+    .input-field {
+      height: 40px;
+      padding: 0 12px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-input);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      transition: border-color 0.14s ease, box-shadow 0.14s ease;
+      width: 100%;
+    }
+
+    .input-field::placeholder { color: var(--color-text-placeholder); }
+    .input-field:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.12);
+    }
+
+    .input-field-compact { height: 36px; font-size: 13px; }
+
+    textarea.input-field {
+      height: auto;
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+
+    .input-field.is-error {
+      border-color: var(--color-danger);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+    }
+
+    .input-hint { font-size: 12px; color: var(--color-text-muted); }
+    .input-error-msg { font-size: 12px; color: var(--color-danger); }
+
+    .input-wrapper { position: relative; }
+
+    .input-icon-right {
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+      pointer-events: none;
+      display: flex;
+    }
+
+    select.input-field {
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237C7670' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    /* ============================================================
+       MOMENT CARDS
+       ============================================================ */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .moment-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.18s ease, transform 0.18s ease;
+      position: relative;
+    }
+
+    .moment-card:hover {
+      box-shadow: 0 4px 20px rgba(44,42,37,0.13);
+      transform: translateY(-1px);
+    }
+
+    .moment-card:hover .card-menu-btn { opacity: 1; }
+
+    .card-cover {
+      position: relative;
+      aspect-ratio: 16/9;
+      overflow: hidden;
+    }
+
+    /* Painterly CSS gradient "photographs" */
+    .cover-forest {
+      background: linear-gradient(165deg,
+        #2D4A3E 0%, #3D6A52 20%, #4E8060 35%,
+        #5E9470 50%, #7AAF88 65%, #96C4A0 80%,
+        #B8D4B8 92%, #D4E8D4 100%);
+    }
+
+    .cover-coast {
+      background: linear-gradient(180deg,
+        #7BB8D8 0%, #A8CDE0 18%, #C8DDE8 30%,
+        #D8E8EF 42%, #E0EBF0 50%,
+        #D4C8A8 60%, #C4B090 70%,
+        #A89278 82%, #8B7355 100%);
+    }
+
+    .cover-mountain {
+      background: linear-gradient(170deg,
+        #C5CAE9 0%, #9FA8DA 15%, #7986CB 28%,
+        #5C6BC0 38%, #8796B8 46%,
+        #A8B8A0 54%, #8AAA80 65%,
+        #6B8A60 76%, #4A6A40 88%, #2D4A28 100%);
+    }
+
+    .cover-golden {
+      background: linear-gradient(155deg,
+        #F4C87A 0%, #E8A845 15%,
+        #D08428 28%, #B86820 40%,
+        #9A5018 52%, #7E3E14 62%,
+        #63300E 72%, #4A2408 84%, #321808 100%);
+    }
+
+    .cover-dusk {
+      background: linear-gradient(170deg,
+        #E8C4D8 0%, #D4A0C0 14%,
+        #B87EA4 26%, #9A608C 36%,
+        #7E4878 46%, #623668 56%,
+        #8A7A9E 64%, #A89AC0 72%,
+        #C4B8D8 82%, #D8D0E8 100%);
+    }
+
+    .card-cover-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(44,42,37,0.15) 45%,
+        rgba(44,42,37,0.72) 100%);
+    }
+
+    .card-title {
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+      right: 40px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-white);
+      line-height: 1.3;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    }
+
+    .card-menu-btn {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      width: 28px;
+      height: 28px;
+      background: rgba(44,42,37,0.45);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s ease, background 0.15s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    .card-menu-btn:hover { background: rgba(44,42,37,0.65); }
+
+    .card-body { padding: 13px 15px 16px; }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 9px;
+      flex-wrap: wrap;
+    }
+
+    .card-date, .card-location {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .card-meta-dot {
+      width: 3px; height: 3px;
+      background: var(--color-border);
+      border-radius: 50%;
+    }
+
+    .card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 11px; }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ============================================================
+       TAGS / CHIPS
+       ============================================================ */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+      line-height: 1;
+    }
+
+    .tag-muted {
+      background: var(--color-surface-raised);
+      color: var(--color-text-muted);
+    }
+
+    .tag-blue {
+      background: var(--color-blue-subtle);
+      color: var(--color-blue);
+    }
+
+    .tag-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--color-text-muted);
+      padding: 0;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      transition: color 0.1s;
+    }
+    .tag-remove:hover { color: var(--color-text-primary); }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+    }
+
+    .role-badge-reader {
+      background: var(--color-blue-subtle);
+      color: var(--color-blue);
+    }
+
+    .role-badge-owner {
+      background: #F0EAD4;
+      color: #8B7030;
+    }
+
+    /* ============================================================
+       AVATARS
+       ============================================================ */
+    .avatar {
+      border-radius: 50%;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+      font-family: var(--font-sans);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .avatar-sm  { width: 28px; height: 28px; font-size: 10px; }
+    .avatar-md  { width: 36px; height: 36px; font-size: 13px; }
+    .avatar-lg  { width: 48px; height: 48px; font-size: 16px; }
+    .avatar-xl  { width: 64px; height: 64px; font-size: 20px; }
+
+    .av-teal  { background: var(--color-accent-subtle);  color: var(--color-accent); }
+    .av-blue  { background: var(--color-blue-subtle);    color: var(--color-blue); }
+    .av-warm  { background: #EDE0D4; color: #8B6650; }
+    .av-sage  { background: #D8E8D8; color: #4A7A5A; }
+    .av-dusk  { background: #E8DAEA; color: #8A6090; }
+
+    .avatar-stack { display: flex; align-items: center; }
+    .avatar-stack .avatar {
+      border: 2px solid var(--color-bg);
+      margin-left: -9px;
+    }
+    .avatar-stack .avatar:first-child { margin-left: 0; }
+
+    .avatar-overflow {
+      background: var(--color-surface-raised);
+      color: var(--color-text-muted);
+      font-size: 10px;
+    }
+
+    /* ============================================================
+       NAVIGATION — DESKTOP
+       ============================================================ */
+    .nav-desktop {
+      display: flex;
+      align-items: center;
+      height: 56px;
+      padding: 0 24px;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border-subtle);
+      gap: 0;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .nav-logo {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--color-text-primary);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .nav-link {
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.13s ease;
+    }
+
+    .nav-link:hover { color: var(--color-text-primary); background: var(--color-surface); }
+    .nav-link.active { color: var(--color-accent); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-icon-btn {
+      width: 34px; height: 34px;
+      background: none; border: none;
+      border-radius: 50%;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      transition: background 0.13s ease, color 0.13s ease;
+    }
+
+    .nav-icon-btn:hover { background: var(--color-surface); color: var(--color-text-primary); }
+
+    .nav-badge {
+      position: absolute; top: 4px; right: 4px;
+      width: 8px; height: 8px;
+      background: var(--color-blue);
+      border-radius: 50%;
+      border: 2px solid var(--color-bg);
+    }
+
+    /* ============================================================
+       NAVIGATION — MOBILE
+       ============================================================ */
+    .nav-mobile {
+      display: flex;
+      align-items: center;
+      height: 64px;
+      padding: 0 4px;
+      background: var(--color-bg);
+      border-top: 1px solid var(--color-border-subtle);
+      border-radius: 0 0 12px 12px;
+    }
+
+    .nav-mobile-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 8px 4px;
+      color: var(--color-text-muted);
+      border: none;
+      background: none;
+      cursor: pointer;
+      transition: color 0.13s ease;
+      border-radius: 8px;
+    }
+
+    .nav-mobile-tab.active { color: var(--color-accent); }
+    .nav-mobile-tab-label { font-size: 10px; font-weight: 500; }
+
+    /* ============================================================
+       MODALS
+       ============================================================ */
+    .modal-scene {
+      background: rgba(44,42,37,0.38);
+      backdrop-filter: blur(3px);
+      border-radius: 12px;
+      padding: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-card {
+      background: var(--color-bg);
+      border-radius: var(--radius-modal);
+      padding: 28px;
+      box-shadow: var(--shadow-modal);
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .modal-title {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 20px;
+      color: var(--color-text-primary);
+      line-height: 1.3;
+    }
+
+    .modal-close {
+      width: 28px; height: 28px;
+      background: none; border: none;
+      color: var(--color-text-muted);
+      cursor: pointer; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.13s, color 0.13s;
+    }
+    .modal-close:hover { background: var(--color-surface-raised); color: var(--color-text-primary); }
+
+    .modal-body { margin-bottom: 24px; }
+    .modal-body p { font-size: 14px; color: var(--color-text-muted); line-height: 1.6; }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* ============================================================
+       NOTIFICATIONS
+       ============================================================ */
+    .notif-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .notif-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .notif-item.unread { background: var(--color-blue-subtle); }
+
+    .notif-icon {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .notif-icon-unread { background: var(--color-accent-subtle); color: var(--color-accent); }
+    .notif-icon-read   { background: var(--color-surface-raised); color: var(--color-text-muted); }
+
+    .notif-content { flex: 1; min-width: 0; }
+
+    .notif-text {
+      font-size: 14px;
+      color: var(--color-text-primary);
+      line-height: 1.5;
+    }
+    .notif-text strong { font-weight: 600; }
+
+    .notif-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+    .notif-time {
+      font-size: 11px;
+      color: var(--color-text-placeholder);
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .notif-dot {
+      width: 8px; height: 8px;
+      background: var(--color-blue);
+      border-radius: 50%;
+      position: absolute; top: 18px; right: 16px;
+    }
+
+    /* ============================================================
+       EMPTY STATES
+       ============================================================ */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 32px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 44px; height: 44px;
+      color: var(--color-text-placeholder);
+      margin-bottom: 16px;
+      opacity: 0.55;
+    }
+
+    .empty-title {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 17px;
+      color: var(--color-text-muted);
+      margin-bottom: 8px;
+    }
+
+    .empty-desc {
+      font-size: 14px;
+      color: var(--color-text-placeholder);
+      max-width: 260px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    /* ============================================================
+       DANGER ZONE
+       ============================================================ */
+    .danger-zone {
+      background: var(--color-danger-subtle);
+      border: 1px solid rgba(192,57,43,0.4);
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+
+    .danger-zone-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-danger);
+      margin-bottom: 10px;
+    }
+
+    .danger-zone-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 6px;
+    }
+
+    .danger-zone-desc {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    /* ============================================================
+       BANNERS
+       ============================================================ */
+    .banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .banner + .banner { margin-top: 8px; }
+
+    .banner-invite {
+      background: var(--color-blue-subtle);
+      border-left: 3px solid var(--color-blue);
+      color: var(--color-text-primary);
+    }
+
+    .banner-success {
+      background: var(--color-accent-subtle);
+      border-left: 3px solid var(--color-accent);
+      color: var(--color-accent);
+    }
+
+    .banner-error {
+      background: var(--color-danger-subtle);
+      border-left: 3px solid var(--color-danger);
+      color: var(--color-danger);
+    }
+
+    .banner-info {
+      background: #FEF3C7;
+      border-left: 3px solid #D97706;
+      color: #92400E;
+    }
+
+    .banner-icon { flex-shrink: 0; margin-top: 1px; }
+
+    /* ============================================================
+       POPOVERS
+       ============================================================ */
+    .popover {
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-popover);
+      box-shadow: var(--shadow-popover);
+      padding: 5px;
+      min-width: 170px;
+      display: inline-block;
+    }
+
+    .popover-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: var(--color-text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .popover-item:hover { background: var(--color-surface); }
+    .popover-item.danger { color: var(--color-danger); }
+
+    .popover-divider { height: 1px; background: var(--color-border-subtle); margin: 4px 0; }
+
+    /* ============================================================
+       TAB BAR
+       ============================================================ */
+    .tab-bar {
+      display: inline-flex;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .tab-item {
+      padding: 5px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.13s;
+      border: none;
+      background: none;
+    }
+
+    .tab-item.active {
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      box-shadow: 0 1px 3px rgba(44,42,37,0.1);
+    }
+
+    .tab-count {
+      display: inline-block;
+      background: var(--color-surface-raised);
+      color: var(--color-text-muted);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 10px;
+      margin-left: 4px;
+    }
+
+    /* ============================================================
+       SPACING REFERENCE
+       ============================================================ */
+    .spacing-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .spacing-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .spacing-label {
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      color: var(--color-text-muted);
+      min-width: 80px;
+    }
+
+    .spacing-bar {
+      height: 8px;
+      background: var(--color-accent-subtle);
+      border-radius: 4px;
+      border: 1px solid var(--color-accent);
+      opacity: 0.7;
+    }
+
+    .spacing-px {
+      font-size: 11px;
+      color: var(--color-text-placeholder);
+    }
+
+    /* ============================================================
+       MEMBER ROW (Moment Settings)
+       ============================================================ */
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+
+    .member-row + .member-row {
+      border-top: 1px solid var(--color-border-subtle);
+    }
+
+    .member-info { flex: 1; min-width: 0; }
+
+    .member-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+    }
+
+    .member-username {
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    /* ============================================================
+       UTILITIES
+       ============================================================ */
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-1 { gap: 4px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-3 { margin-top: 12px; }
+    .mt-4 { margin-top: 16px; }
+    .mt-5 { margin-top: 20px; }
+    .w-full { width: 100%; }
+
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    Remember When
+    <span>Design System v1.0</span>
+  </div>
+  <ul class="sidebar-nav">
+    <li class="sidebar-section-label">Foundations</li>
+    <li><a href="#colors">Colours</a></li>
+    <li><a href="#typography">Typography</a></li>
+    <li><a href="#spacing">Spacing &amp; Layout</a></li>
+    <li class="sidebar-section-label">Components</li>
+    <li><a href="#buttons">Buttons</a></li>
+    <li><a href="#inputs">Input Fields</a></li>
+    <li><a href="#cards">Moment Cards</a></li>
+    <li><a href="#avatars">Avatars</a></li>
+    <li><a href="#tags">Tags &amp; Chips</a></li>
+    <li><a href="#navigation">Navigation</a></li>
+    <li><a href="#modals">Modals</a></li>
+    <li><a href="#notifications">Notifications</a></li>
+    <li><a href="#empty-states">Empty States</a></li>
+    <li><a href="#danger-zone">Danger Zone</a></li>
+    <li class="sidebar-section-label">Patterns</li>
+    <li><a href="#popovers">Popovers &amp; Tabs</a></li>
+    <li><a href="#banners">Banners</a></li>
+  </ul>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main">
+
+  <div class="page-header">
+    <div class="page-header-eyebrow">Design System</div>
+    <h1 class="page-header-title">Remember When</h1>
+    <p style="font-size:15px;color:var(--color-text-muted);max-width:500px;line-height:1.7;">
+      A private, collaborative memory book. Every design decision serves one goal: the people who lived a moment coming together to make sure it's never forgotten. Calm. Intimate. Warm.
+    </p>
+  </div>
+
+
+  <!-- ============================================================
+       COLOURS
+       ============================================================ -->
+  <section class="ds-section" id="colors">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Colours</h2>
+      <p class="ds-section-desc">Warm linen and stone neutrals form the canvas. Sage-teal is the single personality colour. Dusty blue carries informational states sparingly.</p>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Backgrounds &amp; Surfaces</div>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#F5F2ED;border:1px solid #E8E4DE;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Background</div>
+            <div class="color-swatch-token">--color-bg</div>
+            <div class="color-swatch-hex">#F5F2ED</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#EDEAE4;border:1px solid #E8E4DE;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Surface</div>
+            <div class="color-swatch-token">--color-surface</div>
+            <div class="color-swatch-hex">#EDEAE4</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#E6E2DB;border:1px solid #E0DDD6;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Surface Raised</div>
+            <div class="color-swatch-token">--color-surface-raised</div>
+            <div class="color-swatch-hex">#E6E2DB</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Text</div>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#2C2A25;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Text Primary</div>
+            <div class="color-swatch-token">--color-text-primary</div>
+            <div class="color-swatch-hex">#2C2A25</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#7C7670;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Text Muted</div>
+            <div class="color-swatch-token">--color-text-muted</div>
+            <div class="color-swatch-hex">#7C7670</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#A8A39D;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Placeholder</div>
+            <div class="color-swatch-token">--color-text-placeholder</div>
+            <div class="color-swatch-hex">#A8A39D</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Accent — Sage-Teal</div>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#5C7A6B;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Accent</div>
+            <div class="color-swatch-token">--color-accent</div>
+            <div class="color-swatch-hex">#5C7A6B</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#4A6659;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Accent Hover</div>
+            <div class="color-swatch-token">--color-accent-hover</div>
+            <div class="color-swatch-hex">#4A6659</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#D4E0DA;border:1px solid #C8D8D0;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Accent Subtle</div>
+            <div class="color-swatch-token">--color-accent-subtle</div>
+            <div class="color-swatch-hex">#D4E0DA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Informational — Dusty Blue</div>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#7C96A8;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Blue</div>
+            <div class="color-swatch-token">--color-blue</div>
+            <div class="color-swatch-hex">#7C96A8</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#E0E8ED;border:1px solid #D4DCE4;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Blue Subtle</div>
+            <div class="color-swatch-token">--color-blue-subtle</div>
+            <div class="color-swatch-hex">#E0E8ED</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Borders &amp; Danger</div>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#D6D1CB;border:1px solid #CCCAC4;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Border</div>
+            <div class="color-swatch-token">--color-border</div>
+            <div class="color-swatch-hex">#D6D1CB</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#E8E4DE;border:1px solid #E0DDD8;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Border Subtle</div>
+            <div class="color-swatch-token">--color-border-subtle</div>
+            <div class="color-swatch-hex">#E8E4DE</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#C0392B;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Danger</div>
+            <div class="color-swatch-token">--color-danger</div>
+            <div class="color-swatch-hex">#C0392B</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#FDECEA;border:1px solid #F8DEDA;"></div>
+          <div class="color-swatch-info">
+            <div class="color-swatch-name">Danger Subtle</div>
+            <div class="color-swatch-token">--color-danger-subtle</div>
+            <div class="color-swatch-hex">#FDECEA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       TYPOGRAPHY
+       ============================================================ -->
+  <section class="ds-section" id="typography">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Typography</h2>
+      <p class="ds-section-desc">Lora brings warmth and elegance to emotional content. DM Sans keeps the UI clean and readable. The contrast between them is intentional — it marks the boundary between the product and the memory.</p>
+    </div>
+
+    <div class="type-scale">
+      <div>
+        <div class="ds-subsection-label">Lora — Serif, emotional content</div>
+        <div class="type-scale">
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">App name / wordmark — Lora 600, 20px</div>
+            <span style="font-family:var(--font-serif);font-weight:600;font-size:20px;color:var(--color-text-primary);">Remember When</span>
+          </div>
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">Moment name (h1) — Lora 400, 32px</div>
+            <span style="font-family:var(--font-serif);font-weight:400;font-size:32px;color:var(--color-text-primary);line-height:1.3;">Our Ironman 2023</span>
+          </div>
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">Page heading (h1) — Lora 600, 28px</div>
+            <span style="font-family:var(--font-serif);font-weight:600;font-size:28px;color:var(--color-text-primary);line-height:1.3;">Notifications</span>
+          </div>
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">Section heading (h2) — Lora 600, 20px</div>
+            <span style="font-family:var(--font-serif);font-weight:600;font-size:20px;color:var(--color-text-primary);">Your moments</span>
+          </div>
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">Lora italic — used in empty states, captions</div>
+            <span style="font-family:var(--font-serif);font-style:italic;font-weight:400;font-size:16px;color:var(--color-text-muted);">No moments yet.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:32px;">
+        <div class="ds-subsection-label">DM Sans — UI & functional text</div>
+        <div class="type-scale" style="margin-top:16px;">
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">Card title — DM Sans 600, 16px</div>
+            <span style="font-family:var(--font-sans);font-weight:600;font-size:16px;color:var(--color-text-primary);">Summer in Santorini</span>
+          </div>
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">Body text — DM Sans 400, 15px, line-height 1.6</div>
+            <p style="font-family:var(--font-sans);font-weight:400;font-size:15px;color:var(--color-text-primary);line-height:1.6;max-width:480px;">We drove up to the caldera just before sunset. Nobody spoke for a long time. The kind of quiet that only happens when everyone present knows they're somewhere they'll never forget.</p>
+          </div>
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">UI label / button — DM Sans 500, 13px</div>
+            <span style="font-family:var(--font-sans);font-weight:500;font-size:13px;color:var(--color-text-primary);letter-spacing:0.01em;">Add a post · Save changes · Invite someone</span>
+          </div>
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">Timestamp / metadata — DM Sans 400, 12px</div>
+            <span style="font-family:var(--font-sans);font-weight:400;font-size:12px;color:var(--color-text-muted);">June 2023 · Santorini, Greece · 2h ago</span>
+          </div>
+          <div>
+            <div class="ds-subsection-label" style="margin-bottom:8px;">Caption — DM Sans 400, 11px</div>
+            <span style="font-family:var(--font-sans);font-weight:400;font-size:11px;color:var(--color-text-placeholder);">Photo added by Andreas Louca</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       SPACING
+       ============================================================ -->
+  <section class="ds-section" id="spacing">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Spacing &amp; Layout</h2>
+      <p class="ds-section-desc">Base unit: 4px. Generous spacing throughout — this app should feel unhurried.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
+      <div>
+        <div class="ds-subsection-label">Spacing scale</div>
+        <div class="spacing-grid">
+          <div class="spacing-row"><span class="spacing-label">4px</span><div class="spacing-bar" style="width:4px;"></div><span class="spacing-px">base unit</span></div>
+          <div class="spacing-row"><span class="spacing-label">8px</span><div class="spacing-bar" style="width:8px;"></div><span class="spacing-px">tight gap</span></div>
+          <div class="spacing-row"><span class="spacing-label">12px</span><div class="spacing-bar" style="width:12px;"></div><span class="spacing-px">related elements</span></div>
+          <div class="spacing-row"><span class="spacing-label">16px</span><div class="spacing-bar" style="width:16px;"></div><span class="spacing-px">card padding, page mobile</span></div>
+          <div class="spacing-row"><span class="spacing-label">20px</span><div class="spacing-bar" style="width:20px;"></div><span class="spacing-px">card padding desktop</span></div>
+          <div class="spacing-row"><span class="spacing-label">24px</span><div class="spacing-bar" style="width:24px;"></div><span class="spacing-px">between groups, page padding</span></div>
+          <div class="spacing-row"><span class="spacing-label">40px</span><div class="spacing-bar" style="width:40px;"></div><span class="spacing-px">major section spacing</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="ds-subsection-label">Border radii</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:0;">
+          <div class="flex items-center gap-3">
+            <div style="width:48px;height:24px;background:var(--color-accent-subtle);border:1px solid var(--color-accent);border-radius:8px;"></div>
+            <span style="font-size:13px;color:var(--color-text-muted);">8px — buttons, inputs, images</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div style="width:48px;height:24px;background:var(--color-accent-subtle);border:1px solid var(--color-accent);border-radius:10px;"></div>
+            <span style="font-size:13px;color:var(--color-text-muted);">10px — popovers, post images</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div style="width:48px;height:24px;background:var(--color-accent-subtle);border:1px solid var(--color-accent);border-radius:12px;"></div>
+            <span style="font-size:13px;color:var(--color-text-muted);">12px — cards</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div style="width:48px;height:24px;background:var(--color-accent-subtle);border:1px solid var(--color-accent);border-radius:16px;"></div>
+            <span style="font-size:13px;color:var(--color-text-muted);">16px — modals</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div style="width:48px;height:24px;background:var(--color-accent-subtle);border:1px solid var(--color-accent);border-radius:999px;"></div>
+            <span style="font-size:13px;color:var(--color-text-muted);">999px — pills, avatars</span>
+          </div>
+        </div>
+        <div class="ds-subsection-label" style="margin-top:24px;">Layout widths</div>
+        <div style="font-size:13px;color:var(--color-text-muted);line-height:2;">
+          <div>Max content (reading): <strong style="color:var(--color-text-primary);">720px</strong></div>
+          <div>Max content (grid): <strong style="color:var(--color-text-primary);">1100px</strong></div>
+          <div>Page padding desktop: <strong style="color:var(--color-text-primary);">24px</strong></div>
+          <div>Page padding mobile: <strong style="color:var(--color-text-primary);">16px</strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       BUTTONS
+       ============================================================ -->
+  <section class="ds-section" id="buttons">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Buttons</h2>
+      <p class="ds-section-desc">Five variants. Two sizes. Buttons are always action-oriented in copy — never passive labels.</p>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Default size — 36px height</div>
+      <div class="ds-demo-row">
+        <button class="btn btn-primary">Create moment</button>
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-ghost">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+          More
+        </button>
+        <button class="btn btn-destructive">Delete moment</button>
+        <button class="btn btn-destructive-outline">Delete account</button>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Small size — 28px height</div>
+      <div class="ds-demo-row">
+        <button class="btn btn-primary btn-sm">Add post</button>
+        <button class="btn btn-secondary btn-sm">Decline</button>
+        <button class="btn btn-ghost btn-sm">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </button>
+        <button class="btn btn-destructive btn-sm">Remove</button>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">With icons</div>
+      <div class="ds-demo-row">
+        <button class="btn btn-primary">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          New moment
+        </button>
+        <button class="btn btn-secondary">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload photo
+        </button>
+        <button class="btn btn-ghost">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Search
+        </button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       INPUT FIELDS
+       ============================================================ -->
+  <section class="ds-section" id="inputs">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Input Fields</h2>
+      <p class="ds-section-desc">Warm surface background. Soft focus ring in accent. Never harsh. Always inviting.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div class="input-group">
+        <label class="input-label">Moment name <span style="color:var(--color-danger);">*</span></label>
+        <input class="input-field" type="text" placeholder="Give this moment a name…">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Location</label>
+        <div class="input-wrapper">
+          <input class="input-field" type="text" placeholder="Where did this happen?" style="padding-right:36px;">
+          <span class="input-icon-right">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Email</label>
+        <input class="input-field" type="email" value="andreas@example.com">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Username</label>
+        <div class="input-wrapper">
+          <input class="input-field" type="text" value="andreas" style="padding-right:36px;">
+          <span class="input-icon-right" style="color:var(--color-accent);">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+        </div>
+        <span class="input-hint">@andreas is available</span>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Password</label>
+        <input class="input-field" type="password" value="password123">
+        <span class="input-error-msg">Password must be at least 8 characters</span>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Sort by</label>
+        <select class="input-field">
+          <option>Most recent</option>
+          <option>Oldest first</option>
+          <option>By name</option>
+        </select>
+      </div>
+      <div class="input-group" style="grid-column:1/-1;">
+        <label class="input-label">Write something about this moment</label>
+        <textarea class="input-field" rows="3" placeholder="What do you remember most…"></textarea>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Error state</label>
+        <input class="input-field is-error" type="text" value="taken_username">
+        <span class="input-error-msg">This username is already taken</span>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Compact (36px)</label>
+        <input class="input-field input-field-compact" type="text" placeholder="Search moments…">
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       MOMENT CARDS
+       ============================================================ -->
+  <section class="ds-section" id="cards">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Moment Cards</h2>
+      <p class="ds-section-desc">The cover photo is always the visual centrepiece. The gradient overlay ensures moment names are legible over any image. The […] menu appears on hover only.</p>
+    </div>
+
+    <div class="card-grid">
+
+      <!-- Card 1 -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="cover-forest" style="width:100%;height:100%;"></div>
+          <div class="card-cover-gradient"></div>
+          <div class="card-title">Our Ironman 2023</div>
+          <button class="card-menu-btn" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-date">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              November 2023
+            </span>
+            <span class="card-meta-dot"></span>
+            <span class="card-location">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/></svg>
+              Kona, Hawaii
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag">Racing</span>
+            <span class="tag tag-muted">Triathlon</span>
+            <span class="tag tag-muted">Milestone</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-badge-owner">Owner</span>
+            <div class="avatar-stack">
+              <div class="avatar avatar-sm av-teal">AL</div>
+              <div class="avatar avatar-sm av-blue">MK</div>
+              <div class="avatar avatar-sm av-warm">SR</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="cover-coast" style="width:100%;height:100%;"></div>
+          <div class="card-cover-gradient"></div>
+          <div class="card-title">Summer in Santorini</div>
+          <button class="card-menu-btn" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-date">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              August 2022
+            </span>
+            <span class="card-meta-dot"></span>
+            <span class="card-location">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/></svg>
+              Greece
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag">Travel</span>
+            <span class="tag tag-muted">Summer</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge">Editor</span>
+            <div class="avatar-stack">
+              <div class="avatar avatar-sm av-sage">JL</div>
+              <div class="avatar avatar-sm av-dusk">KP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="moment-card">
+        <div class="card-cover">
+          <div class="cover-golden" style="width:100%;height:100%;"></div>
+          <div class="card-cover-gradient"></div>
+          <div class="card-title">Dad's 60th Birthday</div>
+          <button class="card-menu-btn" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-date">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              March 2021
+            </span>
+          </div>
+          <div class="card-tags">
+            <span class="tag">Family</span>
+            <span class="tag tag-muted">Birthday</span>
+            <span class="tag tag-muted">Celebration</span>
+          </div>
+          <div class="card-footer">
+            <span class="role-badge role-badge-reader">Reader</span>
+            <div class="avatar-stack">
+              <div class="avatar avatar-sm av-warm">DL</div>
+              <div class="avatar avatar-sm av-teal">AL</div>
+              <div class="avatar avatar-sm av-blue">EL</div>
+              <div class="avatar avatar-sm av-sage">CL</div>
+              <div class="avatar avatar-sm avatar-overflow">+3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       AVATARS
+       ============================================================ -->
+  <section class="ds-section" id="avatars">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Avatars</h2>
+      <p class="ds-section-desc">Circular. Initials on accent-subtle background when no photo is set. Overlapping stack with 2px white ring between avatars.</p>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Sizes</div>
+      <div class="ds-demo-row" style="align-items:flex-end;gap:16px;">
+        <div style="text-align:center;">
+          <div class="avatar avatar-sm av-teal" style="margin:0 auto 6px;">AL</div>
+          <span style="font-size:10px;color:var(--color-text-muted);">28px</span>
+        </div>
+        <div style="text-align:center;">
+          <div class="avatar avatar-md av-blue" style="margin:0 auto 6px;">MK</div>
+          <span style="font-size:10px;color:var(--color-text-muted);">36px</span>
+        </div>
+        <div style="text-align:center;">
+          <div class="avatar avatar-lg av-warm" style="margin:0 auto 6px;">SR</div>
+          <span style="font-size:10px;color:var(--color-text-muted);">48px</span>
+        </div>
+        <div style="text-align:center;">
+          <div class="avatar avatar-xl av-sage" style="margin:0 auto 6px;">JL</div>
+          <span style="font-size:10px;color:var(--color-text-muted);">64px</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Colour variants</div>
+      <div class="ds-demo-row">
+        <div class="avatar avatar-md av-teal">AL</div>
+        <div class="avatar avatar-md av-blue">MK</div>
+        <div class="avatar avatar-md av-warm">SR</div>
+        <div class="avatar avatar-md av-sage">JL</div>
+        <div class="avatar avatar-md av-dusk">KP</div>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Stacked (overlapping, sm)</div>
+      <div class="avatar-stack">
+        <div class="avatar avatar-md av-teal">AL</div>
+        <div class="avatar avatar-md av-blue">MK</div>
+        <div class="avatar avatar-md av-warm">SR</div>
+        <div class="avatar avatar-md av-sage">JL</div>
+        <div class="avatar avatar-md av-dusk">KP</div>
+        <div class="avatar avatar-md avatar-overflow">+4</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       TAGS & CHIPS
+       ============================================================ -->
+  <section class="ds-section" id="tags">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Tags &amp; Chips</h2>
+      <p class="ds-section-desc">Pill-shaped. Used for moment tags, role badges, and selected people in modals.</p>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Tag variants</div>
+      <div class="ds-demo-row">
+        <span class="tag">Racing</span>
+        <span class="tag tag-muted">Triathlon</span>
+        <span class="tag tag-blue">Pending</span>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Removable chips (invite people UI)</div>
+      <div class="ds-demo-row">
+        <span class="tag">
+          Maria K.
+          <button class="tag-remove" aria-label="Remove">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </span>
+        <span class="tag">
+          Sam R.
+          <button class="tag-remove" aria-label="Remove">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </span>
+        <span class="tag tag-muted">
+          Jules L.
+          <button class="tag-remove" aria-label="Remove">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </span>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Role badges</div>
+      <div class="ds-demo-row">
+        <span class="role-badge role-badge-owner">
+          <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24" style="margin-right:3px;"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+          Owner
+        </span>
+        <span class="role-badge">Editor</span>
+        <span class="role-badge role-badge-reader">Reader</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       NAVIGATION
+       ============================================================ -->
+  <section class="ds-section" id="navigation">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Navigation</h2>
+      <p class="ds-section-desc">Desktop uses a fixed top bar. Mobile uses a fixed bottom tab bar. Both backgrounds match the page background — the nav recedes so content leads.</p>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Desktop — top bar</div>
+      <div style="border:1px solid var(--color-border-subtle);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-card);">
+        <div class="nav-desktop">
+          <a href="#" class="nav-logo">Remember When</a>
+          <nav class="nav-links">
+            <a href="#" class="nav-link active">Home</a>
+            <a href="#" class="nav-link">Friends</a>
+          </nav>
+          <div class="nav-actions">
+            <button class="nav-icon-btn" aria-label="Notifications">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span class="nav-badge"></span>
+            </button>
+            <div class="avatar avatar-md av-teal">AL</div>
+          </div>
+        </div>
+        <div style="padding:20px 24px;background:var(--color-bg);">
+          <span style="font-size:13px;color:var(--color-text-muted);font-style:italic;">← Page content sits below the nav bar</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Mobile — bottom tab bar</div>
+      <div style="max-width:375px;border:1px solid var(--color-border-subtle);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-card);">
+        <div style="padding:20px 16px;background:var(--color-bg);">
+          <span style="font-size:13px;color:var(--color-text-muted);font-style:italic;">← Page content sits above the tab bar</span>
+        </div>
+        <div class="nav-mobile">
+          <button class="nav-mobile-tab active">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span class="nav-mobile-tab-label">Home</span>
+          </button>
+          <button class="nav-mobile-tab">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="nav-mobile-tab-label">Friends</span>
+          </button>
+          <button class="nav-mobile-tab" style="position:relative;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="nav-mobile-tab-label">Alerts</span>
+            <span style="position:absolute;top:8px;right:calc(50% - 14px);width:7px;height:7px;background:var(--color-blue);border-radius:50%;border:2px solid var(--color-bg);"></span>
+          </button>
+          <button class="nav-mobile-tab">
+            <div class="avatar avatar-sm av-teal" style="border:none;">AL</div>
+            <span class="nav-mobile-tab-label">Account</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       MODALS
+       ============================================================ -->
+  <section class="ds-section" id="modals">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Modals &amp; Dialogs</h2>
+      <p class="ds-section-desc">Warm overlay with subtle backdrop blur. Lora for the title. Footer is always right-aligned: Cancel then confirm action.</p>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Create Moment modal</div>
+      <div class="modal-scene">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 class="modal-title">New moment</h3>
+            <button class="modal-close" aria-label="Close">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="input-group">
+                <label class="input-label">Moment name <span style="color:var(--color-danger);">*</span></label>
+                <input class="input-field" type="text" placeholder="Give this moment a name…">
+              </div>
+              <div class="input-group">
+                <label class="input-label">Date</label>
+                <div class="flex gap-2 items-center" style="margin-bottom:8px;">
+                  <div class="tab-bar">
+                    <button class="tab-item">Year</button>
+                    <button class="tab-item active">Month + Year</button>
+                    <button class="tab-item">Full date</button>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <select class="input-field" style="flex:1;">
+                    <option>November</option>
+                  </select>
+                  <select class="input-field" style="flex:1;">
+                    <option>2023</option>
+                  </select>
+                </div>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Location <span style="font-size:11px;color:var(--color-text-muted);font-weight:400;">(optional)</span></label>
+                <input class="input-field" type="text" placeholder="Where did this happen?">
+              </div>
+              <div class="input-group">
+                <label class="input-label">People</label>
+                <input class="input-field" type="text" placeholder="Search by name or email…">
+                <div class="flex gap-2 mt-2" style="flex-wrap:wrap;">
+                  <span class="tag">Maria K. · Editor <button class="tag-remove" style="margin-left:2px;"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>
+                  <span class="tag tag-muted">Sam R. · Reader <button class="tag-remove" style="margin-left:2px;"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary">Cancel</button>
+            <button class="btn btn-primary">Create moment</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-subsection">
+      <div class="ds-subsection-label">Confirmation / destructive dialog</div>
+      <div class="modal-scene">
+        <div class="modal-card" style="max-width:380px;">
+          <div class="modal-header">
+            <h3 class="modal-title">Delete this post?</h3>
+            <button class="modal-close" aria-label="Close">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>This cannot be undone. The post and all its photos will be permanently removed from this moment.</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary">Cancel</button>
+            <button class="btn btn-destructive">Delete post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       NOTIFICATIONS
+       ============================================================ -->
+  <section class="ds-section" id="notifications">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Notifications</h2>
+      <p class="ds-section-desc">Unread items have a pale blue-tinted background and a small blue dot. Moment invites include inline Accept / Decline actions.</p>
+    </div>
+
+    <div class="ds-demo-block" style="padding:0;">
+      <div class="notif-list" style="padding:8px;">
+
+        <!-- Unread with actions -->
+        <div class="notif-item unread">
+          <div class="notif-icon notif-icon-unread">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="notif-content">
+            <p class="notif-text"><strong>@maria</strong> (Maria Konstantinou) invited you as <strong>Editor</strong> on moment <strong>"Our Ironman 2023"</strong></p>
+            <div class="notif-actions">
+              <button class="btn btn-primary btn-sm">Accept</button>
+              <button class="btn btn-secondary btn-sm">Decline</button>
+            </div>
+          </div>
+          <span class="notif-time">2h ago</span>
+          <span class="notif-dot"></span>
+        </div>
+
+        <!-- Unread, no actions -->
+        <div class="notif-item unread">
+          <div class="notif-icon notif-icon-unread">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+          </div>
+          <div class="notif-content">
+            <p class="notif-text"><strong>@sam_r</strong> (Sam Richards) added a post to <strong>"Summer in Santorini"</strong></p>
+          </div>
+          <span class="notif-time">Yesterday</span>
+          <span class="notif-dot"></span>
+        </div>
+
+        <!-- Read -->
+        <div class="notif-item">
+          <div class="notif-icon notif-icon-read">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.26h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.71 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.95-.95a2 2 0 0 1 2.11-.45c.91.35 1.85.58 2.81.71A2 2 0 0 1 22 16.92Z"/></svg>
+          </div>
+          <div class="notif-content">
+            <p class="notif-text" style="color:var(--color-text-muted);"><strong style="font-weight:500;">@jules_l</strong> (Jules Leclaire) accepted your friend request</p>
+          </div>
+          <span class="notif-time">3 days ago</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       EMPTY STATES
+       ============================================================ -->
+  <section class="ds-section" id="empty-states">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Empty States</h2>
+      <p class="ds-section-desc">Centred, calm, inviting — never apologetic. A gentle nudge, not a void.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="ds-demo-block">
+        <div class="empty-state">
+          <svg class="empty-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <p class="empty-title">No moments yet.</p>
+          <p class="empty-desc">Start by capturing something you'll want to remember.</p>
+          <button class="btn btn-primary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Create your first moment
+          </button>
+        </div>
+      </div>
+
+      <div class="ds-demo-block">
+        <div class="empty-state">
+          <svg class="empty-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <p class="empty-title">You're all caught up.</p>
+          <p class="empty-desc">No new notifications right now. Check back later.</p>
+        </div>
+      </div>
+
+      <div class="ds-demo-block">
+        <div class="empty-state">
+          <svg class="empty-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <p class="empty-title">No friends yet.</p>
+          <p class="empty-desc">Search for someone you know to get started.</p>
+          <button class="btn btn-primary btn-sm">Find friends</button>
+        </div>
+      </div>
+
+      <div class="ds-demo-block">
+        <div class="empty-state">
+          <svg class="empty-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <p class="empty-title">No posts yet.</p>
+          <p class="empty-desc">Be the first to add something to this moment.</p>
+          <button class="btn btn-primary btn-sm">Add a post</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       DANGER ZONE
+       ============================================================ -->
+  <section class="ds-section" id="danger-zone">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Danger Zone</h2>
+      <p class="ds-section-desc">Honest but calm. Never alarmist. Red border at 40% opacity so the section is clearly marked without being aggressive.</p>
+    </div>
+
+    <div class="ds-demo-block">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <div class="danger-zone">
+          <div class="danger-zone-label">Danger zone</div>
+          <div class="danger-zone-title">Delete your account</div>
+          <div class="danger-zone-desc">This will permanently delete your account and all moments you own. Any moments you share with others will remain. This cannot be undone.</div>
+          <button class="btn btn-destructive-outline">Delete account</button>
+        </div>
+
+        <div class="danger-zone">
+          <div class="danger-zone-label">Danger zone</div>
+          <div class="danger-zone-title">Leave this moment</div>
+          <div class="danger-zone-desc">You will lose access to this moment and all its posts. The owner can re-invite you later.</div>
+          <button class="btn btn-destructive-outline">Leave moment</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       POPOVERS & TABS
+       ============================================================ -->
+  <section class="ds-section" id="popovers">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Popovers &amp; Tab Bars</h2>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div>
+        <div class="ds-subsection-label">Moment card [...] menu</div>
+        <div class="popover">
+          <div class="popover-item">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            Edit details
+          </div>
+          <div class="popover-item">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Archive moment
+          </div>
+          <div class="popover-divider"></div>
+          <div class="popover-item danger">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            Delete moment
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="ds-subsection-label">Tab bar (Moments / Archived)</div>
+        <div class="tab-bar">
+          <button class="tab-item active">Moments <span class="tab-count">12</span></button>
+          <button class="tab-item">Archived <span class="tab-count">3</span></button>
+        </div>
+
+        <div style="margin-top:24px;">
+          <div class="ds-subsection-label">Date mode toggle</div>
+          <div class="tab-bar">
+            <button class="tab-item">Year</button>
+            <button class="tab-item active">Month + Year</button>
+            <button class="tab-item">Full date</button>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;">
+          <div class="ds-subsection-label">Member row (Moment Settings)</div>
+          <div style="background:var(--color-surface);border:1px solid var(--color-border-subtle);border-radius:10px;padding:4px 16px;">
+            <div class="member-row">
+              <div class="avatar avatar-sm av-teal">AL</div>
+              <div class="member-info">
+                <div class="member-name">Andreas Louca</div>
+                <div class="member-username">@andreas</div>
+              </div>
+              <span class="role-badge role-badge-owner">
+                <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="margin-right:3px;"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+                Owner
+              </span>
+            </div>
+            <div class="member-row">
+              <div class="avatar avatar-sm av-blue">MK</div>
+              <div class="member-info">
+                <div class="member-name">Maria Konstantinou</div>
+                <div class="member-username">@maria</div>
+              </div>
+              <span class="role-badge">Editor</span>
+              <button class="btn btn-ghost btn-sm">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              </button>
+            </div>
+            <div class="member-row">
+              <div class="avatar avatar-sm av-warm">SR</div>
+              <div class="member-info">
+                <div class="member-name">Sam Richards</div>
+                <div class="member-username">@sam_r</div>
+              </div>
+              <span class="role-badge role-badge-reader">Reader</span>
+              <button class="btn btn-ghost btn-sm">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       BANNERS
+       ============================================================ -->
+  <section class="ds-section" id="banners">
+    <div class="ds-section-header">
+      <h2 class="ds-section-title">Banners &amp; Inline Feedback</h2>
+      <p class="ds-section-desc">Left-border accent marks the intent. Never full-red or full-green backgrounds — always the subtle tint variant.</p>
+    </div>
+
+    <div class="banner banner-invite">
+      <span class="banner-icon">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--color-blue);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </span>
+      <div>
+        <strong>@andreas</strong> (Andreas Louca) invited you as <strong>Editor</strong> on <strong>"Our Ironman 2023"</strong> — accept or decline from your notifications.
+      </div>
+    </div>
+
+    <div class="banner banner-success">
+      <span class="banner-icon">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </span>
+      Changes saved successfully.
+    </div>
+
+    <div class="banner banner-error">
+      <span class="banner-icon">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </span>
+      Something went wrong. Please try again.
+    </div>
+
+    <div class="banner banner-info">
+      <span class="banner-icon">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </span>
+      Early users will be grandfathered into their current plan when Plus launches.
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+  // Highlight active sidebar link on scroll
+  const sections = document.querySelectorAll('.ds-section[id]');
+  const navLinks = document.querySelectorAll('.sidebar-nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

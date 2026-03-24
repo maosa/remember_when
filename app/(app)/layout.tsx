@@ -31,7 +31,7 @@ export default async function AppLayout({
   const unreadCount = unreadRes.count ?? 0
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-rw-bg">
       <AppNav
         user={{
           firstName: profile?.first_name ?? '',

@@ -86,12 +86,12 @@ export function MembersSection({ moment, myRole, myStatus, myUserId }: Props) {
   const sortedReaders = [...nonOwnerMembers.filter((m) => m.role === 'reader')].sort(sortByName)
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-4 space-y-8">
+    <div className="mx-auto max-w-[720px] px-4 md:px-6 py-4 space-y-8 pb-12">
 
       {/* ── Section 1: Manage Members ──────────────────────────── */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">
             Manage Members
           </h2>
           {isAccepted && (isOwner || myRole === 'editor') && (
@@ -146,13 +146,13 @@ export function MembersSection({ moment, myRole, myStatus, myUserId }: Props) {
       {isOwner && isAccepted && (
         <>
           <section className="space-y-4">
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">
               Transfer Ownership
             </h2>
             {acceptedEditors.length > 0 ? (
               <TransferOwnershipSection momentId={moment.id} editors={acceptedEditors} />
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-rw-text-muted">
                 You must promote a reader to editor before you can transfer ownership.
               </p>
             )}
@@ -163,8 +163,8 @@ export function MembersSection({ moment, myRole, myStatus, myUserId }: Props) {
 
       {/* ── Section 4: Leave / Delete (danger zone) ───────────── */}
       {isAccepted && (
-        <section className="rounded-lg border border-destructive/40 p-5 space-y-4">
-          <h2 className="text-sm font-medium text-destructive uppercase tracking-wide">
+        <section className="rounded-rw-card border border-rw-danger/40 bg-rw-danger-subtle/40 py-5 px-6 space-y-4">
+          <h2 className="font-sans text-[11px] font-semibold text-rw-danger uppercase tracking-[0.08em]">
             Danger Zone
           </h2>
 
@@ -176,7 +176,7 @@ export function MembersSection({ moment, myRole, myStatus, myUserId }: Props) {
             <div className="space-y-3">
               <div>
                 <p className="text-sm font-medium">Leave moment</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-rw-text-muted mt-1">
                   To leave this moment, you must first transfer ownership to an editor using
                   the Transfer Ownership section above.
                 </p>
@@ -184,7 +184,7 @@ export function MembersSection({ moment, myRole, myStatus, myUserId }: Props) {
               <Button
                 size="sm"
                 variant="outline"
-                className="border-destructive/40 text-destructive/50"
+                className="border-rw-danger/40 text-rw-danger/50"
                 disabled
               >
                 <LogOut className="size-3.5" />
@@ -196,7 +196,7 @@ export function MembersSection({ moment, myRole, myStatus, myUserId }: Props) {
             <div className="space-y-3">
               <div>
                 <p className="text-sm font-medium">Leave moment</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-rw-text-muted mt-1">
                   You cannot leave this moment without an editor to transfer ownership to. You can
                   promote a reader to editor in the Manage Members section above and then transfer
                   ownership, or you can delete this moment for everyone.
@@ -275,14 +275,14 @@ function MemberRow({
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        {error && <p className="text-xs text-rw-danger">{error}</p>}
 
         {showEditMenu && (
           <>
             <Menu>
               <MenuTrigger
                 disabled={isPending}
-                className="rounded p-1 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                className="rounded p-1 text-rw-text-muted hover:text-rw-text-primary transition-colors disabled:opacity-40"
                 aria-label={`Edit ${displayName}`}
               >
                 <Pencil className="size-3.5" />
@@ -301,7 +301,7 @@ function MemberRow({
                 </MenuItem>
                 <MenuSeparator />
                 <MenuItem
-                  className="text-destructive focus:text-destructive"
+                  className="text-rw-danger focus:text-rw-danger"
                   onClick={() => setConfirmRemove(true)}
                 >
                   <X className="size-3.5" />
@@ -315,9 +315,9 @@ function MemberRow({
                 <DialogHeader>
                   <DialogTitle>Remove member?</DialogTitle>
                 </DialogHeader>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-rw-text-muted">
                   Are you sure you want to remove{' '}
-                  <span className="font-medium text-foreground">{displayName}</span> from this
+                  <span className="font-medium text-rw-text-primary">{displayName}</span> from this
                   moment?
                 </p>
                 <DialogFooter>
@@ -352,17 +352,17 @@ function RoleBadge({
 }) {
   if (status === 'pending') {
     return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+      <span className="inline-flex items-center gap-0.5 text-xs text-rw-text-muted">
         <Mail className="size-2.5" />
         {isUnregistered ? 'Invite sent (not yet registered)' : 'Invited'}
       </span>
     )
   }
   if (status === 'declined') {
-    return <span className="text-xs text-muted-foreground line-through">Declined</span>
+    return <span className="text-xs text-rw-text-muted line-through">Declined</span>
   }
   return (
-    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+    <span className="inline-flex items-center gap-0.5 text-xs text-rw-text-muted">
       {role === 'owner' && <><Crown className="size-2.5" /> Owner</>}
       {role === 'editor' && <><PenTool className="size-2.5" /> Editor</>}
       {role === 'reader' && <><Eye className="size-2.5" /> Reader</>}
@@ -454,9 +454,8 @@ export function InviteDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogTrigger render={<Button size="sm" variant="outline" />}>
+      <DialogTrigger render={<Button size="sm" variant="outline" aria-label="Invite someone" />}>
         <UserPlus className="size-3.5" />
-        <span className="hidden sm:inline">Invite</span>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
@@ -466,7 +465,7 @@ export function InviteDialog({
         {step === 'role' ? (
           <>
             <div className="space-y-3 py-1">
-              <p className="text-sm text-muted-foreground">What role should they have?</p>
+              <p className="text-sm text-rw-text-muted">What role should they have?</p>
               <div className="flex gap-2">
                 {canInviteEditors && (
                   <RoleButton
@@ -493,10 +492,10 @@ export function InviteDialog({
         ) : (
           <>
             <div className="space-y-4 py-1">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-xs text-rw-text-muted">
                 {role === 'editor' ? <PenTool className="size-3" /> : <Eye className="size-3" />}
                 Inviting as{' '}
-                <span className="font-medium text-foreground capitalize">{role}</span>
+                <span className="font-medium text-rw-text-primary capitalize">{role}</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -504,7 +503,7 @@ export function InviteDialog({
                     setFeedback(null)
                     setInput('')
                   }}
-                  className="ml-auto text-xs underline underline-offset-2 hover:text-foreground"
+                  className="ml-auto text-xs underline underline-offset-2 hover:text-rw-text-primary"
                 >
                   Change
                 </button>
@@ -521,8 +520,8 @@ export function InviteDialog({
                   className={cn(
                     'flex-1 py-1.5 text-center transition-colors',
                     method === 'username'
-                      ? 'bg-primary text-primary-foreground font-medium'
-                      : 'text-muted-foreground hover:bg-muted'
+                      ? 'bg-rw-accent text-white font-medium'
+                      : 'text-rw-text-muted hover:bg-rw-surface-raised'
                   )}
                 >
                   Username
@@ -537,8 +536,8 @@ export function InviteDialog({
                   className={cn(
                     'flex-1 py-1.5 text-center transition-colors',
                     method === 'email'
-                      ? 'bg-primary text-primary-foreground font-medium'
-                      : 'text-muted-foreground hover:bg-muted'
+                      ? 'bg-rw-accent text-white font-medium'
+                      : 'text-rw-text-muted hover:bg-rw-surface-raised'
                   )}
                 >
                   Email
@@ -564,10 +563,10 @@ export function InviteDialog({
                   className={cn(
                     'text-sm rounded-md px-3 py-2',
                     feedback.kind === 'error' || feedback.kind === 'not_found'
-                      ? 'bg-destructive/10 text-destructive'
+                      ? 'bg-rw-danger-subtle text-rw-danger'
                       : feedback.kind === 'success_email_unregistered'
-                      ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
-                      : 'bg-green-500/10 text-green-700 dark:text-green-400'
+                      ? 'bg-rw-blue-subtle text-rw-blue'
+                      : 'bg-rw-accent-subtle text-rw-accent'
                   )}
                 >
                   {feedback.message}
@@ -606,8 +605,8 @@ function RoleButton({
       className={cn(
         'flex-1 flex items-start gap-2 rounded-lg border p-2.5 text-left transition-colors',
         active
-          ? 'border-primary bg-primary/5 text-foreground'
-          : 'border-border text-muted-foreground hover:border-ring hover:text-foreground'
+          ? 'border-rw-accent bg-rw-accent-subtle/30 text-rw-text-primary'
+          : 'border-rw-border text-rw-text-muted hover:border-rw-accent hover:text-rw-text-primary'
       )}
     >
       <span className="mt-0.5 shrink-0">{icon}</span>
@@ -696,11 +695,11 @@ function InviteLinkSection({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+      <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">
         Invite Link
       </h2>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-rw-text-muted">
         Share this link to invite people to view this moment as a reader. The link expires based on
         the option you choose. Generating a new link will automatically invalidate the previous one.
       </p>
@@ -708,8 +707,8 @@ function InviteLinkSection({
       {link ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <div className="flex-1 rounded-md border bg-muted/50 px-3 py-1.5 min-w-0">
-              <p className="text-xs text-muted-foreground truncate font-mono">
+            <div className="flex-1 rounded-md border border-rw-border-subtle bg-rw-surface-raised/50 px-3 py-1.5 min-w-0">
+              <p className="text-xs text-rw-text-muted truncate font-mono">
                 {linkUrl || '…'}
               </p>
             </div>
@@ -717,11 +716,11 @@ function InviteLinkSection({
               type="button"
               onClick={handleCopy}
               disabled={!linkUrl}
-              className="shrink-0 rounded-md border p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40"
+              className="shrink-0 rounded-md border p-1.5 text-rw-text-muted hover:text-rw-accent hover:bg-rw-accent-subtle transition-colors disabled:opacity-40"
               aria-label="Copy link"
             >
               {copied ? (
-                <Check className="size-3.5 text-green-600" />
+                <Check className="size-3.5 text-rw-accent" />
               ) : (
                 <Copy className="size-3.5" />
               )}
@@ -729,18 +728,18 @@ function InviteLinkSection({
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-xs text-muted-foreground">{formatExpiry(link.expiresAt)}</span>
+            <span className="text-xs text-rw-text-muted">{formatExpiry(link.expiresAt)}</span>
             <div className="flex items-center gap-2 ml-auto">
               <button
                 type="button"
                 onClick={handleRevoke}
                 disabled={isPending}
-                className="text-xs text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50 flex items-center gap-1"
+                className="text-xs text-rw-text-muted hover:text-rw-danger transition-colors disabled:opacity-50 flex items-center gap-1"
               >
                 <Trash2 className="size-3" />
                 Revoke
               </button>
-              <span className="text-muted-foreground/40">·</span>
+              <span className="text-rw-text-muted/40">·</span>
               <GenerateLinkDialog
                 expiry={expiry}
                 onExpiryChange={setExpiry}
@@ -749,7 +748,7 @@ function InviteLinkSection({
                 trigger={
                   <button
                     type="button"
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                    className="text-xs text-rw-text-muted hover:text-rw-text-primary transition-colors flex items-center gap-1"
                   >
                     <RefreshCw className="size-3" />
                     New link
@@ -774,7 +773,7 @@ function InviteLinkSection({
         />
       )}
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-xs text-rw-danger">{error}</p>}
     </div>
   )
 }
@@ -816,7 +815,7 @@ function GenerateLinkDialog({
                 id="expiry-select"
                 value={expiry}
                 onChange={(e) => onExpiryChange(e.target.value as ExpiryOption)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full rounded-md border bg-rw-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rw-accent/30"
               >
                 {(Object.keys(EXPIRY_LABELS) as ExpiryOption[]).map((opt) => (
                   <option key={opt} value={opt}>
@@ -825,7 +824,7 @@ function GenerateLinkDialog({
                 ))}
               </select>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-rw-text-muted">
               Generating a new link revokes any existing one. People who already joined keep their
               access.
             </p>
@@ -869,7 +868,7 @@ function TransferOwnershipSection({
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-rw-text-muted">
         Transfer ownership to an editor. You will become an editor. This action can only be
         reversed by the new owner.
       </p>
@@ -882,7 +881,7 @@ function TransferOwnershipSection({
               id="transfer-owner-select"
               value={newOwnerId}
               onChange={(e) => setNewOwnerId(e.target.value)}
-              className="h-8 w-full appearance-none rounded-md border bg-background pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-8 w-full appearance-none rounded-md border bg-rw-bg pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-rw-accent/30"
             >
               {editors.map((e) => (
                 <option key={e.userId} value={e.userId!}>
@@ -890,7 +889,7 @@ function TransferOwnershipSection({
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
           </div>
         </div>
         <Button
@@ -902,16 +901,16 @@ function TransferOwnershipSection({
         </Button>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-rw-danger">{error}</p>}
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Transfer ownership?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-rw-text-muted">
             Are you sure you want to transfer ownership to{' '}
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-rw-text-primary">
               {selectedEditor?.firstName} {selectedEditor?.lastName}
             </span>
             ? This action can only be reversed by the new owner.
@@ -959,7 +958,7 @@ function LeaveSection({ momentId }: { momentId: string }) {
     <div className="flex items-center justify-between gap-4">
       <div>
         <p className="text-sm font-medium">Leave moment</p>
-        <p className="text-sm text-muted-foreground">You will lose access to this moment.</p>
+        <p className="text-sm text-rw-text-muted">You will lose access to this moment.</p>
       </div>
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setError(null) }}>
         <DialogTrigger
@@ -967,7 +966,7 @@ function LeaveSection({ momentId }: { momentId: string }) {
             <Button
               size="sm"
               variant="outline"
-              className="shrink-0 border-destructive text-destructive hover:bg-destructive/10"
+              className="shrink-0 border-rw-danger text-rw-danger hover:bg-rw-danger-subtle"
             />
           }
         >
@@ -979,7 +978,7 @@ function LeaveSection({ momentId }: { momentId: string }) {
             <DialogTitle>Leave this moment?</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-1">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-rw-text-muted">
               You will lose access to this moment. What would you like to do with your posts?
             </p>
             <div className="space-y-2">
@@ -993,7 +992,7 @@ function LeaveSection({ momentId }: { momentId: string }) {
                 />
                 <div>
                   <p className="text-sm font-medium">Keep my posts</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-rw-text-muted">
                     Your posts remain visible to other members.
                   </p>
                 </div>
@@ -1008,13 +1007,13 @@ function LeaveSection({ momentId }: { momentId: string }) {
                 />
                 <div>
                   <p className="text-sm font-medium">Delete my posts</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-rw-text-muted">
                     All posts you wrote will be permanently removed.
                   </p>
                 </div>
               </label>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-rw-danger">{error}</p>}
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
@@ -1061,7 +1060,7 @@ function DeleteMomentSection({
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-medium">Delete moment</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-rw-text-muted">
             Permanently delete this moment for everyone.
           </p>
         </div>
@@ -1081,11 +1080,11 @@ function DeleteMomentSection({
           <DialogHeader>
             <DialogTitle>Delete this moment?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-rw-text-muted">
             This will permanently delete &ldquo;{momentName}&rdquo; and all its content for
             everyone. This cannot be undone.
           </p>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-rw-danger">{error}</p>}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
               Cancel
@@ -1118,15 +1117,15 @@ function ReaderView({ momentId }: { momentId: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-4">
-      <section className="rounded-lg border border-destructive/40 p-5 space-y-4">
-        <h2 className="text-sm font-medium text-destructive uppercase tracking-wide">
+    <div className="mx-auto max-w-[720px] px-4 md:px-6 py-4">
+      <section className="rounded-rw-card border border-rw-danger/40 bg-rw-danger-subtle/40 py-5 px-6 space-y-4">
+        <h2 className="font-sans text-[11px] font-semibold text-rw-danger uppercase tracking-[0.08em]">
           Danger Zone
         </h2>
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium">Leave moment</p>
-            <p className="text-sm text-muted-foreground">You will lose access to this moment.</p>
+            <p className="text-sm text-rw-text-muted">You will lose access to this moment.</p>
           </div>
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setError(null) }}>
             <DialogTrigger
@@ -1134,7 +1133,7 @@ function ReaderView({ momentId }: { momentId: string }) {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="shrink-0 border-destructive text-destructive hover:bg-destructive/10"
+                  className="shrink-0 border-rw-danger text-rw-danger hover:bg-rw-danger-subtle"
                 />
               }
             >
@@ -1145,10 +1144,10 @@ function ReaderView({ momentId }: { momentId: string }) {
               <DialogHeader>
                 <DialogTitle>Leave this moment?</DialogTitle>
               </DialogHeader>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-rw-text-muted">
                 Are you sure you want to leave? You will lose access to this moment.
               </p>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-sm text-rw-danger">{error}</p>}
               <DialogFooter>
                 <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
                   Cancel

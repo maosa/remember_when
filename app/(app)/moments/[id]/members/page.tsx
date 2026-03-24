@@ -17,8 +17,8 @@ export default async function MomentMembersPage({ params }: Props) {
   if (error || !moment || !myRole || !myStatus || !myUserId) notFound()
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
+    <main className="min-h-screen bg-rw-bg">
+      <div className="mx-auto max-w-[720px] px-4 md:px-6 py-8 space-y-6">
 
         <div className="flex items-center gap-3">
           <Link

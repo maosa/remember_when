@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Bell, UserPlus, Users, MessageSquare, LogOut, Crown, Clock, Check, X, Shield, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { EmptyState } from '@/components/ui/empty-state'
 import { acceptMomentInvite, declineMomentInvite } from '@/app/(app)/moments/[id]/actions'
 import type { NotificationRow } from '../page'
 
@@ -144,14 +145,14 @@ function InviteActions({
 
   if (resolved === 'accepted') {
     return (
-      <span className="text-xs text-green-600 font-medium flex items-center gap-1 mt-1.5">
+      <span className="text-xs text-rw-accent font-medium flex items-center gap-1 mt-1.5">
         <Check className="size-3" /> You accepted this invitation
       </span>
     )
   }
   if (resolved === 'declined') {
     return (
-      <span className="text-xs text-red-500 font-medium flex items-center gap-1 mt-1.5">
+      <span className="text-xs text-rw-text-muted font-medium flex items-center gap-1 mt-1.5">
         <X className="size-3" /> You declined this invitation
       </span>
     )
@@ -169,7 +170,7 @@ function InviteActions({
             if (!result?.error) setOutcome('accepted')
           })
         }
-        className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+        className="inline-flex items-center gap-1 rounded-rw-pill bg-rw-accent px-2.5 py-1 text-xs font-semibold text-white hover:bg-rw-accent-hover disabled:opacity-50 transition-colors"
       >
         <Check className="size-3" />
         Accept
@@ -184,7 +185,7 @@ function InviteActions({
             if (!result?.error) setOutcome('declined')
           })
         }
-        className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
+        className="inline-flex items-center gap-1 rounded-rw-pill border border-rw-border px-2.5 py-1 text-xs font-medium text-rw-text-muted hover:text-rw-text-primary hover:bg-rw-surface-raised disabled:opacity-50 transition-colors"
       >
         <X className="size-3" />
         Decline
@@ -202,15 +203,17 @@ interface Props {
 export function NotificationList({ notifications }: Props) {
   if (notifications.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-20 text-muted-foreground">
-        <Bell className="size-10 opacity-30" />
-        <p className="text-sm">You&apos;re all caught up.</p>
-      </div>
+      <EmptyState
+        icon={<Bell />}
+        title="You're all caught up"
+        description="No new notifications right now."
+        className="py-20"
+      />
     )
   }
 
   return (
-    <ul className="divide-y">
+    <ul className="divide-y divide-rw-border-subtle">
       {notifications.map((n) => {
         const config = TYPE_CONFIG[n.type]
         if (!config) return null
@@ -223,31 +226,31 @@ export function NotificationList({ notifications }: Props) {
             <Link
               href={config.href(n)}
               className={cn(
-                'flex items-start gap-3 py-4 px-1 rounded-lg transition-colors hover:bg-muted/50',
-                unread && 'bg-muted/30'
+                'flex items-start gap-3 py-4 px-1 rounded-lg transition-colors hover:bg-rw-surface-raised/50',
+                unread && 'bg-rw-surface shadow-rw-card'
               )}
             >
               <span className={cn(
                 'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full',
-                unread ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                unread ? 'bg-rw-accent text-white' : 'bg-rw-surface-raised text-rw-text-muted'
               )}>
                 <Icon className="size-4" />
               </span>
 
               <div className="flex-1 min-w-0">
-                <p className={cn('text-sm leading-snug', unread ? 'font-medium' : 'text-muted-foreground')}>
+                <p className={cn('text-sm leading-snug', unread ? 'font-medium text-rw-text-primary' : 'text-rw-text-muted')}>
                   {config.label(n)}
                 </p>
                 {isActionable && (
                   <InviteActions notificationId={n.id} momentId={n.moment!.id} initialStatus={n.memberStatus} />
                 )}
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-rw-text-muted mt-0.5">
                   {timeAgo(n.createdAt)}
                 </p>
               </div>
 
               {unread && (
-                <span className="mt-2 size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" />
+                <span className="mt-2 size-2 shrink-0 rounded-full bg-rw-blue" aria-label="Unread" />
               )}
             </Link>
           </li>

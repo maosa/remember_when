@@ -150,7 +150,7 @@ export function CreateMomentModal() {
 
           {/* Name */}
           <div className="space-y-1.5">
-            <Label htmlFor="moment-name">Name <span className="text-destructive">*</span></Label>
+            <Label htmlFor="moment-name">Name <span className="text-rw-danger">*</span></Label>
             <Input
               id="moment-name"
               placeholder="e.g. Summer in Barcelona"
@@ -162,9 +162,9 @@ export function CreateMomentModal() {
 
           {/* Date */}
           <div className="space-y-1.5">
-            <Label>Date <span className="text-muted-foreground text-xs font-normal">(optional)</span></Label>
+            <Label>Date <span className="text-rw-text-muted text-xs font-normal">(optional)</span></Label>
             {/* Mode selector */}
-            <div className="inline-flex rounded-lg border bg-muted p-0.5 gap-0.5 text-xs">
+            <div className="inline-flex rounded-lg border border-rw-border-subtle bg-rw-surface-raised p-0.5 gap-0.5 text-xs">
               {(['year', 'month-year', 'full'] as DateMode[]).map((mode) => (
                 <button
                   key={mode}
@@ -173,8 +173,8 @@ export function CreateMomentModal() {
                   className={cn(
                     'px-2.5 py-1 rounded-md font-medium transition-colors',
                     dateMode === mode
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'bg-rw-bg text-rw-text-primary shadow-sm'
+                      : 'text-rw-text-muted hover:text-rw-text-primary'
                   )}
                 >
                   {mode === 'year' ? 'Year' : mode === 'month-year' ? 'Month + Year' : 'Full date'}
@@ -200,7 +200,7 @@ export function CreateMomentModal() {
                 <select
                   value={dateMonth}
                   onChange={(e) => setDateMonth(e.target.value)}
-                  className="h-8 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-8 flex-1 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 text-sm outline-none focus-visible:border-rw-accent focus-visible:ring-2 focus-visible:ring-rw-accent/[0.12]"
                 >
                   <option value="">Month</option>
                   {MONTHS.map((m, i) => (
@@ -223,7 +223,7 @@ export function CreateMomentModal() {
 
           {/* Location */}
           <div className="space-y-1.5">
-            <Label htmlFor="moment-location">Location <span className="text-muted-foreground text-xs font-normal">(optional)</span></Label>
+            <Label htmlFor="moment-location">Location <span className="text-rw-text-muted text-xs font-normal">(optional)</span></Label>
             <Input
               id="moment-location"
               placeholder="e.g. Barcelona, Spain"
@@ -234,7 +234,7 @@ export function CreateMomentModal() {
 
           {/* People */}
           <div className="space-y-1.5">
-            <Label>People <span className="text-muted-foreground text-xs font-normal">(optional)</span></Label>
+            <Label>People <span className="text-rw-text-muted text-xs font-normal">(optional)</span></Label>
             <PeopleInviteInput
               invitees={invitees}
               onAdd={addInvitee}
@@ -245,12 +245,12 @@ export function CreateMomentModal() {
 
           {/* Tags */}
           <div className="space-y-1.5">
-            <Label>Tags <span className="text-muted-foreground text-xs font-normal">(optional · max 20 chars)</span></Label>
-            <div className="flex flex-wrap gap-1.5 rounded-lg border border-input bg-transparent px-2.5 py-2 min-h-9 cursor-text" onClick={() => document.getElementById('tag-input')?.focus()}>
+            <Label>Tags <span className="text-rw-text-muted text-xs font-normal">(optional · max 20 chars)</span></Label>
+            <div className="flex flex-wrap gap-1.5 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 min-h-9 cursor-text" onClick={() => document.getElementById('tag-input')?.focus()}>
               {tags.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 rounded bg-secondary px-2 py-0.5 text-xs font-medium">
+                <span key={tag} className="inline-flex items-center gap-1 rounded bg-rw-surface-raised px-2 py-0.5 text-xs font-medium">
                   {tag}
-                  <button type="button" onClick={() => removeTag(tag)} className="text-muted-foreground hover:text-foreground">
+                  <button type="button" onClick={() => removeTag(tag)} className="text-rw-text-muted hover:text-rw-text-primary">
                     <X className="size-3" />
                   </button>
                 </span>
@@ -262,13 +262,13 @@ export function CreateMomentModal() {
                 onKeyDown={handleTagKeyDown}
                 onBlur={() => addTag(tagInput)}
                 placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
-                className="min-w-24 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="min-w-24 flex-1 bg-transparent text-sm outline-none placeholder:text-rw-text-muted"
               />
             </div>
-            <p className="text-xs text-muted-foreground">Press Enter or comma to add a tag.</p>
+            <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-rw-danger">{error}</p>}
         </div>
 
         <DialogFooter>
@@ -353,7 +353,7 @@ function PeopleInviteInput({
       {invitees.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {invitees.map((i) => (
-            <div key={i.value} className="inline-flex items-center gap-2 rounded-lg border bg-secondary pl-2 pr-1.5 py-1 text-xs">
+            <div key={i.value} className="inline-flex items-center gap-2 rounded-lg border bg-rw-surface-raised pl-2 pr-1.5 py-1 text-xs">
               {i.type === 'userId' && (
                 <Avatar className="size-5 shrink-0">
                   <AvatarImage src={i.photoUrl ?? undefined} />
@@ -362,7 +362,7 @@ function PeopleInviteInput({
               )}
               <span className="font-medium truncate max-w-[120px]">{i.label}</span>
               {/* Role toggle */}
-              <div className="inline-flex rounded border border-border overflow-hidden ml-auto shrink-0">
+              <div className="inline-flex rounded border border-rw-border-subtle overflow-hidden ml-auto shrink-0">
                 {(['editor', 'reader'] as const).map((role) => (
                   <button
                     key={role}
@@ -371,15 +371,15 @@ function PeopleInviteInput({
                     className={cn(
                       'px-2 py-0.5 capitalize transition-colors',
                       i.role === role
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'bg-rw-text-primary text-rw-bg'
+                        : 'text-rw-text-muted hover:text-rw-text-primary'
                     )}
                   >
                     {role === 'editor' ? 'Editor' : 'Reader'}
                   </button>
                 ))}
               </div>
-              <button type="button" onClick={() => onRemove(i.value)} className="text-muted-foreground hover:text-foreground shrink-0">
+              <button type="button" onClick={() => onRemove(i.value)} className="text-rw-text-muted hover:text-rw-text-primary shrink-0">
                 <X className="size-3" />
               </button>
             </div>
@@ -389,7 +389,7 @@ function PeopleInviteInput({
 
       {/* Search input */}
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted pointer-events-none" />
         <Input
           type="text"
           placeholder="Search by name, username, or enter email…"
@@ -409,18 +409,18 @@ function PeopleInviteInput({
             onAdd({ type: 'email', value: query.trim(), label: query.trim(), role: 'editor' })
             setQuery('')
           }}
-          className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors text-left"
+          className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm hover:bg-rw-surface-raised transition-colors text-left"
         >
-          <Plus className="size-3.5 text-muted-foreground" />
+          <Plus className="size-3.5 text-rw-text-muted" />
           Invite <span className="font-medium">{query.trim()}</span> by email
         </button>
       )}
 
       {/* Search results */}
-      {searching && <p className="text-xs text-muted-foreground px-1">Searching…</p>}
+      {searching && <p className="text-xs text-rw-text-muted px-1">Searching…</p>}
       {results !== null && !searching && (
         results.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-1">No users found.</p>
+          <p className="text-xs text-rw-text-muted px-1">No users found.</p>
         ) : (
           <ul className="space-y-0.5">
             {results.map((u) => (
@@ -428,7 +428,7 @@ function PeopleInviteInput({
                 <button
                   type="button"
                   onClick={() => selectUser(u)}
-                  className="flex items-center gap-2.5 w-full rounded-md px-2 py-1.5 hover:bg-accent transition-colors text-left"
+                  className="flex items-center gap-2.5 w-full rounded-md px-2 py-1.5 hover:bg-rw-surface-raised transition-colors text-left"
                 >
                   <Avatar className="size-7 shrink-0">
                     <AvatarImage src={u.photoUrl ?? undefined} />
@@ -436,9 +436,9 @@ function PeopleInviteInput({
                   </Avatar>
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{u.firstName} {u.lastName}</p>
-                    <p className="text-xs text-muted-foreground truncate">@{u.username}</p>
+                    <p className="text-xs text-rw-text-muted truncate">@{u.username}</p>
                   </div>
-                  <UserRound className="size-3.5 text-muted-foreground ml-auto shrink-0" />
+                  <UserRound className="size-3.5 text-rw-text-muted ml-auto shrink-0" />
                 </button>
               </li>
             ))}

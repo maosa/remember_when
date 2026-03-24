@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remember When — Create Moment Modal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --color-bg:              #F5F2ED;
+      --color-surface:         #EDEAE4;
+      --color-surface-raised:  #E6E2DB;
+      --color-text-primary:    #2C2A25;
+      --color-text-muted:      #7C7670;
+      --color-text-placeholder:#A8A39D;
+      --color-accent:          #5C7A6B;
+      --color-accent-hover:    #4A6659;
+      --color-accent-subtle:   #D4E0DA;
+      --color-blue:            #7C96A8;
+      --color-blue-subtle:     #E0E8ED;
+      --color-border:          #D6D1CB;
+      --color-border-subtle:   #E8E4DE;
+      --color-danger:          #C0392B;
+      --color-white:           #FFFFFF;
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+      --shadow-card:    0 1px 3px rgba(44,42,37,0.08);
+      --shadow-modal:   0 8px 40px rgba(44,42,37,0.18), 0 2px 8px rgba(44,42,37,0.08);
+      --shadow-popover: 0 4px 20px rgba(44,42,37,0.14);
+    }
+
+    /* ============================================================
+       RESET
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ============================================================
+       BACKGROUND LAYER — blurred home page behind modal
+       ============================================================ */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      filter: blur(1.5px);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* background nav */
+    .bg-nav {
+      height: 56px;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border-subtle);
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+    }
+
+    .bg-nav-logo {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--color-text-primary);
+      flex: 1;
+    }
+
+    .bg-nav-links {
+      display: flex;
+      gap: 4px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .bg-nav-link {
+      padding: 6px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      border-radius: 8px;
+    }
+
+    .bg-nav-link.active { color: var(--color-accent); }
+
+    .bg-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bg-bell {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text-muted);
+    }
+
+    .bg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* background page content */
+    .bg-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 32px 0;
+    }
+
+    .bg-greeting {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 28px;
+      color: var(--color-text-primary);
+      margin-bottom: 28px;
+      opacity: 0.7;
+    }
+
+    .bg-card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .bg-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      height: 220px;
+    }
+
+    .bg-card-cover {
+      height: 130px;
+    }
+
+    .bg-card-body {
+      padding: 12px 14px;
+    }
+
+    .bg-card-line {
+      height: 10px;
+      border-radius: 5px;
+      background: var(--color-surface-raised);
+      margin-bottom: 8px;
+    }
+
+    .c-forest  { background: linear-gradient(162deg, #1E3A2E 0%, #3A6850 30%, #74A882 70%, #B4D4B8 100%); }
+    .c-coast   { background: linear-gradient(180deg, #6BAED4 0%, #94C4E0 30%, #DCCFB2 65%, #8A7860 100%); }
+    .c-golden  { background: linear-gradient(158deg, #F0C060 0%, #9C4C0C 50%, #301A06 100%); }
+    .c-mountain{ background: linear-gradient(168deg, #BCC4E8 0%, #5C74B8 36%, #688868 74%, #30523A 100%); }
+    .c-dusk    { background: linear-gradient(165deg, #E2BDD4 0%, #7A4080 48%, #D8D4EC 100%); }
+    .c-dawn    { background: linear-gradient(160deg, #F8D8B0 0%, #CE6868 48%, #F9E8E4 100%); }
+
+    /* ============================================================
+       MODAL OVERLAY
+       ============================================================ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(44, 42, 37, 0.46);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+    }
+
+    /* ============================================================
+       MODAL CARD
+       ============================================================ */
+    .modal {
+      background: var(--color-bg);
+      border-radius: 16px;
+      box-shadow: var(--shadow-modal);
+      width: 100%;
+      max-width: 484px;
+      max-height: calc(100vh - 48px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 26px 28px 0;
+      flex-shrink: 0;
+    }
+
+    .modal-title {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 22px;
+      color: var(--color-text-primary);
+      line-height: 1.25;
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      background: none;
+      border: none;
+      border-radius: 7px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s, color 0.12s;
+      flex-shrink: 0;
+      margin-top: -2px;
+    }
+
+    .modal-close:hover {
+      background: var(--color-surface-raised);
+      color: var(--color-text-primary);
+    }
+
+    /* Scrollable body */
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 24px 28px 8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-border) transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .modal-body::-webkit-scrollbar { width: 5px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+
+    /* Footer */
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 16px 28px 24px;
+      border-top: 1px solid var(--color-border-subtle);
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       FIELD GROUPS
+       ============================================================ */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .field-required {
+      color: var(--color-danger);
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .field-optional {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--color-text-muted);
+    }
+
+    /* Text input */
+    .field-input {
+      height: 40px;
+      padding: 0 12px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      transition: border-color 0.14s, box-shadow 0.14s;
+      width: 100%;
+    }
+
+    .field-input::placeholder { color: var(--color-text-placeholder); }
+
+    .field-input:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.12);
+    }
+
+    .field-input.is-filled {
+      border-color: var(--color-border);
+      background: var(--color-surface);
+    }
+
+    /* Input with icon */
+    .field-input-wrap {
+      position: relative;
+    }
+
+    .field-input-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+      pointer-events: none;
+      display: flex;
+    }
+
+    .field-input.has-icon { padding-left: 34px; }
+
+    /* Select */
+    select.field-input {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237C7670' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 11px center;
+      padding-right: 34px;
+      cursor: pointer;
+    }
+
+    /* ============================================================
+       DATE TOGGLE
+       ============================================================ */
+    .date-mode-toggle {
+      display: inline-flex;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+      margin-bottom: 2px;
+      align-self: flex-start;
+    }
+
+    .date-mode-btn {
+      padding: 5px 12px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      border-radius: 6px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+
+    .date-mode-btn.active {
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      box-shadow: 0 1px 3px rgba(44,42,37,0.1);
+    }
+
+    .date-fields {
+      display: flex;
+      gap: 10px;
+    }
+
+    .date-fields .field-input { flex: 1; }
+
+    /* Year-only input */
+    .date-year-only {
+      max-width: 120px;
+    }
+
+    /* Full date input */
+    .date-full {
+      width: 100%;
+    }
+
+    /* ============================================================
+       PEOPLE FIELD
+       ============================================================ */
+    .people-search-wrap {
+      position: relative;
+    }
+
+    .people-search-input {
+      height: 40px;
+      padding: 0 12px 0 34px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-accent);
+      border-radius: 8px;
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.12);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      outline: none;
+      width: 100%;
+    }
+
+    .people-search-input::placeholder { color: var(--color-text-placeholder); }
+
+    .people-search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+      pointer-events: none;
+      display: flex;
+    }
+
+    /* Search results dropdown */
+    .people-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-popover);
+      z-index: 10;
+      overflow: hidden;
+      padding: 4px;
+    }
+
+    .people-result {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .people-result:hover { background: var(--color-surface); }
+    .people-result.highlighted { background: var(--color-surface); }
+
+    .result-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .result-info { flex: 1; min-width: 0; }
+
+    .result-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      line-height: 1.3;
+    }
+
+    .result-username {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-top: 1px;
+    }
+
+    .result-add-icon {
+      color: var(--color-text-placeholder);
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      transition: color 0.1s;
+    }
+
+    .people-result:hover .result-add-icon,
+    .people-result.highlighted .result-add-icon {
+      color: var(--color-accent);
+    }
+
+    .result-divider {
+      height: 1px;
+      background: var(--color-border-subtle);
+      margin: 3px 4px;
+    }
+
+    /* ============================================================
+       PEOPLE CHIPS — selected with role toggle
+       ============================================================ */
+    .people-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .people-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px 6px 8px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 10px;
+      transition: border-color 0.12s;
+    }
+
+    .people-chip:hover { border-color: var(--color-border); }
+
+    .chip-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .chip-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Inline role toggle — two small segments */
+    .chip-role-toggle {
+      display: flex;
+      background: var(--color-surface-raised);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 1px;
+      flex-shrink: 0;
+    }
+
+    .chip-role-opt {
+      padding: 3px 9px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      border: none;
+      background: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.12s;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+
+    .chip-role-opt.active {
+      background: var(--color-bg);
+      color: var(--color-accent);
+      box-shadow: 0 1px 2px rgba(44,42,37,0.1);
+    }
+
+    .chip-remove {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      border: none;
+      background: none;
+      color: var(--color-text-placeholder);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.1s, color 0.1s;
+      flex-shrink: 0;
+    }
+
+    .chip-remove:hover {
+      background: var(--color-surface-raised);
+      color: var(--color-text-primary);
+    }
+
+    /* Invite by email hint */
+    .invite-hint {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--color-text-muted);
+      background: var(--color-surface);
+      border: 1px dashed var(--color-border);
+      cursor: pointer;
+      transition: border-color 0.12s, color 0.12s, background 0.12s;
+      margin-top: 8px;
+    }
+
+    .invite-hint:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent);
+      background: var(--color-accent-subtle);
+    }
+
+    /* ============================================================
+       TAGS FIELD
+       ============================================================ */
+    .tags-field {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 10px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      min-height: 42px;
+      align-items: center;
+      cursor: text;
+      transition: border-color 0.14s, box-shadow 0.14s;
+    }
+
+    .tags-field:focus-within {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(92,122,107,0.12);
+    }
+
+    .tags-field .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 999px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .tags-field .tag-chip-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--color-accent);
+      opacity: 0.55;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      transition: opacity 0.1s;
+      line-height: 1;
+    }
+
+    .tags-field .tag-chip-remove:hover { opacity: 1; }
+
+    .tags-field .tag-input {
+      border: none;
+      background: none;
+      outline: none;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      min-width: 100px;
+      flex: 1;
+      padding: 0;
+    }
+
+    .tags-field .tag-input::placeholder { color: var(--color-text-placeholder); }
+
+    .tags-hint {
+      font-size: 11px;
+      color: var(--color-text-placeholder);
+      margin-top: 3px;
+    }
+
+    /* ============================================================
+       AVATAR COLOUR HELPERS
+       ============================================================ */
+    .av-teal { background: var(--color-accent-subtle);  color: var(--color-accent); }
+    .av-blue { background: var(--color-blue-subtle);    color: var(--color-blue); }
+    .av-warm { background: #EDE0D4; color: #8B6650; }
+    .av-sage { background: #D8E8D8; color: #4A7A5A; }
+    .av-dusk { background: #E8DAEA; color: #8A6090; }
+
+    /* ============================================================
+       BUTTONS
+       ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 38px;
+      padding: 0 18px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.13s;
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-text-primary);
+      border-color: var(--color-border);
+    }
+
+    .btn-secondary:hover { background: var(--color-surface-raised); }
+
+    .btn-primary {
+      background: var(--color-accent);
+      color: var(--color-white);
+      border-color: var(--color-accent);
+    }
+
+    .btn-primary:hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); }
+
+    /* Subtle divider between fields */
+    .field-divider {
+      height: 1px;
+      background: var(--color-border-subtle);
+      margin: 2px 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       BACKGROUND (home page, blurred behind overlay)
+       ============================================================ -->
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-nav">
+      <span class="bg-nav-logo">Remember When</span>
+      <div class="bg-nav-links">
+        <span class="bg-nav-link active">Home</span>
+        <span class="bg-nav-link">Friends</span>
+      </div>
+      <div class="bg-nav-right">
+        <div class="bg-bell">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+        <div class="bg-avatar">AL</div>
+      </div>
+    </div>
+
+    <div class="bg-content">
+      <div class="bg-greeting">Hey, Andreas.</div>
+      <div class="bg-card-grid">
+        <div class="bg-card">
+          <div class="bg-card-cover c-forest"></div>
+          <div class="bg-card-body">
+            <div class="bg-card-line" style="width:70%;"></div>
+            <div class="bg-card-line" style="width:45%;"></div>
+          </div>
+        </div>
+        <div class="bg-card">
+          <div class="bg-card-cover c-coast"></div>
+          <div class="bg-card-body">
+            <div class="bg-card-line" style="width:60%;"></div>
+            <div class="bg-card-line" style="width:35%;"></div>
+          </div>
+        </div>
+        <div class="bg-card">
+          <div class="bg-card-cover c-golden"></div>
+          <div class="bg-card-body">
+            <div class="bg-card-line" style="width:55%;"></div>
+            <div class="bg-card-line" style="width:40%;"></div>
+          </div>
+        </div>
+        <div class="bg-card">
+          <div class="bg-card-cover c-dusk"></div>
+          <div class="bg-card-body">
+            <div class="bg-card-line" style="width:65%;"></div>
+            <div class="bg-card-line" style="width:30%;"></div>
+          </div>
+        </div>
+        <div class="bg-card">
+          <div class="bg-card-cover c-mountain"></div>
+          <div class="bg-card-body">
+            <div class="bg-card-line" style="width:50%;"></div>
+            <div class="bg-card-line" style="width:38%;"></div>
+          </div>
+        </div>
+        <div class="bg-card">
+          <div class="bg-card-cover c-dawn"></div>
+          <div class="bg-card-body">
+            <div class="bg-card-line" style="width:62%;"></div>
+            <div class="bg-card-line" style="width:43%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL OVERLAY
+       ============================================================ -->
+  <div class="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">New moment</h2>
+        <button class="modal-close" aria-label="Close">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <!-- 1. Moment name -->
+        <div class="field-group">
+          <label class="field-label" for="moment-name">
+            Moment name
+            <span class="field-required" aria-label="required">*</span>
+          </label>
+          <input
+            class="field-input is-filled"
+            id="moment-name"
+            type="text"
+            value="Our Ironman 2023"
+            placeholder="Give this moment a name…"
+          >
+        </div>
+
+        <!-- 2. Date -->
+        <div class="field-group">
+          <label class="field-label">Date</label>
+
+          <!-- Mode toggle -->
+          <div class="date-mode-toggle" role="group" aria-label="Date precision">
+            <button class="date-mode-btn" id="mode-year" onclick="setDateMode('year')">Year</button>
+            <button class="date-mode-btn active" id="mode-month" onclick="setDateMode('month')">Month + Year</button>
+            <button class="date-mode-btn" id="mode-full" onclick="setDateMode('full')">Full date</button>
+          </div>
+
+          <!-- Year only -->
+          <div id="date-year" class="date-fields" style="display:none;">
+            <input class="field-input date-year-only" type="number" min="1900" max="2099" value="2023" placeholder="Year">
+          </div>
+
+          <!-- Month + Year (default) -->
+          <div id="date-month" class="date-fields">
+            <select class="field-input">
+              <option>January</option>
+              <option>February</option>
+              <option>March</option>
+              <option>April</option>
+              <option>May</option>
+              <option>June</option>
+              <option>July</option>
+              <option>August</option>
+              <option>September</option>
+              <option>October</option>
+              <option selected>November</option>
+              <option>December</option>
+            </select>
+            <input class="field-input" type="number" min="1900" max="2099" value="2023" placeholder="Year" style="max-width:110px;">
+          </div>
+
+          <!-- Full date -->
+          <div id="date-full" class="date-fields" style="display:none;">
+            <input class="field-input date-full" type="date" value="2023-11-18">
+          </div>
+        </div>
+
+        <!-- 3. Location -->
+        <div class="field-group">
+          <label class="field-label" for="location">
+            Location
+            <span class="field-optional">(optional)</span>
+          </label>
+          <div class="field-input-wrap">
+            <span class="field-input-icon">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/>
+              </svg>
+            </span>
+            <input
+              class="field-input has-icon is-filled"
+              id="location"
+              type="text"
+              value="Kona, Hawaii"
+              placeholder="Where did this happen?"
+            >
+          </div>
+        </div>
+
+        <!-- 4. People -->
+        <div class="field-group">
+          <label class="field-label">People</label>
+
+          <div class="people-search-wrap">
+            <span class="people-search-icon">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+            </span>
+            <input
+              class="people-search-input"
+              type="text"
+              value="jul"
+              placeholder="Search by name or email…"
+              autocomplete="off"
+            >
+
+            <!-- Dropdown results -->
+            <div class="people-dropdown">
+              <!-- Result 1 — highlighted -->
+              <div class="people-result highlighted">
+                <div class="result-avatar av-sage">JL</div>
+                <div class="result-info">
+                  <div class="result-name">Jules Leclaire</div>
+                  <div class="result-username">@jules_l</div>
+                </div>
+                <span class="result-add-icon">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14"/>
+                  </svg>
+                </span>
+              </div>
+
+              <div class="result-divider"></div>
+
+              <!-- Result 2 -->
+              <div class="people-result">
+                <div class="result-avatar av-dusk">KP</div>
+                <div class="result-info">
+                  <div class="result-name">Julia Parmentier</div>
+                  <div class="result-username">@juliapar</div>
+                </div>
+                <span class="result-add-icon">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14"/>
+                  </svg>
+                </span>
+              </div>
+
+              <!-- Result 3 — invite by email -->
+              <div class="result-divider"></div>
+              <div class="people-result">
+                <div class="result-avatar" style="background:var(--color-surface);color:var(--color-text-muted);border:1px dashed var(--color-border);">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </div>
+                <div class="result-info">
+                  <div class="result-name" style="color:var(--color-text-muted);">Invite "jul@example.com"</div>
+                  <div class="result-username">Send an email invitation</div>
+                </div>
+                <span class="result-add-icon">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected people chips -->
+          <div class="people-chips">
+
+            <!-- Chip 1 — Editor -->
+            <div class="people-chip">
+              <div class="chip-avatar av-blue">MK</div>
+              <span class="chip-name">Maria Konstantinou</span>
+              <div class="chip-role-toggle" role="group" aria-label="Role for Maria">
+                <button class="chip-role-opt active">Editor</button>
+                <button class="chip-role-opt">Reader</button>
+              </div>
+              <button class="chip-remove" aria-label="Remove Maria">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Chip 2 — Reader -->
+            <div class="people-chip">
+              <div class="chip-avatar av-warm">SR</div>
+              <span class="chip-name">Sam Richards</span>
+              <div class="chip-role-toggle" role="group" aria-label="Role for Sam">
+                <button class="chip-role-opt">Editor</button>
+                <button class="chip-role-opt active">Reader</button>
+              </div>
+              <button class="chip-remove" aria-label="Remove Sam">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 5. Tags -->
+        <div class="field-group">
+          <label class="field-label">Tags</label>
+          <div class="tags-field" onclick="this.querySelector('.tag-input').focus()">
+            <span class="tag-chip">
+              Racing
+              <button class="tag-chip-remove" aria-label="Remove Racing">
+                <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </span>
+            <span class="tag-chip">
+              Triathlon
+              <button class="tag-chip-remove" aria-label="Remove Triathlon">
+                <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </span>
+            <input
+              class="tag-input"
+              type="text"
+              placeholder="Add a tag…"
+            >
+          </div>
+          <p class="tags-hint">Press Enter or comma to add a tag.</p>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary">
+          Create moment
+        </button>
+      </div>
+
+    </div><!-- /modal -->
+  </div><!-- /modal-overlay -->
+
+  <script>
+    function setDateMode(mode) {
+      // toggle button states
+      document.querySelectorAll('.date-mode-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('mode-' + mode).classList.add('active');
+
+      // show/hide fields
+      document.getElementById('date-year').style.display  = mode === 'year'  ? 'flex' : 'none';
+      document.getElementById('date-month').style.display = mode === 'month' ? 'flex' : 'none';
+      document.getElementById('date-full').style.display  = mode === 'full'  ? 'flex' : 'none';
+    }
+
+    // role toggle chips — click to switch active
+    document.querySelectorAll('.chip-role-toggle').forEach(toggle => {
+      toggle.querySelectorAll('.chip-role-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+          toggle.querySelectorAll('.chip-role-opt').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

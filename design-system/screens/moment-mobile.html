@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remember When — Moment Page (Mobile)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --color-bg:              #F5F2ED;
+      --color-surface:         #EDEAE4;
+      --color-surface-raised:  #E6E2DB;
+      --color-text-primary:    #2C2A25;
+      --color-text-muted:      #7C7670;
+      --color-text-placeholder:#A8A39D;
+      --color-accent:          #5C7A6B;
+      --color-accent-hover:    #4A6659;
+      --color-accent-subtle:   #D4E0DA;
+      --color-blue:            #7C96A8;
+      --color-blue-subtle:     #E0E8ED;
+      --color-border:          #D6D1CB;
+      --color-border-subtle:   #E8E4DE;
+      --color-white:           #FFFFFF;
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+      --shadow-card:    0 1px 4px rgba(44,42,37,0.08);
+      --shadow-phone:   0 32px 80px rgba(44,42,37,0.22), 0 8px 24px rgba(44,42,37,0.12);
+    }
+
+    /* ============================================================
+       STAGE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100vh; font-family: var(--font-sans); }
+
+    body {
+      background: #EAE6DF;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 24px 64px;
+      gap: 48px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(92,122,107,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 85% 80%, rgba(124,150,168,0.05) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    /* ============================================================
+       PHONE FRAME
+       ============================================================ */
+    .phone-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .phone-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-text-muted);
+    }
+
+    .phone {
+      width: 390px;
+      height: 844px;
+      background: var(--color-bg);
+      border-radius: 50px;
+      box-shadow: var(--shadow-phone);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(44,42,37,0.08);
+    }
+
+    .phone-island {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 34px;
+      background: #1A1814;
+      border-radius: 20px;
+      z-index: 50;
+    }
+
+    /* ============================================================
+       STATUS BAR
+       ============================================================ */
+    .status-bar {
+      height: 54px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 28px 10px;
+      flex-shrink: 0;
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 40;
+      /* starts transparent over cover */
+    }
+
+    .status-time {
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.92);
+      letter-spacing: -0.01em;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255,255,255,0.92);
+    }
+
+    /* status bar turns dark when sticky bar is visible */
+    .status-bar.over-content .status-time {
+      color: var(--color-text-primary);
+      text-shadow: none;
+    }
+
+    .status-bar.over-content .status-icons {
+      color: var(--color-text-primary);
+    }
+
+    /* ============================================================
+       STICKY BAR (in-phone, appears on scroll)
+       ============================================================ */
+    .sticky-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 30;
+      height: 54px;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border-subtle);
+      display: flex;
+      align-items: flex-end;
+      padding: 0 16px 10px;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .sticky-bar.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .sticky-back {
+      display: flex;
+      align-items: center;
+      color: var(--color-accent);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .sticky-name {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--color-text-primary);
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sticky-gear {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      border-radius: 6px;
+      transition: background 0.12s;
+    }
+
+    .sticky-gear:hover { background: var(--color-surface); }
+
+    /* ============================================================
+       SCROLLABLE CONTENT
+       ============================================================ */
+    .phone-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      position: relative;
+    }
+
+    .phone-scroll::-webkit-scrollbar { display: none; }
+
+    /* ============================================================
+       COVER PHOTO — slightly shorter on mobile
+       ============================================================ */
+    .moment-cover {
+      position: relative;
+      width: 100%;
+      height: 224px;          /* shorter than desktop 280px */
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .cover-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(175deg,
+        #141E30 0%,  #1E2E48 8%,
+        #2A3E5E 16%, #3A5272 24%,
+        #4E6A84 32%, #628090 40%,
+        #8A9E98 48%, #B0A870 54%,
+        #C89840 60%, #B07828 66%,
+        #885A20 72%, #644018 78%,
+        #442C10 86%, #2C1C08 94%,
+        #1A1008 100%
+      );
+    }
+
+    .cover-texture {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 120% 60% at 30% 40%, rgba(180,160,100,0.16) 0%, transparent 55%),
+        radial-gradient(ellipse 80% 40% at 70% 20%,  rgba(100,140,180,0.12) 0%, transparent 50%);
+    }
+
+    /* gradient: transparent top → 76% dark bottom */
+    .cover-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(28,24,18,0.76) 0%,
+        rgba(28,24,18,0.48) 30%,
+        rgba(28,24,18,0.18) 58%,
+        rgba(28,24,18,0.03) 80%,
+        transparent 100%
+      );
+    }
+
+    /* moment text — bottom-left */
+    .cover-text {
+      position: absolute;
+      bottom: 18px;
+      left: 18px;
+      right: 52px;
+    }
+
+    .cover-moment-name {
+      font-family: var(--font-serif);
+      font-weight: 400;
+      font-size: 26px;
+      color: #fff;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 14px rgba(0,0,0,0.32), 0 1px 4px rgba(0,0,0,0.18);
+      margin-bottom: 6px;
+    }
+
+    .cover-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cover-meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.80);
+      text-shadow: 0 1px 6px rgba(0,0,0,0.38);
+    }
+
+    .cover-meta-dot {
+      width: 2px; height: 2px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+    }
+
+    /* cover menu btn — top right */
+    .cover-menu-btn {
+      position: absolute;
+      top: 58px;   /* below status bar */
+      right: 14px;
+      width: 32px;
+      height: 32px;
+      background: rgba(28,24,18,0.42);
+      border: none;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.92);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 0.14s;
+      z-index: 10;
+    }
+
+    .cover-menu-btn:hover { background: rgba(28,24,18,0.65); }
+
+    /* ============================================================
+       PAGE CONTENT (below cover)
+       ============================================================ */
+    .page-content {
+      padding: 0 0 24px;
+    }
+
+    /* ============================================================
+       META STRIP
+       ============================================================ */
+    .meta-strip {
+      border-bottom: 1px solid var(--color-border-subtle);
+      margin-bottom: 0;
+    }
+
+    /* Tags — horizontal scroll, single line */
+    .tags-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 16px 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex-wrap: nowrap;
+    }
+
+    .tags-row::-webkit-scrollbar { display: none; }
+
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 999px;
+      line-height: 1;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .tag-add {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: transparent;
+      color: var(--color-text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 999px;
+      border: 1px dashed var(--color-border);
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    /* Members row — compact: avatars + gear only */
+    .members-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px 14px;
+    }
+
+    .members-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Avatar stack */
+    .avatar-stack { display: flex; align-items: center; }
+
+    .avatar {
+      border-radius: 50%;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      user-select: none;
+      border: 2px solid var(--color-bg);
+    }
+
+    .avatar-sm   { width: 28px; height: 28px; font-size: 10px; }
+    .avatar-stack .avatar { margin-left: -8px; }
+    .avatar-stack .avatar:first-child { margin-left: 0; }
+
+    .av-teal { background: var(--color-accent-subtle);  color: var(--color-accent); }
+    .av-blue { background: var(--color-blue-subtle);    color: var(--color-blue); }
+    .av-warm { background: #EDE0D4; color: #8B6650; }
+    .av-sage { background: #D8E8D8; color: #4A7A5A; }
+    .av-more { background: var(--color-surface-raised); color: var(--color-text-muted); font-size: 9px; }
+
+    .members-names {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+
+    /* Single gear icon button — replaces all three desktop action buttons */
+    .gear-btn {
+      width: 32px;
+      height: 32px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .gear-btn:hover { background: var(--color-surface-raised); color: var(--color-text-primary); }
+
+    /* ============================================================
+       POSTS SECTION
+       ============================================================ */
+    .posts-section { padding: 16px 16px 0; }
+
+    .posts-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .posts-heading {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--color-text-primary);
+    }
+
+    .posts-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Sort — compact icon-text on mobile */
+    .sort-btn-mobile {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 30px;
+      padding: 0 10px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 7px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-add-post {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      height: 30px;
+      padding: 0 12px;
+      background: var(--color-accent);
+      color: var(--color-white);
+      border: none;
+      border-radius: 7px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.13s;
+    }
+
+    .btn-add-post:hover { background: var(--color-accent-hover); }
+
+    /* ============================================================
+       POST CARDS
+       ============================================================ */
+    .posts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .post-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+
+    .post-card-inner { padding: 16px 16px 18px; }
+
+    .post-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .post-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .post-author-info { flex: 1; min-width: 0; }
+
+    .post-author-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      line-height: 1.3;
+    }
+
+    .post-author-meta {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-top: 1px;
+    }
+
+    .post-menu-btn {
+      width: 26px;
+      height: 26px;
+      background: none;
+      border: none;
+      border-radius: 6px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* always visible on mobile */
+
+    .post-text {
+      font-size: 14px;
+      color: var(--color-text-primary);
+      line-height: 1.65;
+    }
+
+    .post-text + .post-images { margin-top: 12px; }
+
+    /* Post images */
+    .post-img-single {
+      width: 100%;
+      height: 186px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .post-img-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .post-img-pair > div { height: 154px; }
+
+    .post-img-trio {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      grid-template-rows: 118px 118px;
+      gap: 3px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .post-img-trio > div:first-child { grid-row: span 2; }
+
+    /* image gradients */
+    .img-ocean-start {
+      background: linear-gradient(175deg,
+        #0A1E34 0%, #163860 28%,
+        #2A6494 52%, #5A9EC8 72%,
+        #A0D8F0 92%, #C8EEF8 100%);
+    }
+    .img-bike-course {
+      background: linear-gradient(160deg,
+        #E8C878 0%, #C48830 28%,
+        #9C5418 52%, #703010 74%,
+        #401C06 100%);
+    }
+    .img-run-lava {
+      background: linear-gradient(170deg,
+        #F0D8A0 0%, #CC9840 28%,
+        #A45E18 56%, #6C3810 80%,
+        #502C0A 100%);
+    }
+    .img-finish-line {
+      background: linear-gradient(165deg,
+        #D4B880 0%, #AA7030 28%,
+        #7A3C0E 50%, #A07848 70%,
+        #D8C090 100%);
+    }
+    .img-crowd-cheer {
+      background: linear-gradient(170deg,
+        #C8B4A0 0%, #988A7A 32%,
+        #7C6A58 58%, #50402E 100%);
+    }
+    .img-transition {
+      background: linear-gradient(155deg,
+        #A8C8D8 0%, #6888A8 34%,
+        #507090 50%, #1A3860 100%);
+    }
+
+    /* ============================================================
+       BOTTOM TAB BAR
+       ============================================================ */
+    .tab-bar {
+      height: 82px;
+      background: var(--color-bg);
+      border-top: 1px solid var(--color-border-subtle);
+      display: flex;
+      align-items: flex-start;
+      padding-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 0 0;
+      color: var(--color-text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.12s;
+      position: relative;
+    }
+
+    .tab.active { color: var(--color-accent); }
+
+    .tab-icon {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tab-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      line-height: 1;
+    }
+
+    .tab-badge {
+      position: absolute;
+      top: 2px;
+      left: calc(50% + 6px);
+      width: 8px;
+      height: 8px;
+      background: var(--color-blue);
+      border-radius: 50%;
+      border: 2px solid var(--color-bg);
+    }
+
+    .tab-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+      font-size: 9px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ============================================================
+       ANNOTATIONS
+       ============================================================ */
+    .annotations {
+      position: relative;
+      z-index: 1;
+      width: 220px;
+      padding-top: 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex-shrink: 0;
+    }
+
+    .annotation { display: flex; flex-direction: column; gap: 6px; }
+
+    .ann-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-accent);
+    }
+
+    .ann-body {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    .ann-rule {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      padding: 7px 10px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+    }
+
+    .ann-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    /* Comparison callout */
+    .compare-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .compare-cell {
+      padding: 7px 9px;
+      border-radius: 7px;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .compare-desktop {
+      background: var(--color-surface-raised);
+      color: var(--color-text-muted);
+    }
+
+    .compare-mobile {
+      background: var(--color-accent-subtle);
+      color: var(--color-accent);
+    }
+
+    .compare-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.7;
+      margin-bottom: 2px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       PHONE FRAME
+       ============================================================ -->
+  <div class="phone-wrap">
+    <div class="phone-label">Mobile — 390 × 844</div>
+
+    <div class="phone">
+      <div class="phone-island"></div>
+
+      <!-- Status bar — floats over cover initially -->
+      <div class="status-bar" id="statusBar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor">
+            <rect x="0"    y="8"   width="3" height="4"  rx="0.8"/>
+            <rect x="4.5"  y="5.5" width="3" height="6.5" rx="0.8"/>
+            <rect x="9"    y="3"   width="3" height="9"   rx="0.8"/>
+            <rect x="13.5" y="0"   width="3" height="12"  rx="0.8" opacity="0.3"/>
+          </svg>
+          <svg width="16" height="12" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M1 6.5C5.5 2 11 0 12 0c1 0 6.5 2 11 6.5" opacity="0.3"/>
+            <path d="M4.5 10.5C7.5 7.5 10.5 6 12 6s4.5 1.5 7.5 4.5"/>
+            <path d="M8 14.5C9.5 13 11 12.5 12 12.5s2.5.5 4 2"/>
+            <circle cx="12" cy="17" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor">
+            <rect x="0" y="1" width="21" height="10" rx="2.5" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <rect x="1.5" y="2.5" width="15" height="7" rx="1.5"/>
+            <rect x="22" y="4" width="2.5" height="4" rx="1.2"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Sticky moment name bar -->
+      <div class="sticky-bar" id="stickyBar">
+        <button class="sticky-back" aria-label="Back">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+        </button>
+        <span class="sticky-name">Our Ironman 2023</span>
+        <button class="sticky-gear" aria-label="Manage">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Scrollable area -->
+      <div class="phone-scroll" id="phoneScroll">
+
+        <!-- COVER PHOTO -->
+        <div class="moment-cover" id="momentCover">
+          <div class="cover-bg"></div>
+          <div class="cover-texture"></div>
+          <div class="cover-overlay"></div>
+
+          <div class="cover-text">
+            <h1 class="cover-moment-name">Our Ironman 2023</h1>
+            <div class="cover-meta">
+              <span class="cover-meta-item">
+                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                </svg>
+                November 2023
+              </span>
+              <span class="cover-meta-dot"></span>
+              <span class="cover-meta-item">
+                <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/>
+                </svg>
+                Kona, Hawaii
+              </span>
+            </div>
+          </div>
+
+          <button class="cover-menu-btn" aria-label="Options">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div class="page-content">
+
+          <!-- Meta strip -->
+          <div class="meta-strip">
+
+            <!-- Tags: horizontal scroll -->
+            <div class="tags-row">
+              <span class="tag-pill">Racing</span>
+              <span class="tag-pill">Triathlon</span>
+              <span class="tag-pill">Milestone</span>
+              <button class="tag-add">
+                <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Add tag
+              </button>
+            </div>
+
+            <!-- Members row — avatars + gear icon only -->
+            <div class="members-row">
+              <div class="members-left">
+                <div class="avatar-stack">
+                  <div class="avatar avatar-sm av-teal">AL</div>
+                  <div class="avatar avatar-sm av-blue">MK</div>
+                  <div class="avatar avatar-sm av-warm">SR</div>
+                  <div class="avatar avatar-sm av-sage">JL</div>
+                </div>
+                <span class="members-names">Andreas, Maria, Sam, Jules</span>
+              </div>
+              <!-- Gear only — no camera, no invite label -->
+              <button class="gear-btn" aria-label="Manage moment">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </button>
+            </div>
+
+          </div><!-- /meta-strip -->
+
+          <!-- Posts section -->
+          <div class="posts-section">
+
+            <div class="posts-header">
+              <h2 class="posts-heading">Posts</h2>
+              <div class="posts-controls">
+                <button class="sort-btn-mobile">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="3"  y1="6"  x2="21" y2="6"/>
+                    <line x1="6"  y1="12" x2="18" y2="12"/>
+                    <line x1="9"  y1="18" x2="15" y2="18"/>
+                  </svg>
+                  Newest
+                </button>
+                <button class="btn-add-post">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M12 5v14M5 12h14"/>
+                  </svg>
+                  Add post
+                </button>
+              </div>
+            </div>
+
+            <div class="posts-list">
+
+              <!-- Post 1 — image pair + text -->
+              <article class="post-card">
+                <div class="post-card-inner">
+                  <div class="post-header">
+                    <div class="post-avatar" style="background:#D8E8D8;color:#4A7A5A;">JL</div>
+                    <div class="post-author-info">
+                      <div class="post-author-name">Jules Leclaire</div>
+                      <div class="post-author-meta">Yesterday · 11:34 am</div>
+                    </div>
+                    <button class="post-menu-btn" aria-label="Options">
+                      <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="post-text">Crossing that finish line — hearing them say your name over the PA in the dark, the whole town cheering — is the kind of thing that doesn't fit inside a sentence. We all trained separately and arrived at the same finish chute within eight minutes of each other.</p>
+                  <div class="post-img-pair" style="margin-top:12px;">
+                    <div class="img-finish-line"></div>
+                    <div class="img-crowd-cheer"></div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Post 2 — text only -->
+              <article class="post-card">
+                <div class="post-card-inner">
+                  <div class="post-header">
+                    <div class="post-avatar" style="background:var(--color-accent-subtle);color:var(--color-accent);">AL</div>
+                    <div class="post-author-info">
+                      <div class="post-author-name">Andreas Louca</div>
+                      <div class="post-author-meta">Yesterday · 9:08 am</div>
+                    </div>
+                    <button class="post-menu-btn" aria-label="Options">
+                      <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="post-text">There's a moment in every Ironman — usually around mile 16 of the run — where you have a long, honest conversation with yourself about who you actually are. The lava fields don't let you look anywhere else.<br><br>Then I thought about the four of us on that beach at 6:45am in the dark, not saying much. That's the part I'll remember longest.</p>
+                </div>
+              </article>
+
+              <!-- Post 3 — single image + text -->
+              <article class="post-card">
+                <div class="post-card-inner">
+                  <div class="post-header">
+                    <div class="post-avatar" style="background:var(--color-blue-subtle);color:var(--color-blue);">MK</div>
+                    <div class="post-author-info">
+                      <div class="post-author-name">Maria Konstantinou</div>
+                      <div class="post-author-meta">2 days ago · 7:22 pm</div>
+                    </div>
+                    <button class="post-menu-btn" aria-label="Options">
+                      <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="post-text">The swim start at 6:55am. The water was 78°F and glassy, and the sky was still this deep navy-purple.</p>
+                  <div class="post-img-single img-ocean-start" style="margin-top:12px;"></div>
+                </div>
+              </article>
+
+              <!-- Post 4 — three images -->
+              <article class="post-card">
+                <div class="post-card-inner">
+                  <div class="post-header">
+                    <div class="post-avatar" style="background:#EDE0D4;color:#8B6650;">SR</div>
+                    <div class="post-author-info">
+                      <div class="post-author-name">Sam Richards</div>
+                      <div class="post-author-meta">2 days ago · 2:14 pm</div>
+                    </div>
+                    <button class="post-menu-btn" aria-label="Options">
+                      <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="post-text">112 miles of lava fields, crosswinds and silence. T1, mile 60, and the final descent into town.</p>
+                  <div class="post-img-trio" style="margin-top:12px;">
+                    <div class="img-bike-course"></div>
+                    <div class="img-run-lava"></div>
+                    <div class="img-transition"></div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Post 5 — short text -->
+              <article class="post-card">
+                <div class="post-card-inner">
+                  <div class="post-header">
+                    <div class="post-avatar" style="background:var(--color-accent-subtle);color:var(--color-accent);">AL</div>
+                    <div class="post-author-info">
+                      <div class="post-author-name">Andreas Louca</div>
+                      <div class="post-author-meta">3 days ago · 10:50 pm</div>
+                    </div>
+                    <button class="post-menu-btn" aria-label="Options">
+                      <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="post-text">We're all home. All four of us finished. Starting this moment so we have somewhere to put everything — the photos, the stories, the stuff that's too good to leave in a group chat.</p>
+                </div>
+              </article>
+
+            </div><!-- /posts-list -->
+          </div><!-- /posts-section -->
+        </div><!-- /page-content -->
+      </div><!-- /phone-scroll -->
+
+      <!-- BOTTOM TAB BAR -->
+      <nav class="tab-bar">
+        <button class="tab active" aria-label="Home">
+          <div class="tab-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <span class="tab-label">Home</span>
+        </button>
+        <button class="tab" aria-label="Friends">
+          <div class="tab-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <span class="tab-label">Friends</span>
+        </button>
+        <button class="tab" aria-label="Alerts">
+          <div class="tab-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <span class="tab-label">Alerts</span>
+          <span class="tab-badge"></span>
+        </button>
+        <button class="tab" aria-label="Account">
+          <div class="tab-icon">
+            <div class="tab-avatar">AL</div>
+          </div>
+          <span class="tab-label">Account</span>
+        </button>
+      </nav>
+
+    </div><!-- /phone -->
+  </div><!-- /phone-wrap -->
+
+
+  <!-- ============================================================
+       ANNOTATIONS
+       ============================================================ -->
+  <div class="annotations">
+
+    <div class="annotation">
+      <div class="ann-title">Cover height</div>
+      <div class="ann-body">224px vs 280px on desktop — shorter so posts start sooner, but the gradient and cinematic feel are identical.</div>
+      <div class="compare-row">
+        <div class="compare-cell compare-desktop">
+          <div class="compare-label">Desktop</div>
+          280px
+        </div>
+        <div class="compare-cell compare-mobile">
+          <div class="compare-label">Mobile</div>
+          224px
+        </div>
+      </div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-title">Status bar</div>
+      <div class="ann-body">Floats white over the cover. Transitions to dark text once the sticky bar takes over on scroll.</div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-title">Sticky bar</div>
+      <div class="ann-body">Fades in as the cover scrolls out. Shows back arrow + moment name + gear icon only. No full action row.</div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-title">Members row</div>
+      <div class="ann-body">Collapses from 3 labelled buttons to a single gear icon. Avatars + truncated name list remain.</div>
+      <div class="ann-rule">
+        <span class="ann-dot"></span>
+        Desktop: Edit cover · Invite · Manage
+      </div>
+      <div class="ann-rule" style="border-color:var(--color-accent-subtle);background:var(--color-accent-subtle);color:var(--color-accent);">
+        <span class="ann-dot"></span>
+        Mobile: ⚙ icon only
+      </div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-title">Tags row</div>
+      <div class="ann-body">Horizontal scroll with <code style="font-size:11px;">overflow-x: auto</code>, no wrapping. Prevents the meta strip from growing tall.</div>
+    </div>
+
+    <div class="annotation">
+      <div class="ann-title">Post cards</div>
+      <div class="ann-body">Same 5 posts, single column. Image heights slightly reduced (186px single, 154px pair). Post menu always visible — no hover state on touch.</div>
+    </div>
+
+  </div>
+
+  <script>
+    const scroll    = document.getElementById('phoneScroll');
+    const cover     = document.getElementById('momentCover');
+    const stickyBar = document.getElementById('stickyBar');
+    const statusBar = document.getElementById('statusBar');
+
+    scroll.addEventListener('scroll', () => {
+      const coverBottom = cover.offsetTop + cover.offsetHeight;
+      const scrolled    = scroll.scrollTop >= coverBottom - 54;
+      stickyBar.classList.toggle('visible', scrolled);
+      statusBar.classList.toggle('over-content', scrolled);
+    });
+  </script>
+
+</body>
+</html>

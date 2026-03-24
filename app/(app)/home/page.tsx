@@ -28,12 +28,15 @@ export default async function HomePage({ searchParams }: Props) {
   return (
     <main className="min-h-screen">
       {pending_invite === 'true' && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800">
-          <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-2.5 text-sm text-amber-800 dark:text-amber-300">
-            <Bell className="size-4 shrink-0" />
+        <div className="bg-rw-blue-subtle border-b border-rw-blue/20">
+          <div className="mx-auto max-w-[1100px] px-4 md:px-6 py-3 flex items-center gap-2.5 text-[13px] text-rw-text-primary">
+            <Bell className="size-4 shrink-0 text-rw-blue" />
             <span>
               You have a pending moment invitation —{' '}
-              <Link href="/notifications" className="font-medium underline underline-offset-2 hover:no-underline">
+              <Link
+                href="/notifications"
+                className="font-medium underline underline-offset-2 hover:no-underline text-rw-blue"
+              >
                 check your notifications
               </Link>
               .

@@ -3,18 +3,32 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
+  // Base — pill shape, 12px DM Sans 500, inline-flex
+  "inline-flex items-center gap-1 rounded-rw-pill px-2.5 py-0.5 text-[12px] font-medium leading-none transition-colors",
   {
     variants: {
       variant: {
+        // Default — sage-teal tint (accent tags)
         default:
-          "border-transparent bg-primary text-primary-foreground",
+          "border border-transparent bg-rw-accent-subtle text-rw-accent",
+        // Muted — neutral surface tint (general tags, most common)
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground",
-        outline:
-          "border-border text-foreground",
+          "border border-transparent bg-rw-surface-raised text-rw-text-muted",
+        // Same as secondary — explicit alias used in moment cards
         muted:
-          "border-transparent bg-muted text-muted-foreground",
+          "border border-transparent bg-rw-surface-raised text-rw-text-muted",
+        // Blue — info / invite tags
+        blue:
+          "border border-transparent bg-rw-blue-subtle text-rw-blue",
+        // Outlined — neutral border, no fill
+        outline:
+          "border border-rw-border text-rw-text-primary",
+        // Danger — error / destructive
+        danger:
+          "border border-transparent bg-rw-danger-subtle text-rw-danger",
+        // Owner role badge — warm amber tint
+        owner:
+          "border border-transparent bg-[#F0EAD4] text-[#8B7030]",
       },
     },
     defaultVariants: {

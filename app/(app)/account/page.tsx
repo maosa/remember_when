@@ -31,8 +31,8 @@ export default async function AccountPage() {
   const initials = `${profile.first_name[0] ?? ''}${profile.last_name[0] ?? ''}`.toUpperCase()
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-lg px-4 py-12 space-y-8">
+    <main className="min-h-screen bg-rw-bg">
+      <div className="mx-auto max-w-[720px] px-4 md:px-6 py-12 space-y-10">
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -47,7 +47,7 @@ export default async function AccountPage() {
 
         {/* Photo */}
         <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Photo</h2>
+          <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Photo</h2>
           <AvatarUpload
             currentUrl={profile.profile_photo_url ?? null}
             initials={initials}
@@ -58,7 +58,7 @@ export default async function AccountPage() {
 
         {/* Profile */}
         <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Profile</h2>
+          <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Profile</h2>
           <ProfileForm
             initialData={{
               firstName: profile.first_name,
@@ -73,7 +73,7 @@ export default async function AccountPage() {
 
         {/* Security */}
         <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Security</h2>
+          <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Security</h2>
           <ChangePasswordForm email={profile.email} />
         </section>
 
@@ -81,19 +81,19 @@ export default async function AccountPage() {
 
         {/* Notification preferences */}
         <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Notifications</h2>
+          <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Notifications</h2>
           <Link
             href="/settings?from=account"
-            className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-muted transition-colors"
+            className="flex items-center justify-between rounded-rw-card border border-rw-border-subtle bg-rw-surface px-4 py-3 hover:bg-rw-surface-raised/70 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <Bell className="size-4 text-muted-foreground shrink-0" />
+              <Bell className="size-4 text-rw-text-muted shrink-0" />
               <div>
                 <p className="text-sm font-medium">Notification Preferences</p>
-                <p className="text-xs text-muted-foreground">Manage what you get notified about</p>
+                <p className="text-xs text-rw-text-muted">Manage what you get notified about</p>
               </div>
             </div>
-            <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+            <ChevronRight className="size-4 text-rw-text-muted shrink-0" />
           </Link>
         </section>
 
@@ -101,31 +101,31 @@ export default async function AccountPage() {
 
         {/* Plans */}
         <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Plans</h2>
+          <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Plans</h2>
           <Link
             href="/pricing"
-            className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-muted transition-colors"
+            className="flex items-center justify-between rounded-rw-card border border-rw-border-subtle bg-rw-surface px-4 py-3 hover:bg-rw-surface-raised/70 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <CreditCard className="size-4 text-muted-foreground shrink-0" />
+              <CreditCard className="size-4 text-rw-text-muted shrink-0" />
               <div>
                 <p className="text-sm font-medium">Pricing & Plans</p>
-                <p className="text-xs text-muted-foreground">View available plans and features</p>
+                <p className="text-xs text-rw-text-muted">View available plans and features</p>
               </div>
             </div>
-            <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+            <ChevronRight className="size-4 text-rw-text-muted shrink-0" />
           </Link>
         </section>
 
         <Separator />
 
         {/* Danger zone */}
-        <section className="rounded-lg border border-destructive/40 p-5 space-y-4">
-          <h2 className="text-sm font-medium text-destructive uppercase tracking-wide">Danger zone</h2>
+        <section className="rounded-rw-card border border-rw-danger/40 bg-rw-danger-subtle/40 py-5 px-6 space-y-4">
+          <h2 className="font-sans text-[11px] font-semibold text-rw-danger uppercase tracking-[0.08em]">Danger zone</h2>
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium">Delete account</p>
-              <p className="text-sm text-muted-foreground">Permanently remove your personal data</p>
+              <p className="text-sm text-rw-text-muted">Permanently remove your personal data</p>
             </div>
             <DeleteAccountDialog username={profile.username} />
           </div>

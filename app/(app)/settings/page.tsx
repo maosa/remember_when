@@ -51,8 +51,8 @@ export default async function SettingsPage({
     : DEFAULTS
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-lg px-4 py-12 space-y-8">
+    <main className="min-h-screen bg-rw-bg">
+      <div className="mx-auto max-w-[720px] px-4 md:px-6 py-12 space-y-10">
 
         <div className="flex items-center gap-3">
           <Link

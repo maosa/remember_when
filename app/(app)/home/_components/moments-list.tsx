@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { SlidersHorizontal, ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, BookOpen } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Menu,
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/menu'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { MomentCard } from './moment-card'
 import { CreateMomentModal } from './create-moment-modal'
 import { type MomentSummary } from '../actions'
@@ -79,12 +80,12 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+    <div className="mx-auto max-w-[1100px] px-4 md:px-6 py-8 space-y-6">
 
-      {/* Header */}
+      {/* Header — greeting + new moment CTA */}
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">
-          Hey, {firstName}
+        <h1 className="text-[28px] font-semibold text-rw-text-primary leading-tight">
+          Hey, {firstName}.
         </h1>
         <CreateMomentModal />
       </div>
@@ -119,13 +120,13 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         </Menu>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — underline style */}
       <Tabs defaultValue="moments">
         <TabsList>
           <TabsTrigger value="moments">
             Moments
             {active.length > 0 && (
-              <span className="ml-1.5 rounded-full bg-muted-foreground/15 px-1.5 py-0.5 text-xs font-medium">
+              <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-rw-surface-raised px-1.5 py-0.5 text-[11px] font-medium text-rw-text-muted">
                 {active.length}
               </span>
             )}
@@ -133,7 +134,7 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
           <TabsTrigger value="archived">
             Archived
             {archived.length > 0 && (
-              <span className="ml-1.5 rounded-full bg-muted-foreground/15 px-1.5 py-0.5 text-xs font-medium">
+              <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-rw-surface-raised px-1.5 py-0.5 text-[11px] font-medium text-rw-text-muted">
                 {archived.length}
               </span>
             )}
@@ -141,22 +142,24 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         </TabsList>
 
         {/* ── Active moments ───────────────────────────── */}
-        <TabsContent value="moments" className="mt-4">
+        <TabsContent value="moments" className="mt-5">
           <MomentsGrid
             moments={sortedActive}
             currentUserId={currentUserId}
             sort={sort}
-            emptyMessage="No moments yet — create your first one!"
+            emptyTitle="No moments yet"
+            emptyDescription="Create your first moment and start capturing memories together."
           />
         </TabsContent>
 
         {/* ── Archived moments ─────────────────────────── */}
-        <TabsContent value="archived" className="mt-4">
+        <TabsContent value="archived" className="mt-5">
           <MomentsGrid
             moments={sortedArchived}
             currentUserId={currentUserId}
             sort={sort}
-            emptyMessage="Nothing archived yet."
+            emptyTitle="Nothing archived"
+            emptyDescription="Moments you archive will appear here."
           />
         </TabsContent>
       </Tabs>
@@ -170,18 +173,23 @@ function MomentsGrid({
   moments,
   currentUserId,
   sort,
-  emptyMessage,
+  emptyTitle,
+  emptyDescription,
 }: {
   moments: MomentSummary[]
   currentUserId: string
   sort: SortMode
-  emptyMessage: string
+  emptyTitle: string
+  emptyDescription: string
 }) {
   if (moments.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center space-y-2">
-        <p className="text-muted-foreground text-sm">{emptyMessage}</p>
-      </div>
+      <EmptyState
+        icon={<BookOpen className="size-11" />}
+        title={emptyTitle}
+        description={emptyDescription}
+        className="py-16"
+      />
     )
   }
 
@@ -192,13 +200,17 @@ function MomentsGrid({
       <div className="space-y-8">
         {yours.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Created by you</h2>
+            <p className="font-sans text-[11px] font-semibold text-rw-text-placeholder uppercase tracking-[0.1em]">
+              Created by you
+            </p>
             <Grid moments={yours} currentUserId={currentUserId} />
           </section>
         )}
         {shared.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Shared with you</h2>
+            <p className="font-sans text-[11px] font-semibold text-rw-text-placeholder uppercase tracking-[0.1em]">
+              Shared with you
+            </p>
             <Grid moments={shared} currentUserId={currentUserId} />
           </section>
         )}

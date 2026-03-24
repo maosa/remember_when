@@ -122,8 +122,8 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
             rows={4}
             autoFocus
             className={cn(
-              'w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none resize-none transition-colors',
-              'placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+              'w-full rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 text-sm outline-none resize-none transition-colors',
+              'placeholder:text-rw-text-muted focus-visible:border-rw-accent/60 focus-visible:ring-3 focus-visible:ring-rw-accent/20'
             )}
           />
 
@@ -131,7 +131,7 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
           {(visibleExisting.length > 0 || newPreviews.length > 0) && (
             <div className="flex flex-wrap gap-2">
               {visibleExisting.map((m) => (
-                <div key={m.id} className="relative size-40 rounded-lg overflow-hidden bg-muted shrink-0">
+                <div key={m.id} className="relative size-28 sm:size-40 rounded-lg overflow-hidden bg-rw-surface-raised shrink-0">
                   {m.mediaType === 'photo' && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={m.storageUrl} alt="" className="size-full object-cover" />
@@ -141,8 +141,8 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
                   )}
                   {m.mediaType === 'audio' && (
                     <div className="size-full flex flex-col items-center justify-center gap-2 p-3">
-                      <Mic className="size-6 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground truncate max-w-full px-1">Audio</p>
+                      <Mic className="size-6 text-rw-text-muted" />
+                      <p className="text-xs text-rw-text-muted truncate max-w-full px-1">Audio</p>
                     </div>
                   )}
                   <button
@@ -155,7 +155,7 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
                 </div>
               ))}
               {newPreviews.map((p, i) => (
-                <div key={i} className="relative rounded-lg overflow-hidden bg-muted aspect-square ring-2 ring-primary/40">
+                <div key={i} className="relative rounded-lg overflow-hidden bg-rw-surface-raised aspect-square ring-2 ring-rw-accent/30">
                   {p.mediaType === 'photo' && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.objectUrl} alt="" className="size-full object-cover" />
@@ -165,8 +165,8 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
                   )}
                   {p.mediaType === 'audio' && (
                     <div className="size-full flex flex-col items-center justify-center gap-2 p-3">
-                      <Mic className="size-6 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground truncate max-w-full px-1">{p.file.name}</p>
+                      <Mic className="size-6 text-rw-text-muted" />
+                      <p className="text-xs text-rw-text-muted truncate max-w-full px-1">{p.file.name}</p>
                     </div>
                   )}
                   <button
@@ -207,7 +207,7 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
             </div>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-rw-danger">{error}</p>}
         </div>
 
         <DialogFooter>

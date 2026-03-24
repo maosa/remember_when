@@ -12,18 +12,18 @@ interface Props {
 // Blurred placeholder shown to pending invitees instead of real posts
 function LockedPostsPlaceholder() {
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10">
+    <section className="mx-auto max-w-[720px] px-4 md:px-6 py-10">
       <div className="relative select-none pointer-events-none" aria-hidden>
         {/* Fake post cards */}
         {[80, 56, 96].map((h, i) => (
           <div
             key={i}
-            className="mb-4 rounded-xl border bg-muted/40 p-4 blur-sm"
+            className="mb-4 rounded-xl border border-rw-border-subtle bg-rw-surface-raised/40 p-4 blur-sm"
             style={{ height: `${h}px` }}
           />
         ))}
         {/* Lock overlay */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-rw-text-muted">
           <Lock className="size-6 opacity-60" />
           <p className="text-sm font-medium">Accept the invite to see posts</p>
         </div>
@@ -42,7 +42,7 @@ export async function PostsSection({ momentId, momentOwnerId, myRole, myStatus }
   const isEditor = myStatus === 'accepted' && myRole === 'editor'
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10">
+    <section className="mx-auto max-w-[720px] px-4 md:px-6 py-10">
       <PostsFeed
         initialPosts={posts}
         currentUserId={currentUserId ?? ''}

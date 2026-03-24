@@ -59,13 +59,13 @@ export function NotificationsForm({ initialPrefs }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {message && (
-        <p className={`text-sm ${message.type === 'error' ? 'text-destructive' : 'text-green-600'}`}>
+        <p className={`text-sm ${message.type === 'error' ? 'text-rw-danger' : 'text-rw-accent'}`}>
           {message.text}
         </p>
       )}
 
       <div className="space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Friends</p>
+        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted">Friends</p>
 
         <NotifRow
           label="Friend request received"
@@ -81,9 +81,8 @@ export function NotificationsForm({ initialPrefs }: Props) {
           onCheckedChange={() => toggle('friendRequestAccepted')}
         />
 
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">Moments</p>
+        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted pt-2">Moments</p>
 
-        <Separator />
         <NotifRow
           label="Moment invite"
           description="When someone invites you to a moment"
@@ -126,13 +125,12 @@ export function NotificationsForm({ initialPrefs }: Props) {
           onCheckedChange={() => toggle('archivedMomentNotifications')}
         />
 
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-2">Reminders</p>
+        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted pt-2">Reminders</p>
 
-        <Separator />
         <div className="space-y-3">
           <div>
             <p className="text-sm font-medium">Capture reminders</p>
-            <p className="text-sm text-muted-foreground">Periodic prompts to revisit and add new moments</p>
+            <p className="text-sm text-rw-text-muted">Periodic prompts to revisit and add new moments</p>
           </div>
           <Select
             value={prefs.reminderCadence}
@@ -175,7 +173,7 @@ function NotifRow({
     <div className="flex items-start justify-between gap-4">
       <div>
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="text-sm text-rw-text-muted">{description}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={label} />
     </div>

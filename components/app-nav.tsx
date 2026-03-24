@@ -35,24 +35,27 @@ export function AppNav({ user, unreadCount }: Props) {
   return (
     <>
       {/* ── Desktop: top bar ───────────────────────────────────── */}
-      <nav className="hidden md:flex fixed top-0 inset-x-0 z-50 h-14 border-b bg-background/95 backdrop-blur-sm items-center px-6 gap-6">
+      <nav className="hidden md:flex fixed top-0 inset-x-0 z-50 h-14 border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm items-center px-6 gap-6">
+
+        {/* Logo — Lora serif */}
         <Link
           href="/home"
-          className="text-sm font-semibold tracking-tight mr-2 shrink-0"
+          className="font-serif text-[18px] font-semibold text-rw-text-primary shrink-0 mr-2 hover:text-rw-accent transition-colors"
         >
           Remember When
         </Link>
 
-        <div className="flex items-center gap-1 flex-1">
+        {/* Centre nav links */}
+        <div className="flex items-center gap-0.5 flex-1 justify-center">
           {NAV_ITEMS.slice(0, 2).map(({ href, label }) => (
             <Link
               key={href}
               href={href}
               className={cn(
-                'px-3 py-1.5 rounded-md text-sm transition-colors',
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
                 isActive(href)
-                  ? 'text-foreground font-medium bg-muted'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'text-rw-accent'
+                  : 'text-rw-text-muted hover:text-rw-text-primary hover:bg-rw-surface'
               )}
             >
               {label}
@@ -60,21 +63,22 @@ export function AppNav({ user, unreadCount }: Props) {
           ))}
         </div>
 
+        {/* Right actions — bell + avatar */}
         <div className="flex items-center gap-1.5">
           <Link
             href="/notifications"
             className={cn(
-              'relative flex items-center justify-center size-9 rounded-md transition-colors',
+              'relative flex items-center justify-center size-[34px] rounded-full transition-colors',
               isActive('/notifications')
-                ? 'text-foreground bg-muted'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                ? 'text-rw-text-primary bg-rw-surface'
+                : 'text-rw-text-muted hover:text-rw-text-primary hover:bg-rw-surface'
             )}
             aria-label="Notifications"
           >
-            <Bell className="size-4.5" />
+            <Bell className="size-[18px]" strokeWidth={1.8} />
             {unreadCount > 0 && (
               <span
-                className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary"
+                className="absolute top-1 right-1 size-2 rounded-full bg-rw-blue border-2 border-rw-bg"
                 aria-label={`${unreadCount} unread`}
               />
             )}
@@ -83,14 +87,16 @@ export function AppNav({ user, unreadCount }: Props) {
           <Link href="/account" aria-label="Account">
             <Avatar className="size-8 transition-opacity hover:opacity-80">
               <AvatarImage src={user.photoUrl ?? undefined} alt={`${user.firstName} ${user.lastName}`} />
-              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+              <AvatarFallback className="text-xs bg-rw-accent-subtle text-rw-accent font-medium">
+                {initials}
+              </AvatarFallback>
             </Avatar>
           </Link>
         </div>
       </nav>
 
       {/* ── Mobile: bottom tab bar ─────────────────────────────── */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 h-16 border-t bg-background/95 backdrop-blur-sm flex items-center justify-around px-2">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 h-16 border-t border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm flex items-center justify-around px-1">
         {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = isActive(href)
           const isAccount = href === '/account'
@@ -101,24 +107,31 @@ export function AppNav({ user, unreadCount }: Props) {
               key={href}
               href={href}
               className={cn(
-                'flex flex-col items-center gap-1 px-4 py-1.5 rounded-xl transition-colors',
-                active ? 'text-foreground' : 'text-muted-foreground'
+                'flex flex-col items-center justify-center gap-[3px] flex-1 py-2 px-1 rounded-lg transition-colors',
+                active ? 'text-rw-accent' : 'text-rw-text-muted'
               )}
             >
               {isAccount ? (
-                <Avatar className={cn('size-6 transition-all', active && 'ring-2 ring-foreground ring-offset-1')}>
+                <Avatar
+                  className={cn(
+                    'size-6 transition-all',
+                    active && 'ring-2 ring-rw-accent ring-offset-1 ring-offset-rw-bg'
+                  )}
+                >
                   <AvatarImage src={user.photoUrl ?? undefined} />
-                  <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
+                  <AvatarFallback className="text-[9px] bg-rw-accent-subtle text-rw-accent">
+                    {initials}
+                  </AvatarFallback>
                 </Avatar>
               ) : isBell ? (
                 <span className="relative">
-                  <Icon className="size-5" />
+                  <Icon className="size-5" strokeWidth={1.8} />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary" />
+                    <span className="absolute -top-0.5 -right-0.5 size-[7px] rounded-full bg-rw-blue border-2 border-rw-bg" />
                   )}
                 </span>
               ) : (
-                <Icon className="size-5" />
+                <Icon className="size-5" strokeWidth={1.8} />
               )}
               <span className="text-[10px] font-medium leading-none">{label}</span>
             </Link>

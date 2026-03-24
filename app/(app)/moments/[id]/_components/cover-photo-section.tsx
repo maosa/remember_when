@@ -75,9 +75,8 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button size="sm" variant="outline" />}>
+      <DialogTrigger render={<Button size="sm" variant="outline" aria-label={currentUrl ? 'Edit cover photo' : 'Add cover photo'} />}>
         <Camera className="size-3.5" />
-        <span className="hidden sm:inline">{currentUrl ? 'Edit cover photo' : 'Add cover photo'}</span>
       </DialogTrigger>
 
         <DialogContent className="sm:max-w-md">
@@ -88,7 +87,7 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
           <div className="space-y-5 py-1">
             {/* Upload from device */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Upload from device</p>
+              <p className="text-xs font-medium text-rw-text-muted uppercase tracking-wide">Upload from device</p>
               <Button
                 variant="outline"
                 size="sm"
@@ -110,12 +109,12 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
 
             {/* Photos from this moment */}
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From this moment</p>
+              <p className="text-xs font-medium text-rw-text-muted uppercase tracking-wide">From this moment</p>
               {loadingPhotos && (
-                <p className="text-sm text-muted-foreground">Loading…</p>
+                <p className="text-sm text-rw-text-muted">Loading…</p>
               )}
               {!loadingPhotos && momentPhotos !== null && momentPhotos.length === 0 && (
-                <p className="text-sm text-muted-foreground">No photos uploaded yet.</p>
+                <p className="text-sm text-rw-text-muted">No photos uploaded yet.</p>
               )}
               {!loadingPhotos && momentPhotos && momentPhotos.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -126,9 +125,9 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
                       disabled={isPending}
                       onClick={() => handleSelectExisting(photo.storagePath)}
                       className={cn(
-                        'relative size-20 rounded-lg overflow-hidden shrink-0 ring-offset-background transition-all',
-                        'hover:ring-2 hover:ring-ring hover:ring-offset-2',
-                        currentStoragePath === photo.storagePath && 'ring-2 ring-ring ring-offset-2'
+                        'relative size-20 rounded-lg overflow-hidden shrink-0 ring-offset-rw-bg transition-all',
+                        'hover:ring-2 hover:ring-rw-accent hover:ring-offset-2',
+                        currentStoragePath === photo.storagePath && 'ring-2 ring-rw-accent ring-offset-2'
                       )}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -142,7 +141,7 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
             {/* Delete cover photo */}
             {currentUrl && (
               <div className="space-y-2 border-t pt-4">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Remove</p>
+                <p className="text-xs font-medium text-rw-text-muted uppercase tracking-wide">Remove</p>
                 <Button
                   variant="destructive"
                   size="sm"
@@ -156,7 +155,7 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
               </div>
             )}
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-rw-danger">{error}</p>}
           </div>
         </DialogContent>
     </Dialog>

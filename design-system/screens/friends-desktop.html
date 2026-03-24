@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friends — Remember When Design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── TOKENS ──────────────────────────────────────────────────── */
+    :root {
+      --color-bg:             #FAFAF7;
+      --color-surface:        #FFFFFF;
+      --color-accent:         #5B8A7D;
+      --color-accent-hover:   #4A7A6D;
+      --color-accent-subtle:  rgba(91, 138, 125, 0.09);
+      --color-text:           #1C1813;
+      --color-text-muted:     #7A756E;
+      --color-text-faint:     #B5B0A8;
+      --color-border:         #E8E4DC;
+      --color-border-strong:  #D4CFC7;
+      --color-danger:         #C0392B;
+      --color-danger-subtle:  rgba(192, 57, 43, 0.07);
+
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', sans-serif;
+
+      --radius-sm:   6px;
+      --radius-md:   10px;
+      --radius-lg:   14px;
+      --radius-full: 999px;
+
+      --shadow-nav: 0 1px 0 rgba(28,24,18,0.08);
+      --shadow-sm:  0 1px 3px rgba(28,24,18,0.07);
+      --shadow-md:  0 4px 12px rgba(28,24,18,0.09);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────────── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: rgba(250,250,247,0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border);
+      box-shadow: var(--shadow-nav);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+    }
+
+    .nav-logo {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--color-text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+      flex-shrink: 0;
+    }
+
+    .nav-centre {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .nav-link {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-link.active { color: var(--color-text); background: rgba(28,24,18,0.06); }
+    .nav-link:hover  { color: var(--color-text); background: rgba(28,24,18,0.05); }
+
+    .nav-right {
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+
+    .nav-icon-btn {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-full);
+      background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--color-text-muted);
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-icon-btn:hover { background: rgba(28,24,18,0.06); color: var(--color-text); }
+
+    .nav-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5B8A7D, #3A7A6A);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: white; cursor: pointer;
+    }
+
+    /* ── PAGE ────────────────────────────────────────────────────── */
+    .page { padding-top: 60px; }
+
+    .content {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+
+    /* ── PAGE HEADER ─────────────────────────────────────────────── */
+    .page-title {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--color-text);
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+    }
+
+    /* ── SEARCH ──────────────────────────────────────────────────── */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 40px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-faint);
+      pointer-events: none;
+      display: flex;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 42px;
+      padding: 0 14px 0 40px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .search-input::placeholder { color: var(--color-text-faint); }
+    .search-input:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(91,138,125,0.14);
+    }
+
+    /* ── SECTION ─────────────────────────────────────────────────── */
+    .section { margin-bottom: 40px; }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+    }
+
+    .section-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      background: var(--color-accent);
+      border-radius: var(--radius-full);
+      padding: 2px 8px;
+      line-height: 1.6;
+    }
+
+    /* ── EMPTY INLINE ────────────────────────────────────────────── */
+    .empty-inline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 20px;
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-md);
+      color: var(--color-text-faint);
+      font-size: 13px;
+    }
+
+    /* ── REQUEST CARD ────────────────────────────────────────────── */
+    .request-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .request-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: box-shadow 0.15s;
+    }
+    .request-item:hover { box-shadow: var(--shadow-sm); }
+
+    /* stack adjacent items */
+    .request-item + .request-item {
+      border-top-left-radius: var(--radius-sm);
+      border-top-right-radius: var(--radius-sm);
+      margin-top: -1px;
+    }
+    .request-item:first-child:not(:last-child) {
+      border-bottom-left-radius: var(--radius-sm);
+      border-bottom-right-radius: var(--radius-sm);
+    }
+
+    /* ── FRIEND ROW ──────────────────────────────────────────────── */
+    .friends-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .friend-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: box-shadow 0.15s;
+    }
+    .friend-row:hover { box-shadow: var(--shadow-sm); }
+    .friend-row:hover .remove-btn { opacity: 1; }
+
+    /* ── PENDING ROW ─────────────────────────────────────────────── */
+    .pending-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .pending-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 16px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: box-shadow 0.15s;
+    }
+    .pending-item + .pending-item { margin-top: -1px; }
+    .pending-item:hover { box-shadow: var(--shadow-sm); }
+
+    /* ── AVATARS ─────────────────────────────────────────────────── */
+    .avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600; color: white;
+      flex-shrink: 0;
+      letter-spacing: 0.02em;
+    }
+
+    .avatar-sm {
+      width: 36px; height: 36px;
+      font-size: 12px;
+    }
+
+    /* avatar colour palette */
+    .av-sage    { background: linear-gradient(135deg, #5B8A7D, #3A7A6A); }
+    .av-amber   { background: linear-gradient(135deg, #C89840, #A87830); }
+    .av-slate   { background: linear-gradient(135deg, #6B7A8D, #4A5A70); }
+    .av-rose    { background: linear-gradient(135deg, #C0706A, #A05060); }
+    .av-indigo  { background: linear-gradient(135deg, #6B6BC0, #4A4AA0); }
+    .av-forest  { background: linear-gradient(135deg, #4A7A5A, #2A5A3A); }
+    .av-rust    { background: linear-gradient(135deg, #B0623A, #8A4A28); }
+    .av-plum    { background: linear-gradient(135deg, #8A5A8A, #6A3A6A); }
+
+    /* ── PERSON INFO ─────────────────────────────────────────────── */
+    .person-info { flex: 1; min-width: 0; }
+
+    .person-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .person-handle {
+      font-size: 12px;
+      color: var(--color-text-faint);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .person-meta {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 1px;
+    }
+
+    /* ── BUTTONS ─────────────────────────────────────────────────── */
+    .btn-accept {
+      font-family: var(--font-sans);
+      font-size: 12.5px; font-weight: 600;
+      color: white; background: var(--color-accent);
+      border: none; border-radius: var(--radius-full);
+      padding: 7px 16px; cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-accept:hover { background: var(--color-accent-hover); }
+
+    .btn-decline {
+      font-family: var(--font-sans);
+      font-size: 12.5px; font-weight: 500;
+      color: var(--color-text-muted); background: none;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      padding: 6px 14px; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-decline:hover {
+      border-color: var(--color-border-strong);
+      color: var(--color-text);
+      background: rgba(28,24,18,0.03);
+    }
+
+    .remove-btn {
+      font-family: var(--font-sans);
+      font-size: 11.5px; font-weight: 500;
+      color: var(--color-text-faint); background: none;
+      border: 1px solid transparent;
+      border-radius: var(--radius-full);
+      padding: 5px 11px; cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s, border-color 0.15s, background 0.15s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .remove-btn:hover {
+      color: var(--color-danger);
+      border-color: rgba(192,57,43,0.25);
+      background: var(--color-danger-subtle);
+    }
+
+    .cancel-btn {
+      font-family: var(--font-sans);
+      font-size: 12px; font-weight: 500;
+      color: var(--color-text-faint); background: none;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      padding: 5px 12px; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .cancel-btn:hover {
+      color: var(--color-danger);
+      border-color: rgba(192,57,43,0.28);
+      background: var(--color-danger-subtle);
+    }
+
+    /* Pending dot indicator */
+    .pending-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--color-border-strong);
+      flex-shrink: 0;
+    }
+
+    /* ── FULL EMPTY STATE (friends section) ─────────────────────── */
+    .empty-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 44px 24px;
+      text-align: center;
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+    }
+
+    .empty-block-icon {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--color-accent-subtle);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--color-accent);
+      margin-bottom: 14px;
+    }
+
+    .empty-block-title {
+      font-family: var(--font-serif);
+      font-size: 17px; font-weight: 400;
+      color: var(--color-text-muted);
+      letter-spacing: -0.01em;
+    }
+
+    .empty-block-sub {
+      font-size: 13px;
+      color: var(--color-text-faint);
+      margin-top: 6px; line-height: 1.5;
+      max-width: 280px;
+    }
+
+    /* ── ACCEPTED / DECLINED INLINE BADGE ───────────────────────── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px; font-weight: 500;
+      flex-shrink: 0;
+    }
+    .status-badge.accepted { color: var(--color-accent); }
+    .status-badge.declined { color: var(--color-text-faint); }
+
+    /* ── DEMO BAR ────────────────────────────────────────────────── */
+    .demo-bar {
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(28,24,18,0.90);
+      backdrop-filter: blur(14px);
+      border-radius: var(--radius-full);
+      padding: 8px 8px 8px 16px;
+      display: flex; align-items: center; gap: 8px;
+      z-index: 200;
+      box-shadow: 0 8px 28px rgba(28,24,18,0.30);
+    }
+
+    .demo-label {
+      font-size: 11.5px; color: rgba(255,255,255,0.45);
+      font-weight: 500; letter-spacing: 0.04em;
+      text-transform: uppercase; padding-right: 4px;
+      white-space: nowrap;
+    }
+
+    .demo-btn {
+      font-size: 12px; font-weight: 600;
+      padding: 5px 13px;
+      border-radius: var(--radius-full); border: none; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      background: rgba(255,255,255,0.10);
+      color: rgba(255,255,255,0.60);
+      white-space: nowrap;
+    }
+    .demo-btn:hover  { background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.90); }
+    .demo-btn.active { background: white; color: var(--color-text); }
+
+    /* fade transition for removals */
+    .fading {
+      opacity: 0;
+      transform: scale(0.98);
+      transition: opacity 0.22s, transform 0.22s;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ NAV -->
+<nav class="nav">
+  <a href="#" class="nav-logo">Remember When</a>
+  <div class="nav-centre">
+    <a href="#" class="nav-link">Home</a>
+    <a href="#" class="nav-link active">Friends</a>
+  </div>
+  <div class="nav-right">
+    <button class="nav-icon-btn" aria-label="Notifications">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+    <div class="nav-avatar">AL</div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════ PAGE -->
+<main class="page">
+  <div class="content">
+
+    <h1 class="page-title">Friends</h1>
+
+    <!-- ── SEARCH ──────────────────────────────────────────── -->
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input class="search-input" type="text" placeholder="Search by name or username…" id="search-input">
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         FRIEND REQUESTS SECTION
+    ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="section-requests">
+      <div class="section-head">
+        <h2 class="section-title">Friend requests</h2>
+        <span class="section-badge" id="requests-badge">2</span>
+      </div>
+
+      <!-- populated state -->
+      <div id="requests-list" class="request-list">
+
+        <div class="request-item" id="req-christos">
+          <div class="avatar av-slate">CG</div>
+          <div class="person-info">
+            <div class="person-name">Christos Georgiou</div>
+            <div class="person-handle">@christosg</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;" id="req-christos-actions">
+            <button class="btn-accept"  onclick="acceptRequest('req-christos')">Accept</button>
+            <button class="btn-decline" onclick="declineRequest('req-christos')">Decline</button>
+          </div>
+        </div>
+
+        <div class="request-item" id="req-eleni">
+          <div class="avatar av-rose">EK</div>
+          <div class="person-info">
+            <div class="person-name">Eleni Konstantinou</div>
+            <div class="person-handle">@elenk</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;" id="req-eleni-actions">
+            <button class="btn-accept"  onclick="acceptRequest('req-eleni')">Accept</button>
+            <button class="btn-decline" onclick="declineRequest('req-eleni')">Decline</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- empty state -->
+      <div id="requests-empty" class="empty-inline" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="8" x2="19" y2="14"/>
+          <line x1="22" y1="11" x2="16" y2="11"/>
+        </svg>
+        No pending friend requests right now.
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════
+         YOUR FRIENDS SECTION
+    ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="section-friends">
+      <div class="section-head">
+        <h2 class="section-title">Your friends</h2>
+        <span class="section-badge" id="friends-badge" style="background:rgba(28,24,18,0.12);color:var(--color-text-muted);">6</span>
+      </div>
+
+      <!-- populated state -->
+      <div id="friends-grid" class="friends-grid">
+
+        <div class="friend-row" id="fr-sofia">
+          <div class="avatar avatar-sm av-amber">SM</div>
+          <div class="person-info">
+            <div class="person-name">Sofia Mavrides</div>
+            <div class="person-handle">@sofiaM</div>
+          </div>
+          <button class="remove-btn" onclick="removeFriend('fr-sofia')">Remove</button>
+        </div>
+
+        <div class="friend-row" id="fr-nikos">
+          <div class="avatar avatar-sm av-forest">NP</div>
+          <div class="person-info">
+            <div class="person-name">Nikos Papadakis</div>
+            <div class="person-handle">@nikosp</div>
+          </div>
+          <button class="remove-btn" onclick="removeFriend('fr-nikos')">Remove</button>
+        </div>
+
+        <div class="friend-row" id="fr-marilena">
+          <div class="avatar avatar-sm av-indigo">MD</div>
+          <div class="person-info">
+            <div class="person-name">Marilena Drakos</div>
+            <div class="person-handle">@marilena</div>
+          </div>
+          <button class="remove-btn" onclick="removeFriend('fr-marilena')">Remove</button>
+        </div>
+
+        <div class="friend-row" id="fr-yannis">
+          <div class="avatar avatar-sm av-rust">YP</div>
+          <div class="person-info">
+            <div class="person-name">Yannis Petridis</div>
+            <div class="person-handle">@yannisP</div>
+          </div>
+          <button class="remove-btn" onclick="removeFriend('fr-yannis')">Remove</button>
+        </div>
+
+        <div class="friend-row" id="fr-anna">
+          <div class="avatar avatar-sm av-plum">AT</div>
+          <div class="person-info">
+            <div class="person-name">Anna Theodorou</div>
+            <div class="person-handle">@annaT</div>
+          </div>
+          <button class="remove-btn" onclick="removeFriend('fr-anna')">Remove</button>
+        </div>
+
+        <div class="friend-row" id="fr-petros">
+          <div class="avatar avatar-sm av-sage">PV</div>
+          <div class="person-info">
+            <div class="person-name">Petros Vasilis</div>
+            <div class="person-handle">@petrosv</div>
+          </div>
+          <button class="remove-btn" onclick="removeFriend('fr-petros')">Remove</button>
+        </div>
+
+      </div>
+
+      <!-- empty state -->
+      <div id="friends-empty" class="empty-block" style="display:none;">
+        <div class="empty-block-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <p class="empty-block-title">No friends yet</p>
+        <p class="empty-block-sub">When you connect with people, they'll appear here.</p>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════
+         PENDING (SENT) SECTION
+    ═══════════════════════════════════════════════════════════ -->
+    <section class="section" id="section-pending">
+      <div class="section-head">
+        <h2 class="section-title">Pending</h2>
+        <span class="section-badge" id="pending-badge" style="background:rgba(28,24,18,0.12);color:var(--color-text-muted);">3</span>
+      </div>
+
+      <!-- populated state -->
+      <div id="pending-list" class="pending-list">
+
+        <div class="pending-item" id="pend-dimk">
+          <div class="pending-dot"></div>
+          <div class="avatar avatar-sm av-slate">DK</div>
+          <div class="person-info">
+            <div class="person-name">Dimitris Karas</div>
+            <div class="person-handle">@dimk · <span class="person-meta" style="display:inline">Sent 2 days ago</span></div>
+          </div>
+          <button class="cancel-btn" onclick="cancelRequest('pend-dimk')">Cancel</button>
+        </div>
+
+        <div class="pending-item" id="pend-irene">
+          <div class="pending-dot"></div>
+          <div class="avatar avatar-sm av-rose">IS</div>
+          <div class="person-info">
+            <div class="person-name">Irene Stavros</div>
+            <div class="person-handle">@ireneS · <span class="person-meta" style="display:inline">Sent 5 days ago</span></div>
+          </div>
+          <button class="cancel-btn" onclick="cancelRequest('pend-irene')">Cancel</button>
+        </div>
+
+        <div class="pending-item" id="pend-kostas">
+          <div class="pending-dot"></div>
+          <div class="avatar avatar-sm av-forest">KN</div>
+          <div class="person-info">
+            <div class="person-name">Kostas Nikolaou</div>
+            <div class="person-handle">@kostasN · <span class="person-meta" style="display:inline">Sent last week</span></div>
+          </div>
+          <button class="cancel-btn" onclick="cancelRequest('pend-kostas')">Cancel</button>
+        </div>
+
+      </div>
+
+      <!-- empty state -->
+      <div id="pending-empty" class="empty-inline" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        No outgoing requests. Search above to add friends.
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════ DEMO BAR -->
+<div class="demo-bar">
+  <span class="demo-label">Demo</span>
+  <button class="demo-btn active" id="btn-full"  onclick="setView('full')">Full</button>
+  <button class="demo-btn"        id="btn-empty" onclick="setView('empty')">All empty</button>
+  <button class="demo-btn"        id="btn-reset" onclick="location.reload()">Reset</button>
+</div>
+
+<script>
+  /* ── live search filter ───────────────────────────────────────── */
+  document.getElementById('search-input').addEventListener('input', function() {
+    const q = this.value.trim().toLowerCase();
+    document.querySelectorAll('.friend-row, .request-item, .pending-item').forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+  });
+
+  /* ── accept / decline request ─────────────────────────────────── */
+  function acceptRequest(id) {
+    const item = document.getElementById(id);
+    const actions = document.getElementById(id + '-actions');
+    if (!item || !actions) return;
+    actions.outerHTML = `
+      <span class="status-badge accepted">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Added
+      </span>`;
+    setTimeout(() => fadeRemove(item, updateRequestBadge), 1400);
+  }
+
+  function declineRequest(id) {
+    const item = document.getElementById(id);
+    const actions = document.getElementById(id + '-actions');
+    if (!item || !actions) return;
+    actions.outerHTML = `
+      <span class="status-badge declined">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        Declined
+      </span>`;
+    setTimeout(() => fadeRemove(item, updateRequestBadge), 1200);
+  }
+
+  function updateRequestBadge() {
+    const remaining = document.querySelectorAll('#requests-list .request-item').length;
+    document.getElementById('requests-badge').textContent = remaining;
+    if (remaining === 0) {
+      document.getElementById('requests-list').style.display = 'none';
+      document.getElementById('requests-empty').style.display = 'flex';
+      document.getElementById('requests-badge').style.display = 'none';
+    }
+  }
+
+  /* ── remove friend ────────────────────────────────────────────── */
+  function removeFriend(id) {
+    const item = document.getElementById(id);
+    if (!item) return;
+    if (!confirm('Remove this friend?')) return;
+    fadeRemove(item, updateFriendsBadge);
+  }
+
+  function updateFriendsBadge() {
+    const remaining = document.querySelectorAll('#friends-grid .friend-row').length;
+    document.getElementById('friends-badge').textContent = remaining;
+    if (remaining === 0) {
+      document.getElementById('friends-grid').style.display = 'none';
+      document.getElementById('friends-empty').style.display = 'flex';
+    }
+  }
+
+  /* ── cancel pending request ───────────────────────────────────── */
+  function cancelRequest(id) {
+    const item = document.getElementById(id);
+    if (!item) return;
+    fadeRemove(item, updatePendingBadge);
+  }
+
+  function updatePendingBadge() {
+    const remaining = document.querySelectorAll('#pending-list .pending-item').length;
+    document.getElementById('pending-badge').textContent = remaining;
+    if (remaining === 0) {
+      document.getElementById('pending-list').style.display = 'none';
+      document.getElementById('pending-empty').style.display = 'flex';
+      document.getElementById('pending-badge').style.display = 'none';
+    }
+  }
+
+  /* ── generic fade + remove ────────────────────────────────────── */
+  function fadeRemove(el, callback) {
+    el.classList.add('fading');
+    setTimeout(() => {
+      el.remove();
+      if (callback) callback();
+    }, 230);
+  }
+
+  /* ── demo toggle ──────────────────────────────────────────────── */
+  function setView(state) {
+    ['btn-full','btn-empty'].forEach(id =>
+      document.getElementById(id).classList.remove('active'));
+    document.getElementById('btn-' + state).classList.add('active');
+
+    if (state === 'full') {
+      location.reload();
+    } else {
+      /* empty all three sections */
+      document.getElementById('requests-list').style.display  = 'none';
+      document.getElementById('requests-empty').style.display = 'flex';
+      document.getElementById('requests-badge').style.display = 'none';
+
+      document.getElementById('friends-grid').style.display   = 'none';
+      document.getElementById('friends-empty').style.display  = 'flex';
+
+      document.getElementById('pending-list').style.display   = 'none';
+      document.getElementById('pending-empty').style.display  = 'flex';
+      document.getElementById('pending-badge').style.display  = 'none';
+    }
+  }
+</script>
+
+</body>
+</html>

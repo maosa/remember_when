@@ -9,7 +9,18 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       type={type}
       data-slot="input"
       className={cn(
-        "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        // Base — 40px height, surface bg, border, 8px radius, 14px DM Sans
+        "h-10 w-full min-w-0 rounded-rw-input border border-rw-border bg-rw-surface px-3 py-1 text-[14px] text-rw-text-primary transition-colors outline-none",
+        // Placeholder
+        "placeholder:text-rw-text-placeholder",
+        // Focus — accent border + subtle ring
+        "focus-visible:border-rw-accent focus-visible:ring-3 focus-visible:ring-rw-accent/[0.12]",
+        // File input
+        "file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-rw-text-primary",
+        // Disabled
+        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+        // Invalid / error — danger border + subtle ring
+        "aria-invalid:border-rw-danger aria-invalid:ring-3 aria-invalid:ring-rw-danger/10",
         className
       )}
       {...props}

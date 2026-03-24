@@ -56,13 +56,13 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
   )
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-3 border-b flex items-center justify-between gap-4">
+    <div className="mx-auto max-w-[720px] px-4 md:px-6 py-3 border-b border-rw-border-subtle flex items-center justify-between gap-4">
 
       {/* Avatar stack + hover popover */}
       <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
         <button
           type="button"
-          className="flex items-center gap-2.5 cursor-pointer"
+          className="flex items-center gap-2.5 cursor-pointer min-h-11"
           onClick={() => setPopoverOpen((v) => !v)}
           aria-label="View members"
         >
@@ -70,19 +70,19 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
             {shownMembers.map((m) => {
               const initials = `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase()
               return (
-                <Avatar key={m.userId} className="size-7 border-2 border-background">
+                <Avatar key={m.userId} className="size-7 border-2 border-rw-bg">
                   <AvatarImage src={m.photoUrl ?? undefined} />
                   <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
                 </Avatar>
               )
             })}
             {overflow > 0 && (
-              <div className="flex size-7 items-center justify-center rounded-full border-2 border-background bg-muted text-[10px] font-medium text-muted-foreground">
+              <div className="flex size-7 items-center justify-center rounded-full border-2 border-rw-bg bg-rw-surface-raised text-[10px] font-medium text-rw-text-muted">
                 +{overflow}
               </div>
             )}
           </div>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-rw-text-muted">
             {allMembers.length} {allMembers.length === 1 ? 'member' : 'members'}
           </span>
         </button>
@@ -90,7 +90,7 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
         {/* Hover popover */}
         {popoverOpen && (
           <div
-            className="absolute left-0 top-full mt-2 z-50 w-64 rounded-xl border bg-background shadow-lg p-3 space-y-2"
+            className="absolute left-0 top-full mt-2 z-50 w-64 rounded-xl border border-rw-border bg-rw-bg shadow-rw-popover p-3 space-y-2"
             onMouseEnter={handleEnter}
             onMouseLeave={handleLeave}
           >
@@ -124,7 +124,7 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
 
       {/* Action buttons */}
       {myStatus === 'accepted' && (
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 [&>*]:min-h-11 [&>*]:md:min-h-0">
           {canEdit && (
             <>
               <CoverPhotoSection
@@ -139,9 +139,9 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
           <Link
             href={`/moments/${moment.id}/members`}
             className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
+            aria-label="Manage members"
           >
             <Settings className="size-3.5" />
-            <span className="hidden sm:inline">Manage</span>
           </Link>
         </div>
       )}
@@ -170,7 +170,7 @@ function PopoverRow({
         <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
       </Avatar>
       <span className="text-sm truncate flex-1">{firstName} {lastName}</span>
-      <span className="flex items-center gap-0.5 text-xs text-muted-foreground shrink-0">
+      <span className="flex items-center gap-0.5 text-xs text-rw-text-muted shrink-0">
         {role === 'owner' && <><Crown className="size-3" /> Owner</>}
         {role === 'editor' && <><PenTool className="size-3" /> Editor</>}
         {role === 'reader' && <><Eye className="size-3" /> Reader</>}
