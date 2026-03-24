@@ -35,7 +35,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 gap-5" style={bgStyle}>
+    <div className="flex-1 flex flex-col items-center justify-center px-4 gap-5" style={bgStyle}>
       <Card className="w-full max-w-[400px] shadow-rw-modal">
         {/* Card header — decorative accent bar + wordmark */}
         <CardHeader className="border-b border-rw-border-subtle pb-5">

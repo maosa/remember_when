@@ -107,7 +107,7 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-rw-bg px-4" style={bgStyle}>
+      <div className="flex-1 flex items-center justify-center px-4" style={bgStyle}>
         <Card className="w-full max-w-[420px] shadow-rw-modal">
           <CardHeader className="border-b border-rw-border-subtle pb-5">
             <h2 className="font-serif text-[22px] font-semibold text-rw-text-primary">Check your email</h2>
@@ -127,7 +127,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 gap-5" style={bgStyle}>
+    <div className="flex-1 flex flex-col items-center justify-center px-4 gap-5" style={bgStyle}>
       <Card className="w-full max-w-[420px] shadow-rw-modal">
         {/* Card header — wordmark + subtitle */}
         <CardHeader className="border-b border-rw-border-subtle pb-5">
