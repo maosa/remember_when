@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { createClient } from '@/lib/supabase/client'
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
+type EmailStatus = 'idle' | 'checking' | 'available' | 'taken'
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -20,11 +21,14 @@ export default function SignupPage() {
     password: '',
   })
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
+  const [emailStatus, setEmailStatus] = useState<EmailStatus>('idle')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const usernameTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const emailTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Username availability check
   useEffect(() => {
     const username = formData.username.trim()
 
@@ -40,23 +44,42 @@ export default function SignupPage() {
 
     setUsernameStatus('checking')
 
-    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    if (usernameTimer.current) clearTimeout(usernameTimer.current)
 
-    debounceTimer.current = setTimeout(async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('users')
-        .select('id')
-        .eq('username', username.toLowerCase())
-        .maybeSingle()
-
-      setUsernameStatus(data ? 'taken' : 'available')
+    usernameTimer.current = setTimeout(async () => {
+      const res = await fetch(`/api/check-availability?username=${encodeURIComponent(username)}`)
+      const json = await res.json()
+      setUsernameStatus(json.available ? 'available' : 'taken')
     }, 500)
 
     return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+      if (usernameTimer.current) clearTimeout(usernameTimer.current)
     }
   }, [formData.username])
+
+  // Email already-registered check
+  useEffect(() => {
+    const email = formData.email.trim()
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailStatus('idle')
+      return
+    }
+
+    setEmailStatus('checking')
+
+    if (emailTimer.current) clearTimeout(emailTimer.current)
+
+    emailTimer.current = setTimeout(async () => {
+      const res = await fetch(`/api/check-availability?email=${encodeURIComponent(email)}`)
+      const json = await res.json()
+      setEmailStatus(json.available ? 'available' : 'taken')
+    }, 600)
+
+    return () => {
+      if (emailTimer.current) clearTimeout(emailTimer.current)
+    }
+  }, [formData.email])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -66,6 +89,14 @@ export default function SignupPage() {
     e.preventDefault()
     setError(null)
 
+    if (emailStatus === 'taken') {
+      setError('An account with this email already exists.')
+      return
+    }
+    if (emailStatus === 'checking') {
+      setError('Please wait — checking email.')
+      return
+    }
     if (usernameStatus === 'taken') {
       setError('Username is already taken.')
       return
@@ -173,16 +204,40 @@ export default function SignupPage() {
             {/* Email */}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                autoComplete="email"
-              />
+              <div className="relative">
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  autoComplete="email"
+                  className="pr-9"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  {emailStatus === 'checking' && (
+                    <Loader2 className="size-4 animate-spin text-rw-text-placeholder" />
+                  )}
+                  {emailStatus === 'taken' && (
+                    <XCircle className="size-4 text-rw-danger" />
+                  )}
+                </div>
+              </div>
+              {emailStatus === 'taken' && (
+                <p className="text-[12px] text-rw-danger">
+                  An account with this email already exists.{' '}
+                  <Link href="/login" className="underline underline-offset-2 hover:text-rw-danger/80 transition-colors">
+                    Sign in
+                  </Link>
+                  {' '}— or use{' '}
+                  <Link href="/forgot-password" className="underline underline-offset-2 hover:text-rw-danger/80 transition-colors">
+                    forgot password
+                  </Link>
+                  {' '}if you&apos;ve forgotten it.
+                </p>
+              )}
             </div>
 
             {/* Username */}
@@ -243,7 +298,7 @@ export default function SignupPage() {
               type="submit"
               size="lg"
               className="w-full"
-              disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
+              disabled={loading || emailStatus === 'taken' || emailStatus === 'checking' || usernameStatus === 'taken' || usernameStatus === 'checking'}
             >
               {loading ? 'Creating account…' : 'Create account'}
             </Button>
