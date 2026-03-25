@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Plus, X, Search, UserRound } from 'lucide-react'
+import { ChevronDown, Plus, X, Search, UserRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogBody,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -141,12 +143,12 @@ export function CreateMomentModal() {
         New moment
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[484px] flex flex-col max-h-[90dvh]">
+        <DialogHeader className="border-b-0 pb-0">
           <DialogTitle>New moment</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-1">
+        <DialogBody className="pt-5 overflow-y-auto">
 
           {/* Name */}
           <div className="space-y-1.5">
@@ -197,16 +199,19 @@ export function CreateMomentModal() {
               )}
               {/* Month (month-year + full) */}
               {(dateMode === 'month-year' || dateMode === 'full') && (
-                <select
-                  value={dateMonth}
-                  onChange={(e) => setDateMonth(e.target.value)}
-                  className="h-8 flex-1 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 text-sm outline-none focus-visible:border-rw-accent focus-visible:ring-2 focus-visible:ring-rw-accent/[0.12]"
-                >
-                  <option value="">Month</option>
-                  {MONTHS.map((m, i) => (
-                    <option key={m} value={String(i + 1)}>{m}</option>
-                  ))}
-                </select>
+                <div className="relative flex-1">
+                  <select
+                    value={dateMonth}
+                    onChange={(e) => setDateMonth(e.target.value)}
+                    className="h-10 w-full appearance-none rounded-rw-input border border-rw-border bg-rw-surface pl-3 pr-8 text-sm outline-none focus:border-rw-accent focus:ring-2 focus:ring-rw-accent/[0.12] cursor-pointer"
+                  >
+                    <option value="">Month</option>
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={String(i + 1)}>{m}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
+                </div>
               )}
               {/* Year */}
               <Input
@@ -248,9 +253,9 @@ export function CreateMomentModal() {
             <Label>Tags <span className="text-rw-text-muted text-xs font-normal">(optional · max 20 chars)</span></Label>
             <div className="flex flex-wrap gap-1.5 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 min-h-9 cursor-text" onClick={() => document.getElementById('tag-input')?.focus()}>
               {tags.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 rounded bg-rw-surface-raised px-2 py-0.5 text-xs font-medium">
+                <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-rw-accent-subtle text-rw-accent px-2.5 py-1 text-xs font-medium">
                   {tag}
-                  <button type="button" onClick={() => removeTag(tag)} className="text-rw-text-muted hover:text-rw-text-primary">
+                  <button type="button" onClick={() => removeTag(tag)} className="text-rw-accent/60 hover:text-rw-accent">
                     <X className="size-3" />
                   </button>
                 </span>
@@ -269,9 +274,10 @@ export function CreateMomentModal() {
           </div>
 
           {error && <p className="text-sm text-rw-danger">{error}</p>}
-        </div>
+        </DialogBody>
 
         <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
           <Button onClick={handleSubmit} disabled={!canSubmit}>
             {isPending ? 'Creating…' : 'Create moment'}
           </Button>
@@ -369,9 +375,9 @@ function PeopleInviteInput({
                     type="button"
                     onClick={() => onRoleChange(i.value, role)}
                     className={cn(
-                      'px-2 py-0.5 capitalize transition-colors',
+                      'px-2 py-0.5 capitalize transition-colors rounded-[4px]',
                       i.role === role
-                        ? 'bg-rw-text-primary text-rw-bg'
+                        ? 'bg-rw-bg text-rw-accent shadow-sm'
                         : 'text-rw-text-muted hover:text-rw-text-primary'
                     )}
                   >
