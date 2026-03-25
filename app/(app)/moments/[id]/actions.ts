@@ -1124,7 +1124,7 @@ export async function deletePost(postId: string, momentId: string): Promise<{ er
   return {}
 }
 
-export async function editPost(postId: string, momentId: string, formData: FormData): Promise<{ error?: string }> {
+export async function editPost(postId: string, momentId: string, formData: FormData): Promise<{ error?: string; post?: PostWithMedia }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -1238,7 +1238,48 @@ export async function editPost(postId: string, momentId: string, formData: FormD
   if (error) return { error: error.message }
 
   revalidatePath(`/moments/${momentId}`)
-  return {}
+
+  // Re-fetch the updated post so the client can reflect changes without a full reload
+  const { data: updatedRow } = await admin
+    .from('posts')
+    .select(`
+      id, moment_id, author_id, content, created_at, edited_at,
+      author:users!posts_author_id_fkey(id, first_name, last_name, profile_photo_url),
+      post_media(id, media_type, storage_url, deleted_at)
+    `)
+    .eq('id', postId)
+    .single()
+
+  if (!updatedRow) return {}
+
+  const mediaPaths = (updatedRow.post_media as unknown as Array<{ storage_url: string; deleted_at: string | null }>)
+    .filter((m) => !m.deleted_at && m.storage_url)
+    .map((m) => m.storage_url)
+  const signed = await signStoragePaths(mediaPaths)
+
+  const author = updatedRow.author as unknown as {
+    id: string; first_name: string; last_name: string; profile_photo_url: string | null
+  }
+  const updatedPost: PostWithMedia = {
+    id: updatedRow.id,
+    momentId: updatedRow.moment_id,
+    authorId: updatedRow.author_id,
+    authorFirstName: author.first_name,
+    authorLastName: author.last_name,
+    authorPhotoUrl: author.profile_photo_url,
+    content: updatedRow.content ?? null,
+    createdAt: updatedRow.created_at,
+    editedAt: (updatedRow as unknown as { edited_at: string | null }).edited_at ?? null,
+    media: (updatedRow.post_media as unknown as Array<{
+      id: string; media_type: string; storage_url: string; deleted_at: string | null
+    }>).filter((m) => !m.deleted_at).map((m) => ({
+      id: m.id,
+      mediaType: m.media_type as 'photo' | 'video' | 'audio',
+      storageUrl: signed.get(m.storage_url) ?? m.storage_url,
+    })),
+  }
+
+  return { post: updatedPost }
 }
 
 // ─── Auth helper: owner or accepted editor ────────────────────────────────────

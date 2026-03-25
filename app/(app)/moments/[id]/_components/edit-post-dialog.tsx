@@ -19,6 +19,7 @@ interface Props {
   post: PostWithMedia
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSaved: (updated: PostWithMedia) => void
 }
 
 type NewPreview = {
@@ -36,7 +37,7 @@ type ExistingItem = {
   removed: boolean
 }
 
-export function EditPostDialog({ post, open, onOpenChange }: Props) {
+export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
   const [isPending, startTransition] = useTransition()
   const [content, setContent] = useState(post.content ?? '')
   const [existing, setExisting] = useState<ExistingItem[]>(() =>
@@ -101,6 +102,7 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
         setError(res.error)
         return
       }
+      if (res.post) onSaved(res.post)
       handleOpenChange(false)
     })
   }

@@ -171,15 +171,8 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
         <EditPostDialog
           post={currentPost}
           open={editOpen}
-          onOpenChange={(val) => {
-            setEditOpen(val)
-            // Reflect the server revalidation by updating local post state.
-            // The full up-to-date post comes back on the next server render;
-            // for now we optimistically mark it as edited.
-            if (!val && !error) {
-              setCurrentPost((p) => ({ ...p, editedAt: new Date().toISOString() }))
-            }
-          }}
+          onOpenChange={setEditOpen}
+          onSaved={(updated) => setCurrentPost(updated)}
         />
       )}
     </article>
