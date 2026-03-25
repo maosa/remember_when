@@ -31,9 +31,8 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
     ...acceptedNonOwner.map((m) => ({ userId: m.userId!, firstName: m.firstName, lastName: m.lastName, photoUrl: m.photoUrl, role: m.role })),
   ]
 
-  const SHOWN = 5
-  const shownMembers = allMembers.slice(0, SHOWN)
-  const overflow = allMembers.length - SHOWN
+  const SHOWN_MOBILE = 3
+  const SHOWN_DESKTOP = 5
 
   const [editOpen, setEditOpen] = useState(false)
 
@@ -72,7 +71,7 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
           aria-label="View members"
         >
           <div className="flex -space-x-2">
-            {shownMembers.map((m) => {
+            {allMembers.slice(0, SHOWN_MOBILE).map((m) => {
               const initials = `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase()
               return (
                 <Avatar key={m.userId} className="size-7 border-2 border-rw-bg">
@@ -81,9 +80,25 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
                 </Avatar>
               )
             })}
-            {overflow > 0 && (
-              <div className="flex size-7 items-center justify-center rounded-full border-2 border-rw-bg bg-rw-surface-raised text-[10px] font-medium text-rw-text-muted">
-                +{overflow}
+            {allMembers.slice(SHOWN_MOBILE, SHOWN_DESKTOP).map((m) => {
+              const initials = `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase()
+              return (
+                <Avatar key={m.userId} className="hidden md:flex size-7 border-2 border-rw-bg">
+                  <AvatarImage src={m.photoUrl ?? undefined} />
+                  <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+                </Avatar>
+              )
+            })}
+            {/* Mobile overflow (> 3) */}
+            {allMembers.length > SHOWN_MOBILE && (
+              <div className="flex md:hidden size-7 items-center justify-center rounded-full border-2 border-rw-bg bg-rw-surface-raised text-[10px] font-medium text-rw-text-muted">
+                +{allMembers.length - SHOWN_MOBILE}
+              </div>
+            )}
+            {/* Desktop overflow (> 5) */}
+            {allMembers.length > SHOWN_DESKTOP && (
+              <div className="hidden md:flex size-7 items-center justify-center rounded-full border-2 border-rw-bg bg-rw-surface-raised text-[10px] font-medium text-rw-text-muted">
+                +{allMembers.length - SHOWN_DESKTOP}
               </div>
             )}
           </div>
@@ -135,7 +150,7 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
               <Button
                 size="sm"
                 variant="outline"
-                className="size-11 md:size-7"
+                className="size-9 md:size-7"
                 aria-label="Edit moment"
                 onClick={() => setEditOpen(true)}
               >
@@ -146,14 +161,14 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
                 currentUrl={moment.coverPhotoUrl}
                 currentStoragePath={moment.coverPhotoStoragePath}
                 canEdit={true}
-                buttonClassName="size-11 md:size-7"
+                buttonClassName="size-9 md:size-7"
               />
-              <InviteDialog momentId={moment.id} myRole={myRole} buttonClassName="size-11 md:size-7" />
+              <InviteDialog momentId={moment.id} myRole={myRole} buttonClassName="size-9 md:size-7" />
             </>
           )}
           <Link
             href={`/moments/${moment.id}/members`}
-            className={cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'size-11 md:size-7')}
+            className={cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'size-9 md:size-7')}
             aria-label="Manage members"
           >
             <Settings className="size-3.5" />
