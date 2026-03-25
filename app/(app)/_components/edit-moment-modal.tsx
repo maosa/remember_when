@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { X } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogBody,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -130,12 +132,12 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[484px] flex flex-col max-h-[90dvh]">
+        <DialogHeader className="border-b-0 pb-0">
           <DialogTitle>Edit moment</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-1">
+        <DialogBody className="pt-5 overflow-y-auto">
 
           {/* Name */}
           <div className="space-y-1.5">
@@ -191,16 +193,19 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               )}
               {/* Month (month-year + full) */}
               {(dateMode === 'month-year' || dateMode === 'full') && (
-                <select
-                  value={dateMonth}
-                  onChange={(e) => setDateMonth(e.target.value)}
-                  className="h-8 flex-1 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 text-sm outline-none focus-visible:border-rw-accent focus-visible:ring-2 focus-visible:ring-rw-accent/[0.12]"
-                >
-                  <option value="">Month</option>
-                  {MONTHS.map((m, i) => (
-                    <option key={m} value={String(i + 1)}>{m}</option>
-                  ))}
-                </select>
+                <div className="relative flex-1">
+                  <select
+                    value={dateMonth}
+                    onChange={(e) => setDateMonth(e.target.value)}
+                    className="h-10 w-full appearance-none rounded-rw-input border border-rw-border bg-rw-surface pl-3 pr-8 text-sm outline-none focus:border-rw-accent focus:ring-2 focus:ring-rw-accent/[0.12] cursor-pointer"
+                  >
+                    <option value="">Month</option>
+                    {MONTHS.map((m, i) => (
+                      <option key={m} value={String(i + 1)}>{m}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
+                </div>
               )}
               {/* Year */}
               <Input
@@ -244,13 +249,13 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded bg-rw-surface-raised px-2 py-0.5 text-xs font-medium"
+                  className="inline-flex items-center gap-1 rounded-full bg-rw-accent-subtle text-rw-accent px-2.5 py-1 text-xs font-medium"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="text-rw-text-muted hover:text-rw-text-primary"
+                    className="text-rw-accent/60 hover:text-rw-accent"
                   >
                     <X className="size-3" />
                   </button>
@@ -270,9 +275,10 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
           </div>
 
           {error && <p className="text-sm text-rw-danger">{error}</p>}
-        </div>
+        </DialogBody>
 
         <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
           <Button onClick={handleSubmit} disabled={!canSubmit}>
             {isPending ? 'Saving…' : 'Save changes'}
           </Button>
