@@ -20,9 +20,10 @@ interface Props {
   currentUrl: string | null          // signed URL for display
   currentStoragePath: string | null  // raw storage path for identity comparison
   canEdit: boolean
+  buttonClassName?: string
 }
 
-export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, canEdit }: Props) {
+export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, canEdit, buttonClassName }: Props) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -76,7 +77,7 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button size="sm" variant="outline" aria-label={currentUrl ? 'Edit cover photo' : 'Add cover photo'} />}>
+      <DialogTrigger render={<Button size="sm" variant="outline" className={buttonClassName} aria-label={currentUrl ? 'Edit cover photo' : 'Add cover photo'} />}>
         <Camera className="size-3.5" />
       </DialogTrigger>
 

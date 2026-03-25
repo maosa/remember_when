@@ -394,9 +394,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export function InviteDialog({
   momentId,
   myRole,
+  buttonClassName,
 }: {
   momentId: string
   myRole: 'owner' | 'editor' | 'reader'
+  buttonClassName?: string
 }) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<InviteStep>('role')
@@ -516,7 +518,7 @@ export function InviteDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogTrigger render={<Button size="sm" variant="outline" aria-label="Invite someone" />}>
+      <DialogTrigger render={<Button size="sm" variant="outline" className={buttonClassName} aria-label="Invite someone" />}>
         <UserPlus className="size-3.5" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">

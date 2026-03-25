@@ -124,7 +124,7 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
 
       {/* Action buttons */}
       {myStatus === 'accepted' && (
-        <div className="flex items-center gap-2 shrink-0 [&>*]:min-h-11 [&>*]:md:min-h-0">
+        <div className="flex items-center gap-2 shrink-0">
           {canEdit && (
             <>
               <CoverPhotoSection
@@ -132,13 +132,14 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
                 currentUrl={moment.coverPhotoUrl}
                 currentStoragePath={moment.coverPhotoStoragePath}
                 canEdit={true}
+                buttonClassName="size-11 md:size-7"
               />
-              <InviteDialog momentId={moment.id} myRole={myRole} />
+              <InviteDialog momentId={moment.id} myRole={myRole} buttonClassName="size-11 md:size-7" />
             </>
           )}
           <Link
             href={`/moments/${moment.id}/members`}
-            className={cn(buttonVariants({ size: 'sm', variant: 'outline' }))}
+            className={cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'size-11 md:size-7')}
             aria-label="Manage members"
           >
             <Settings className="size-3.5" />
