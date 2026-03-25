@@ -206,14 +206,13 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               {/* Day — dropdown 1–N where N = days in selected month/year */}
               {dateMode === 'full' && (
                 <Select
-                  value={dateDay || '_none'}
-                  onValueChange={(d) => setDateDay(d === '_none' || d === null ? '' : d)}
+                  value={dateDay}
+                  onValueChange={(d) => setDateDay(d === null ? '' : d)}
                 >
                   <SelectTrigger className="w-20" style={{ height: '2.5rem' }}>
-                    <SelectValue placeholder="—" />
+                    <SelectValue placeholder="Day" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56" alignItemWithTrigger={false}>
-                    <SelectItem value="_none">—</SelectItem>
                     {Array.from(
                       {
                         length: dateMonth
@@ -230,9 +229,9 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               {/* Month (month-year + full) */}
               {(dateMode === 'month-year' || dateMode === 'full') && (
                 <Select
-                  value={dateMonth || '_none'}
+                  value={dateMonth}
                   onValueChange={(m) => {
-                    const actual = m === '_none' || m === null ? '' : m
+                    const actual = m === null ? '' : m
                     setDateMonth(actual)
                     // Clamp day if it's now beyond the new month's max
                     if (dateMode === 'full' && dateDay && actual) {
@@ -245,7 +244,6 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56" alignItemWithTrigger={false}>
-                    <SelectItem value="_none">Month</SelectItem>
                     {MONTHS.map((m, i) => (
                       <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>
                     ))}
@@ -254,9 +252,9 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               )}
               {/* Year — opens below trigger; scrolls selected year to centre of list on open */}
               <Select
-                value={dateYear || '_none'}
+                value={dateYear}
                 onValueChange={(y) => {
-                  const actual = y === '_none' || y === null ? '' : y
+                  const actual = y === null ? '' : y
                   setDateYear(actual)
                   // Clamp day if Feb 29 becomes invalid (non-leap year)
                   if (dateMode === 'full' && dateDay && dateMonth && actual) {
@@ -281,7 +279,6 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent className="max-h-56" alignItemWithTrigger={false}>
-                  <SelectItem value="_none">—</SelectItem>
                   {YEARS.map((y) => (
                     <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                   ))}
