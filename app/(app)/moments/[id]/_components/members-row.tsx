@@ -2,12 +2,14 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { Crown, PenTool, Eye, Settings } from 'lucide-react'
+import { Crown, PenTool, Eye, Settings, Pencil } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/lib/button-variants'
 import { InviteDialog } from './members-section'
 import { CoverPhotoSection } from './cover-photo-section'
+import { EditMomentModal } from '@/app/(app)/_components/edit-moment-modal'
 import { type MomentDetail } from '../actions'
 
 interface Props {
@@ -33,6 +35,8 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
   const shownMembers = allMembers.slice(0, SHOWN)
   const overflow = allMembers.length - SHOWN
 
+  const [editOpen, setEditOpen] = useState(false)
+
   // Popover
   const [popoverOpen, setPopoverOpen] = useState(false)
   const enterTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -56,6 +60,7 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
   )
 
   return (
+  <>
     <div className="mx-auto max-w-[720px] px-4 md:px-6 py-3 border-b border-rw-border-subtle flex items-center justify-between gap-4">
 
       {/* Avatar stack + hover popover */}
@@ -127,6 +132,15 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
         <div className="flex items-center gap-2 shrink-0">
           {canEdit && (
             <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="size-11 md:size-7"
+                aria-label="Edit moment"
+                onClick={() => setEditOpen(true)}
+              >
+                <Pencil className="size-3.5" />
+              </Button>
               <CoverPhotoSection
                 momentId={moment.id}
                 currentUrl={moment.coverPhotoUrl}
@@ -147,6 +161,23 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
         </div>
       )}
     </div>
+
+    {canEdit && (
+      <EditMomentModal
+        moment={{
+          id: moment.id,
+          name: moment.name,
+          dateYear: moment.dateYear,
+          dateMonth: moment.dateMonth,
+          dateDay: moment.dateDay,
+          location: moment.location,
+          tags: moment.tags.map((t) => t.tag),
+        }}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+    )}
+  </>
   )
 }
 

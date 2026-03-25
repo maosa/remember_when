@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Calendar, CheckCircle2, XCircle, MoreHorizontal, Pencil } from 'lucide-react'
+import { MapPin, Calendar, CheckCircle2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
 import { acceptMomentInvite, declineMomentInvite, type MomentDetail } from '../actions'
-import { EditMomentModal } from '@/app/(app)/_components/edit-moment-modal'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -35,7 +33,6 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
   const [inviteError, setInviteError] = useState<string | null>(null)
-  const [editOpen, setEditOpen] = useState(false)
 
   const canEdit = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
 
@@ -126,29 +123,6 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
             />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(44,42,37,0.75) 0%, rgba(44,42,37,0.3) 50%, transparent 100%)' }} />
 
-            {/* Edit button — top-right corner of cover photo */}
-            {canEdit && (
-              <div className="absolute top-3 right-4 md:right-6">
-                <Menu>
-                  <MenuTrigger
-                    render={
-                      <button
-                        type="button"
-                        className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/20 backdrop-blur-sm text-white transition-colors hover:bg-white/40"
-                        aria-label="Moment options"
-                      />
-                    }
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </MenuTrigger>
-                  <MenuContent align="end">
-                    <MenuItem onClick={() => setEditOpen(true)} className="gap-2">
-                      <Pencil className="size-3.5" /> Edit moment
-                    </MenuItem>
-                  </MenuContent>
-                </Menu>
-              </div>
-            )}
           </div>
         ) : (
           <div className="h-28 bg-gradient-to-br from-rw-accent-subtle via-rw-surface-raised to-rw-surface" />
@@ -175,26 +149,6 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
               >
                 {moment.name}
               </h1>
-              {canEdit && !moment.coverPhotoUrl && (
-                <Menu>
-                  <MenuTrigger
-                    render={
-                      <button
-                        type="button"
-                        className="mt-1 flex size-11 md:size-8 shrink-0 items-center justify-center rounded-md text-rw-text-muted transition-colors hover:text-rw-text-primary hover:bg-rw-surface-raised"
-                        aria-label="Moment options"
-                      />
-                    }
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </MenuTrigger>
-                  <MenuContent align="end">
-                    <MenuItem onClick={() => setEditOpen(true)} className="gap-2">
-                      <Pencil className="size-3.5" /> Edit moment
-                    </MenuItem>
-                  </MenuContent>
-                </Menu>
-              )}
             </div>
 
             {/* Meta */}
@@ -224,23 +178,6 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
 
       {/* Sentinel — when this scrolls out of view the collapsed bar appears */}
       <div ref={sentinelRef} className="h-px" />
-
-      {/* Edit moment modal */}
-      {canEdit && (
-        <EditMomentModal
-          moment={{
-            id: moment.id,
-            name: moment.name,
-            dateYear: moment.dateYear,
-            dateMonth: moment.dateMonth,
-            dateDay: moment.dateDay,
-            location: moment.location,
-            tags: moment.tags.map((t) => t.tag),
-          }}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-        />
-      )}
 
       {/* ── Pending invite banner ──────────────────────────────── */}
       {isPendingInvite && (
