@@ -1,10 +1,12 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { Camera, Upload, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/lib/button-variants'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -21,7 +23,6 @@ interface Props {
 }
 
 export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, canEdit }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -84,27 +85,16 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
             <DialogTitle>{currentUrl ? 'Edit cover photo' : 'Add cover photo'}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-5 py-1">
+          <DialogBody>
             {/* Upload from device */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-rw-text-muted uppercase tracking-wide">Upload from device</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                disabled={isPending}
-                onClick={() => inputRef.current?.click()}
-              >
+              <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5 cursor-pointer', isPending && 'pointer-events-none opacity-50')}>
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only"
+                  onChange={(e) => { handleFileChange(e); e.target.value = '' }} />
                 <Upload className="size-3.5" />
                 Choose file
-              </Button>
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="sr-only"
-                onChange={handleFileChange}
-              />
+              </label>
             </div>
 
             {/* Photos from this moment */}
@@ -156,7 +146,7 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
             )}
 
             {error && <p className="text-sm text-rw-danger">{error}</p>}
-          </div>
+          </DialogBody>
         </DialogContent>
     </Dialog>
   )

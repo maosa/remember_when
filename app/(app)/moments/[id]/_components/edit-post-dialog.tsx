@@ -1,10 +1,12 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { ImageIcon, Mic, Video, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/lib/button-variants'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -42,7 +44,6 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
   )
   const [newPreviews, setNewPreviews] = useState<NewPreview[]>([])
   const [error, setError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Reset internal state whenever the dialog opens fresh
   function handleOpenChange(val: boolean) {
@@ -114,7 +115,7 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
           <DialogTitle>Edit entry</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-1">
+        <DialogBody className="gap-4">
           <textarea
             placeholder="Write something…"
             value={content}
@@ -181,34 +182,32 @@ export function EditPostDialog({ post, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Add more media */}
+          {/* Media picker — label+input approach works reliably inside dialogs */}
           <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,video/*,audio/*"
-              multiple
-              className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
-            />
             <div className="flex gap-1.5">
-              <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs"
-                onClick={() => { if (fileInputRef.current) { fileInputRef.current.accept = 'image/*'; fileInputRef.current.click() } }}>
-                <ImageIcon className="size-3.5" />Photo
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs"
-                onClick={() => { if (fileInputRef.current) { fileInputRef.current.accept = 'video/*'; fileInputRef.current.click() } }}>
-                <Video className="size-3.5" />Video
-              </Button>
-              <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs"
-                onClick={() => { if (fileInputRef.current) { fileInputRef.current.accept = 'audio/*'; fileInputRef.current.click() } }}>
-                <Mic className="size-3.5" />Audio
-              </Button>
+              <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5 text-xs cursor-pointer')}>
+                <input type="file" accept="image/*" multiple className="sr-only"
+                  onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }} />
+                <ImageIcon className="size-3.5" />
+                Photo
+              </label>
+              <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5 text-xs cursor-pointer')}>
+                <input type="file" accept="video/*" multiple className="sr-only"
+                  onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }} />
+                <Video className="size-3.5" />
+                Video
+              </label>
+              <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5 text-xs cursor-pointer')}>
+                <input type="file" accept="audio/*" multiple className="sr-only"
+                  onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }} />
+                <Mic className="size-3.5" />
+                Audio
+              </label>
             </div>
           </div>
 
           {error && <p className="text-sm text-rw-danger">{error}</p>}
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button onClick={handleSubmit} disabled={!canSubmit}>

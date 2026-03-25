@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -401,8 +402,6 @@ export function InviteDialog({
   const [isPending, startTransition] = useTransition()
   const [feedback, setFeedback] = useState<InviteFeedback | null>(null)
 
-  const canInviteEditors = myRole === 'owner'
-
   function handleOpen(v: boolean) {
     setOpen(v)
     if (!v) {
@@ -464,18 +463,16 @@ export function InviteDialog({
 
         {step === 'role' ? (
           <>
-            <div className="space-y-3 py-1">
+            <DialogBody className="gap-3">
               <p className="text-sm text-rw-text-muted">What role should they have?</p>
               <div className="flex gap-2">
-                {canInviteEditors && (
-                  <RoleButton
-                    active={role === 'editor'}
-                    onClick={() => setRole('editor')}
-                    icon={<PenTool className="size-3.5" />}
-                    label="Editor"
-                    description="Can post and edit"
-                  />
-                )}
+                <RoleButton
+                  active={role === 'editor'}
+                  onClick={() => setRole('editor')}
+                  icon={<PenTool className="size-3.5" />}
+                  label="Editor"
+                  description="Can post and edit"
+                />
                 <RoleButton
                   active={role === 'reader'}
                   onClick={() => setRole('reader')}
@@ -484,14 +481,14 @@ export function InviteDialog({
                   description="View only"
                 />
               </div>
-            </div>
+            </DialogBody>
             <DialogFooter>
               <Button onClick={() => setStep('lookup')}>Next</Button>
             </DialogFooter>
           </>
         ) : (
           <>
-            <div className="space-y-4 py-1">
+            <DialogBody className="gap-4">
               <div className="flex items-center gap-1.5 text-xs text-rw-text-muted">
                 {role === 'editor' ? <PenTool className="size-3" /> : <Eye className="size-3" />}
                 Inviting as{' '}
@@ -572,7 +569,7 @@ export function InviteDialog({
                   {feedback.message}
                 </p>
               )}
-            </div>
+            </DialogBody>
             <DialogFooter>
               <Button onClick={handleSend} disabled={!input.trim() || isPending}>
                 {isPending ? 'Sending…' : 'Send invite'}

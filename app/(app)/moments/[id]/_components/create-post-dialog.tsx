@@ -1,10 +1,12 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
-import { ImageIcon, Mic, Paperclip, Plus, Video, X } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { ImageIcon, Mic, Video, X, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/lib/button-variants'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -30,7 +32,6 @@ export function CreatePostDialog({ momentId }: Props) {
   const [content, setContent] = useState('')
   const [previews, setPreviews] = useState<PreviewFile[]>([])
   const [error, setError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function reset() {
     setContent('')
@@ -99,7 +100,7 @@ export function CreatePostDialog({ momentId }: Props) {
           <DialogTitle>New entry</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-1">
+        <DialogBody className="gap-4">
           <textarea
             placeholder="Write something…"
             value={content}
@@ -144,68 +145,33 @@ export function CreatePostDialog({ momentId }: Props) {
             </div>
           )}
 
-          {/* Media picker */}
+          {/* Media picker — label+input approach works reliably inside dialogs */}
           <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,video/*,audio/*"
-              multiple
-              className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
-            />
             <div className="flex gap-1.5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => {
-                  if (fileInputRef.current) {
-                    fileInputRef.current.accept = 'image/*'
-                    fileInputRef.current.click()
-                  }
-                }}
-              >
+              <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5 text-xs cursor-pointer')}>
+                <input type="file" accept="image/*" multiple className="sr-only"
+                  onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }} />
                 <ImageIcon className="size-3.5" />
                 Photo
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => {
-                  if (fileInputRef.current) {
-                    fileInputRef.current.accept = 'video/*'
-                    fileInputRef.current.click()
-                  }
-                }}
-              >
+              </label>
+              <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5 text-xs cursor-pointer')}>
+                <input type="file" accept="video/*" multiple className="sr-only"
+                  onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }} />
                 <Video className="size-3.5" />
                 Video
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => {
-                  if (fileInputRef.current) {
-                    fileInputRef.current.accept = 'audio/*'
-                    fileInputRef.current.click()
-                  }
-                }}
-              >
+              </label>
+              <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5 text-xs cursor-pointer')}>
+                <input type="file" accept="audio/*" multiple className="sr-only"
+                  onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }} />
                 <Mic className="size-3.5" />
                 Audio
-              </Button>
+              </label>
             </div>
             <span className="text-xs text-rw-text-muted ml-auto">Max 100 MB per file</span>
           </div>
 
           {error && <p className="text-sm text-rw-danger">{error}</p>}
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button onClick={handleSubmit} disabled={!canSubmit}>
