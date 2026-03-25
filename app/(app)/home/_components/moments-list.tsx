@@ -102,7 +102,7 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         <Menu>
           <MenuTrigger
             render={
-              <Button variant="outline" className="shrink-0 w-36" />
+              <Button variant="outline" className="shrink-0 w-36 h-10" />
             }
           >
             <ArrowUpDown className="size-3.5" />

@@ -26,8 +26,10 @@ export async function GET(request: NextRequest) {
   }
 
   if (email) {
-    const { data } = await admin.auth.admin.getUserByEmail(email.toLowerCase())
-    return NextResponse.json({ available: !data.user })
+    // listUsers supports a server-side filter string (Postgres ilike syntax)
+    const { data } = await admin.auth.admin.listUsers({ perPage: 1, filter: email.toLowerCase() })
+    const exists = data?.users?.some((u) => u.email?.toLowerCase() === email.toLowerCase()) ?? false
+    return NextResponse.json({ available: !exists })
   }
 
   return NextResponse.json({ error: 'Provide username or email param' }, { status: 400 })

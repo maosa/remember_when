@@ -178,7 +178,7 @@ export default function LandingPage() {
               className="inline-flex items-center gap-2 text-[15px] font-semibold text-white bg-rw-accent hover:bg-rw-accent-hover rounded-rw-pill px-7 py-3.5 transition-all hover:-translate-y-px active:translate-y-0"
               style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.30)' }}
             >
-              Get started free
+              Get started for free
               <ArrowRight className="size-3.5" strokeWidth={2.5} />
             </Link>
           </div>
