@@ -126,7 +126,7 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         const maxCount = Math.max(active.length, archived.length)
         const digits = String(maxCount).length
         const badgeSize = digits >= 3 ? 'h-[18px] w-[26px]' : digits === 2 ? 'h-[18px] w-[22px]' : 'h-[18px] w-[18px]'
-        const badgeCls = `ml-1.5 inline-flex items-center justify-center rounded-full tabular-nums text-[11px] font-medium bg-rw-surface-raised text-rw-text-muted group-data-[active]:bg-rw-accent/15 group-data-[active]:text-rw-accent ${badgeSize}`
+        const badgeCls = `ml-1.5 inline-flex items-center justify-center rounded-full tabular-nums leading-none text-[11px] font-medium bg-rw-surface-raised text-rw-text-muted group-data-[active]:bg-rw-accent/15 group-data-[active]:text-rw-accent ${badgeSize}`
         return (
           <Tabs defaultValue="moments">
             <TabsList>
