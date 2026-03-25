@@ -120,48 +120,54 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
       </div>
 
       {/* Tabs — underline style */}
-      <Tabs defaultValue="moments">
-        <TabsList>
-          <TabsTrigger value="moments">
-            Moments
-            {active.length > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-rw-surface-raised px-1.5 py-0.5 text-[11px] font-medium text-rw-text-muted group-data-[active]:bg-rw-accent/15 group-data-[active]:text-rw-accent">
-                {active.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="archived">
-            Archived
-            {archived.length > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-rw-surface-raised px-1.5 py-0.5 text-[11px] font-medium text-rw-text-muted group-data-[active]:bg-rw-accent/15 group-data-[active]:text-rw-accent">
-                {archived.length}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
+      {/* Badge dimensions are derived from the larger of the two counts so both
+          badges are always identical in size regardless of digit count. */}
+      {(() => {
+        const maxCount = Math.max(active.length, archived.length)
+        const digits = String(maxCount).length
+        const badgeSize = digits >= 3 ? 'h-[18px] w-[26px]' : digits === 2 ? 'h-[18px] w-[22px]' : 'h-[18px] w-[18px]'
+        const badgeCls = `ml-1.5 inline-flex items-center justify-center rounded-full tabular-nums text-[11px] font-medium bg-rw-surface-raised text-rw-text-muted group-data-[active]:bg-rw-accent/15 group-data-[active]:text-rw-accent ${badgeSize}`
+        return (
+          <Tabs defaultValue="moments">
+            <TabsList>
+              <TabsTrigger value="moments">
+                Moments
+                {active.length > 0 && (
+                  <span className={badgeCls}>{active.length}</span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="archived">
+                Archived
+                {archived.length > 0 && (
+                  <span className={badgeCls}>{archived.length}</span>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-        {/* ── Active moments ───────────────────────────── */}
-        <TabsContent value="moments" className="mt-5">
-          <MomentsGrid
-            moments={sortedActive}
-            currentUserId={currentUserId}
-            sort={sort}
-            emptyTitle="No moments yet"
-            emptyDescription="Create your first moment and start capturing memories together."
-          />
-        </TabsContent>
+            {/* ── Active moments ───────────────────────────── */}
+            <TabsContent value="moments" className="mt-5">
+              <MomentsGrid
+                moments={sortedActive}
+                currentUserId={currentUserId}
+                sort={sort}
+                emptyTitle="No moments yet"
+                emptyDescription="Create your first moment and start capturing memories together."
+              />
+            </TabsContent>
 
-        {/* ── Archived moments ─────────────────────────── */}
-        <TabsContent value="archived" className="mt-5">
-          <MomentsGrid
-            moments={sortedArchived}
-            currentUserId={currentUserId}
-            sort={sort}
-            emptyTitle="Nothing archived"
-            emptyDescription="Moments you archive will appear here."
-          />
-        </TabsContent>
-      </Tabs>
+            {/* ── Archived moments ─────────────────────────── */}
+            <TabsContent value="archived" className="mt-5">
+              <MomentsGrid
+                moments={sortedArchived}
+                currentUserId={currentUserId}
+                sort={sort}
+                emptyTitle="Nothing archived"
+                emptyDescription="Moments you archive will appear here."
+              />
+            </TabsContent>
+          </Tabs>
+        )
+      })()}
     </div>
   )
 }
