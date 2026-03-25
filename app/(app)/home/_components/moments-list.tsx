@@ -6,7 +6,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Menu,
   MenuContent,
-  MenuLabel,
   MenuRadioGroup,
   MenuRadioItem,
   MenuSeparator,
@@ -110,7 +109,6 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
             <span>{sortLabel[sort]}</span>
           </MenuTrigger>
           <MenuContent align="end">
-            <MenuLabel>Sort</MenuLabel>
             <MenuRadioGroup value={sort} onValueChange={(v) => setSort(v as SortMode)}>
               <MenuRadioItem value="newest">Newest first</MenuRadioItem>
               <MenuRadioItem value="oldest">Oldest first</MenuRadioItem>
