@@ -29,6 +29,24 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+
+const CURRENT_YEAR = new Date().getFullYear()
+const YEARS = Array.from({ length: 3000 - 1900 + 1 }, (_, i) => 1900 + i)
+
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)
+}
+
+/** Returns the number of days in a month. When year is omitted, Feb returns 28 (safe default). */
+function daysInMonth(month: number, year?: number): number {
+  if (month === 2) {
+    if (year === undefined) return 28
+    return isLeapYear(year) ? 29 : 28
+  }
+  return [4, 6, 9, 11].includes(month) ? 30 : 31
+}
+
 // ─── Invite list item ─────────────────────────────────────────────────────────
 
 type InviteeDisplay = {
@@ -49,7 +67,7 @@ export function CreateMomentModal() {
   // Form state
   const [name, setName] = useState('')
   const [dateMode, setDateMode] = useState<DateMode>('year')
-  const [dateYear, setDateYear] = useState('')
+  const [dateYear, setDateYear] = useState(String(CURRENT_YEAR))
   const [dateMonth, setDateMonth] = useState('')
   const [dateDay, setDateDay] = useState('')
   const [location, setLocation] = useState('')
@@ -60,7 +78,7 @@ export function CreateMomentModal() {
   function reset() {
     setName('')
     setDateMode('year')
-    setDateYear('')
+    setDateYear(String(CURRENT_YEAR))
     setDateMonth('')
     setDateDay('')
     setLocation('')
@@ -133,7 +151,6 @@ export function CreateMomentModal() {
     })
   }
 
-  const currentYear = new Date().getFullYear()
   const canSubmit = name.trim().length > 0 && !isPending
 
   return (
@@ -171,7 +188,14 @@ export function CreateMomentModal() {
                 <button
                   key={mode}
                   type="button"
-                  onClick={() => setDateMode(mode)}
+                  onClick={() => {
+                    setDateMode(mode)
+                    // Clamp stored day when switching into full mode
+                    if (mode === 'full' && dateDay && dateMonth) {
+                      const max = daysInMonth(parseInt(dateMonth), dateYear ? parseInt(dateYear) : undefined)
+                      if (parseInt(dateDay) > max) setDateDay(String(max))
+                    }
+                  }}
                   className={cn(
                     'px-2.5 py-1 rounded-md font-medium transition-colors',
                     dateMode === mode
@@ -185,24 +209,43 @@ export function CreateMomentModal() {
             </div>
 
             <div className="flex gap-2">
-              {/* Day (full only) */}
+              {/* Day — dropdown 1–N where N = days in selected month/year */}
               {dateMode === 'full' && (
-                <Input
-                  type="number"
-                  placeholder="Day"
-                  min={1}
-                  max={31}
-                  value={dateDay}
-                  onChange={(e) => setDateDay(e.target.value)}
-                  className="w-20"
-                />
+                <div className="relative w-20">
+                  <select
+                    value={dateDay}
+                    onChange={(e) => setDateDay(e.target.value)}
+                    className="h-10 w-full appearance-none rounded-rw-input border border-rw-border bg-rw-surface pl-3 pr-7 text-sm outline-none focus:border-rw-accent focus:ring-2 focus:ring-rw-accent/[0.12] cursor-pointer"
+                  >
+                    <option value="">—</option>
+                    {Array.from(
+                      {
+                        length: dateMonth
+                          ? daysInMonth(parseInt(dateMonth), dateYear ? parseInt(dateYear) : undefined)
+                          : 31,
+                      },
+                      (_, i) => i + 1
+                    ).map((d) => (
+                      <option key={d} value={String(d)}>{d}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
+                </div>
               )}
               {/* Month (month-year + full) */}
               {(dateMode === 'month-year' || dateMode === 'full') && (
                 <div className="relative flex-1">
                   <select
                     value={dateMonth}
-                    onChange={(e) => setDateMonth(e.target.value)}
+                    onChange={(e) => {
+                      const m = e.target.value
+                      setDateMonth(m)
+                      // Clamp day if it's now beyond the new month's max
+                      if (dateMode === 'full' && dateDay && m) {
+                        const max = daysInMonth(parseInt(m), dateYear ? parseInt(dateYear) : undefined)
+                        if (parseInt(dateDay) > max) setDateDay(String(max))
+                      }
+                    }}
                     className="h-10 w-full appearance-none rounded-rw-input border border-rw-border bg-rw-surface pl-3 pr-8 text-sm outline-none focus:border-rw-accent focus:ring-2 focus:ring-rw-accent/[0.12] cursor-pointer"
                   >
                     <option value="">Month</option>
@@ -213,16 +256,28 @@ export function CreateMomentModal() {
                   <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
                 </div>
               )}
-              {/* Year */}
-              <Input
-                type="number"
-                placeholder="Year"
-                min={1900}
-                max={currentYear + 1}
-                value={dateYear}
-                onChange={(e) => setDateYear(e.target.value)}
-                className={dateMode === 'year' ? 'w-28' : 'w-24'}
-              />
+              {/* Year — dropdown 1900–3000, pre-selected to current year so native picker centres there */}
+              <div className={cn('relative', dateMode === 'year' ? 'w-28' : 'w-24')}>
+                <select
+                  value={dateYear}
+                  onChange={(e) => {
+                    const y = e.target.value
+                    setDateYear(y)
+                    // Clamp day if Feb 29 becomes invalid (non-leap year)
+                    if (dateMode === 'full' && dateDay && dateMonth && y) {
+                      const max = daysInMonth(parseInt(dateMonth), parseInt(y))
+                      if (parseInt(dateDay) > max) setDateDay(String(max))
+                    }
+                  }}
+                  className="h-10 w-full appearance-none rounded-rw-input border border-rw-border bg-rw-surface pl-3 pr-8 text-sm outline-none focus:border-rw-accent focus:ring-2 focus:ring-rw-accent/[0.12] cursor-pointer"
+                >
+                  <option value="">—</option>
+                  {YEARS.map((y) => (
+                    <option key={y} value={String(y)}>{y}</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
+              </div>
             </div>
           </div>
 
