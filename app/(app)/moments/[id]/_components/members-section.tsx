@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Crown, PenTool, Eye, X, UserPlus, Link2, Copy, Check, Trash2,
-  LogOut, RefreshCw, Pencil, ChevronDown, Mail,
+  LogOut, RefreshCw, Pencil, ChevronDown, Mail, Loader2, CheckCircle, XCircle,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -375,6 +376,7 @@ function RoleBadge({
 
 type InviteStep = 'role' | 'lookup'
 type LookupMethod = 'username' | 'email'
+type LookupStatus = 'idle' | 'checking' | 'found' | 'not_found' | 'unregistered' | 'invalid_email'
 type FeedbackKind =
   | 'error'
   | 'not_found'
@@ -386,6 +388,8 @@ interface InviteFeedback {
   kind: FeedbackKind
   message: string
 }
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function InviteDialog({
   momentId,
@@ -401,6 +405,61 @@ export function InviteDialog({
   const [input, setInput] = useState('')
   const [isPending, startTransition] = useTransition()
   const [feedback, setFeedback] = useState<InviteFeedback | null>(null)
+  const [lookupStatus, setLookupStatus] = useState<LookupStatus>('idle')
+  const [lookupDisplay, setLookupDisplay] = useState<string>('')
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Debounced real-time lookup ───────────────────────────────────────────────
+  useEffect(() => {
+    const val = input.trim().replace(/^@/, '')
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+
+    if (!val) { setLookupStatus('idle'); setLookupDisplay(''); return }
+
+    if (method === 'email' && !EMAIL_RE.test(val)) {
+      setLookupStatus('invalid_email'); setLookupDisplay(''); return
+    }
+
+    setLookupStatus('checking')
+    setLookupDisplay('')
+
+    debounceTimer.current = setTimeout(async () => {
+      const supabase = createClient()
+      if (method === 'username') {
+        const { data } = await supabase
+          .from('users')
+          .select('username, first_name, last_name')
+          .eq('username', val.toLowerCase())
+          .maybeSingle()
+        if (data) {
+          setLookupStatus('found')
+          setLookupDisplay(`@${data.username} (${data.first_name} ${data.last_name})`)
+        } else {
+          setLookupStatus('not_found')
+        }
+      } else {
+        const { data } = await supabase
+          .from('users')
+          .select('username, first_name, last_name')
+          .eq('email', val.toLowerCase())
+          .maybeSingle()
+        if (data) {
+          setLookupStatus('found')
+          setLookupDisplay(`@${data.username} (${data.first_name} ${data.last_name})`)
+        } else {
+          setLookupStatus('unregistered')
+        }
+      }
+    }, 500)
+
+    return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current) }
+  }, [input, method])
+
+  function resetLookup() {
+    setLookupStatus('idle')
+    setLookupDisplay('')
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+  }
 
   function handleOpen(v: boolean) {
     setOpen(v)
@@ -410,6 +469,7 @@ export function InviteDialog({
       setMethod('username')
       setInput('')
       setFeedback(null)
+      resetLookup()
     }
   }
 
@@ -428,18 +488,17 @@ export function InviteDialog({
       if ('notFound' in res) {
         setFeedback({
           kind: 'not_found',
-          message:
-            'No account found with that username. Try a different username or invite by email instead.',
+          message: 'No account found with that username. Try a different username or invite by email instead.',
         })
         return
       }
       if (res.success === 'email_unregistered') {
         setFeedback({
           kind: 'success_email_unregistered',
-          message:
-            "No account found with that email. We've sent them an invite to join Remember When and accept your invitation.",
+          message: "No account found with that email. We've sent them an invite to join Remember When and accept your invitation.",
         })
         setInput('')
+        resetLookup()
         return
       }
       const username = res.invitedUsername
@@ -448,8 +507,12 @@ export function InviteDialog({
         message: `Invite successfully sent to @${username}.`,
       })
       setInput('')
+      resetLookup()
     })
   }
+
+  // "Send invite" is only enabled when we know what we're sending to
+  const canSend = !isPending && (lookupStatus === 'found' || lookupStatus === 'unregistered')
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -489,72 +552,78 @@ export function InviteDialog({
         ) : (
           <>
             <DialogBody className="gap-4">
+              {/* Role indicator + change */}
               <div className="flex items-center gap-1.5 text-xs text-rw-text-muted">
                 {role === 'editor' ? <PenTool className="size-3" /> : <Eye className="size-3" />}
                 Inviting as{' '}
                 <span className="font-medium text-rw-text-primary capitalize">{role}</span>
                 <button
                   type="button"
-                  onClick={() => {
-                    setStep('role')
-                    setFeedback(null)
-                    setInput('')
-                  }}
+                  onClick={() => { setStep('role'); setFeedback(null); setInput(''); resetLookup() }}
                   className="ml-auto text-xs underline underline-offset-2 hover:text-rw-text-primary"
                 >
                   Change
                 </button>
               </div>
 
+              {/* Method toggle */}
               <div className="flex rounded-md border overflow-hidden text-sm">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMethod('username')
-                    setFeedback(null)
-                    setInput('')
-                  }}
-                  className={cn(
-                    'flex-1 py-1.5 text-center transition-colors',
-                    method === 'username'
-                      ? 'bg-rw-accent text-white font-medium'
-                      : 'text-rw-text-muted hover:bg-rw-surface-raised'
-                  )}
-                >
-                  Username
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMethod('email')
-                    setFeedback(null)
-                    setInput('')
-                  }}
-                  className={cn(
-                    'flex-1 py-1.5 text-center transition-colors',
-                    method === 'email'
-                      ? 'bg-rw-accent text-white font-medium'
-                      : 'text-rw-text-muted hover:bg-rw-surface-raised'
-                  )}
-                >
-                  Email
-                </button>
+                {(['username', 'email'] as LookupMethod[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => { setMethod(m); setFeedback(null); setInput(''); resetLookup() }}
+                    className={cn(
+                      'flex-1 py-1.5 text-center capitalize transition-colors',
+                      method === m
+                        ? 'bg-rw-accent text-white font-medium'
+                        : 'text-rw-text-muted hover:bg-rw-surface-raised'
+                    )}
+                  >
+                    {m}
+                  </button>
+                ))}
               </div>
 
+              {/* Input + inline lookup indicator */}
               <div className="space-y-1.5">
-                <Input
-                  placeholder={method === 'username' ? '@username' : 'email@example.com'}
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value)
-                    setFeedback(null)
-                  }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  autoFocus
-                  type={method === 'email' ? 'email' : 'text'}
-                />
+                <div className="relative">
+                  <Input
+                    placeholder={method === 'username' ? '@username' : 'email@example.com'}
+                    value={input}
+                    onChange={(e) => { setInput(e.target.value); setFeedback(null) }}
+                    onKeyDown={(e) => e.key === 'Enter' && canSend && handleSend()}
+                    autoFocus
+                    type={method === 'email' ? 'email' : 'text'}
+                    className="pr-8"
+                  />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                    {lookupStatus === 'checking' && <Loader2 className="size-4 animate-spin text-rw-text-placeholder" />}
+                    {lookupStatus === 'found' && <CheckCircle className="size-4 text-rw-accent" />}
+                    {(lookupStatus === 'not_found' || lookupStatus === 'invalid_email') && <XCircle className="size-4 text-rw-danger" />}
+                  </div>
+                </div>
+
+                {/* Lookup hints — shown before sending */}
+                {!feedback && (
+                  <>
+                    {lookupStatus === 'found' && (
+                      <p className="text-xs text-rw-accent">{lookupDisplay}</p>
+                    )}
+                    {lookupStatus === 'not_found' && method === 'username' && (
+                      <p className="text-xs text-rw-danger">No account with this username. Try inviting by email instead.</p>
+                    )}
+                    {lookupStatus === 'unregistered' && (
+                      <p className="text-xs text-rw-text-muted">Not registered — they'll receive an invite email to join.</p>
+                    )}
+                    {lookupStatus === 'invalid_email' && (
+                      <p className="text-xs text-rw-text-muted">Enter a valid email address.</p>
+                    )}
+                  </>
+                )}
               </div>
 
+              {/* Post-send feedback */}
               {feedback && (
                 <p
                   className={cn(
@@ -571,7 +640,7 @@ export function InviteDialog({
               )}
             </DialogBody>
             <DialogFooter>
-              <Button onClick={handleSend} disabled={!input.trim() || isPending}>
+              <Button onClick={handleSend} disabled={!canSend}>
                 {isPending ? 'Sending…' : 'Send invite'}
               </Button>
             </DialogFooter>
