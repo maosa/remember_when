@@ -26,8 +26,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (email) {
-    // listUsers supports a server-side filter string (Postgres ilike syntax)
-    const { data } = await admin.auth.admin.listUsers({ perPage: 1, filter: email.toLowerCase() })
+    const { data } = await admin.auth.admin.listUsers({ perPage: 1000 })
     const exists = data?.users?.some((u) => u.email?.toLowerCase() === email.toLowerCase()) ?? false
     return NextResponse.json({ available: !exists })
   }
