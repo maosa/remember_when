@@ -207,7 +207,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               {dateMode === 'full' && (
                 <Select
                   value={dateDay || '_none'}
-                  onValueChange={(d) => setDateDay(d === '_none' ? '' : d)}
+                  onValueChange={(d) => setDateDay(d === '_none' || d === null ? '' : d)}
                 >
                   <SelectTrigger className="w-20" style={{ height: '2.5rem' }}>
                     <SelectValue placeholder="—" />
@@ -255,7 +255,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               <Select
                 value={dateYear || '_none'}
                 onValueChange={(y) => {
-                  const actual = y === '_none' ? '' : y
+                  const actual = y === '_none' || y === null ? '' : y
                   setDateYear(actual)
                   // Clamp day if Feb 29 becomes invalid (non-leap year)
                   if (dateMode === 'full' && dateDay && dateMonth && actual) {
