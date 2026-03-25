@@ -152,7 +152,7 @@ function InviteActions({
   }
   if (resolved === 'declined') {
     return (
-      <span className="text-xs text-rw-text-muted font-medium flex items-center gap-1 mt-1.5">
+      <span className="text-xs text-destructive font-medium flex items-center gap-1 mt-1.5">
         <X className="size-3" /> You declined this invitation
       </span>
     )

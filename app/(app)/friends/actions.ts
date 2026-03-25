@@ -249,4 +249,5 @@ export async function markNotificationsRead(): Promise<void> {
     .eq('read', false)
 
   revalidatePath('/friends')
+  revalidatePath('/', 'layout')
 }
