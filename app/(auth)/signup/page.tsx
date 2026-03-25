@@ -28,7 +28,7 @@ export default function SignupPage() {
   const usernameTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const emailTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Username availability check
+  // Username availability check — via RPC (SECURITY DEFINER, no admin key needed)
   useEffect(() => {
     const username = formData.username.trim()
 
@@ -48,9 +48,10 @@ export default function SignupPage() {
 
     usernameTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/check-availability?username=${encodeURIComponent(username)}`)
-        const json = await res.json()
-        setUsernameStatus(json.available ? 'available' : 'taken')
+        const supabase = createClient()
+        const { data, error } = await supabase.rpc('check_username_available', { p_username: username.toLowerCase() })
+        if (error) { setUsernameStatus('idle'); return }
+        setUsernameStatus(data ? 'available' : 'taken')
       } catch {
         setUsernameStatus('idle')
       }
@@ -61,7 +62,7 @@ export default function SignupPage() {
     }
   }, [formData.username])
 
-  // Email already-registered check
+  // Email already-registered check — via RPC (SECURITY DEFINER, no admin key needed)
   useEffect(() => {
     const email = formData.email.trim()
 
@@ -76,9 +77,10 @@ export default function SignupPage() {
 
     emailTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/check-availability?email=${encodeURIComponent(email)}`)
-        const json = await res.json()
-        setEmailStatus(json.available ? 'available' : 'taken')
+        const supabase = createClient()
+        const { data, error } = await supabase.rpc('check_email_available', { p_email: email.toLowerCase() })
+        if (error) { setEmailStatus('idle'); return }
+        setEmailStatus(data ? 'available' : 'taken')
       } catch {
         setEmailStatus('idle')
       }
@@ -306,7 +308,16 @@ export default function SignupPage() {
               type="submit"
               size="lg"
               className="w-full"
-              disabled={loading || emailStatus === 'taken' || emailStatus === 'checking' || usernameStatus === 'taken' || usernameStatus === 'checking'}
+              disabled={
+                loading ||
+                !formData.firstName.trim() ||
+                !formData.lastName.trim() ||
+                !formData.email.trim() ||
+                formData.password.length < 8 ||
+                emailStatus === 'taken' ||
+                emailStatus === 'checking' ||
+                usernameStatus !== 'available'
+              }
             >
               {loading ? 'Creating account…' : 'Create account'}
             </Button>
