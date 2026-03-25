@@ -125,6 +125,30 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
               className={cn('size-full object-cover', isPendingInvite && 'blur-md scale-110')}
             />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(44,42,37,0.75) 0%, rgba(44,42,37,0.3) 50%, transparent 100%)' }} />
+
+            {/* Edit button — top-right corner of cover photo */}
+            {canEdit && (
+              <div className="absolute top-3 right-4 md:right-6">
+                <Menu>
+                  <MenuTrigger
+                    render={
+                      <button
+                        type="button"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/20 backdrop-blur-sm text-white transition-colors hover:bg-white/40"
+                        aria-label="Moment options"
+                      />
+                    }
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </MenuTrigger>
+                  <MenuContent align="end">
+                    <MenuItem onClick={() => setEditOpen(true)} className="gap-2">
+                      <Pencil className="size-3.5" /> Edit moment
+                    </MenuItem>
+                  </MenuContent>
+                </Menu>
+              </div>
+            )}
           </div>
         ) : (
           <div className="h-28 bg-gradient-to-br from-rw-accent-subtle via-rw-surface-raised to-rw-surface" />
@@ -140,7 +164,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
           )}
         >
           <div className="mx-auto max-w-[720px] space-y-3">
-            {/* Name + edit menu */}
+            {/* Name + edit menu (no-cover case only) */}
             <div className="flex items-start gap-2">
               <h1
                 className={cn(
@@ -151,18 +175,13 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
               >
                 {moment.name}
               </h1>
-              {canEdit && (
+              {canEdit && !moment.coverPhotoUrl && (
                 <Menu>
                   <MenuTrigger
                     render={
                       <button
                         type="button"
-                        className={cn(
-                          'mt-1 flex size-11 md:size-8 shrink-0 items-center justify-center rounded-md transition-colors',
-                          moment.coverPhotoUrl
-                            ? 'text-white/70 hover:text-white hover:bg-white/10'
-                            : 'text-rw-text-muted hover:text-rw-text-primary hover:bg-rw-surface-raised'
-                        )}
+                        className="mt-1 flex size-11 md:size-8 shrink-0 items-center justify-center rounded-md text-rw-text-muted transition-colors hover:text-rw-text-primary hover:bg-rw-surface-raised"
                         aria-label="Moment options"
                       />
                     }
