@@ -47,9 +47,13 @@ export default function SignupPage() {
     if (usernameTimer.current) clearTimeout(usernameTimer.current)
 
     usernameTimer.current = setTimeout(async () => {
-      const res = await fetch(`/api/check-availability?username=${encodeURIComponent(username)}`)
-      const json = await res.json()
-      setUsernameStatus(json.available ? 'available' : 'taken')
+      try {
+        const res = await fetch(`/api/check-availability?username=${encodeURIComponent(username)}`)
+        const json = await res.json()
+        setUsernameStatus(json.available ? 'available' : 'taken')
+      } catch {
+        setUsernameStatus('idle')
+      }
     }, 500)
 
     return () => {
@@ -71,9 +75,13 @@ export default function SignupPage() {
     if (emailTimer.current) clearTimeout(emailTimer.current)
 
     emailTimer.current = setTimeout(async () => {
-      const res = await fetch(`/api/check-availability?email=${encodeURIComponent(email)}`)
-      const json = await res.json()
-      setEmailStatus(json.available ? 'available' : 'taken')
+      try {
+        const res = await fetch(`/api/check-availability?email=${encodeURIComponent(email)}`)
+        const json = await res.json()
+        setEmailStatus(json.available ? 'available' : 'taken')
+      } catch {
+        setEmailStatus('idle')
+      }
     }, 600)
 
     return () => {

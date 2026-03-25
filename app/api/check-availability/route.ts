@@ -9,27 +9,34 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * Returns { available: boolean }
  */
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const username = searchParams.get('username')
-  const email = searchParams.get('email')
+  try {
+    const { searchParams } = new URL(request.url)
+    const username = searchParams.get('username')
+    const email = searchParams.get('email')
 
-  const admin = createAdminClient()
+    const admin = createAdminClient()
 
-  if (username) {
-    const { data } = await admin
-      .from('users')
-      .select('id')
-      .eq('username', username.toLowerCase())
-      .maybeSingle()
+    if (username) {
+      const { data, error } = await admin
+        .from('users')
+        .select('id')
+        .eq('username', username.toLowerCase())
+        .maybeSingle()
 
-    return NextResponse.json({ available: !data })
+      if (error) return NextResponse.json({ available: true })
+      return NextResponse.json({ available: !data })
+    }
+
+    if (email) {
+      const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 })
+      if (error) return NextResponse.json({ available: true })
+      const exists = data?.users?.some((u) => u.email?.toLowerCase() === email.toLowerCase()) ?? false
+      return NextResponse.json({ available: !exists })
+    }
+
+    return NextResponse.json({ error: 'Provide username or email param' }, { status: 400 })
+  } catch {
+    // Fail open — don't block the user if the check errors
+    return NextResponse.json({ available: true })
   }
-
-  if (email) {
-    const { data } = await admin.auth.admin.listUsers({ perPage: 1000 })
-    const exists = data?.users?.some((u) => u.email?.toLowerCase() === email.toLowerCase()) ?? false
-    return NextResponse.json({ available: !exists })
-  }
-
-  return NextResponse.json({ error: 'Provide username or email param' }, { status: 400 })
 }
