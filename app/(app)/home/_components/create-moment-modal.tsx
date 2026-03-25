@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { ChevronDown, Plus, X, Search, UserRound } from 'lucide-react'
+import { Plus, X, Search, UserRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -236,27 +236,28 @@ export function CreateMomentModal() {
               )}
               {/* Month (month-year + full) */}
               {(dateMode === 'month-year' || dateMode === 'full') && (
-                <div className="relative flex-1">
-                  <select
-                    value={dateMonth}
-                    onChange={(e) => {
-                      const m = e.target.value
-                      setDateMonth(m)
-                      // Clamp day if it's now beyond the new month's max
-                      if (dateMode === 'full' && dateDay && m) {
-                        const max = daysInMonth(parseInt(m), dateYear ? parseInt(dateYear) : undefined)
-                        if (parseInt(dateDay) > max) setDateDay(String(max))
-                      }
-                    }}
-                    className="h-10 w-full appearance-none rounded-rw-input border border-rw-border bg-rw-surface pl-3 pr-8 text-sm outline-none focus:border-rw-accent focus:ring-2 focus:ring-rw-accent/[0.12] cursor-pointer"
-                  >
-                    <option value="">Month</option>
+                <Select
+                  value={dateMonth || '_none'}
+                  onValueChange={(m) => {
+                    const actual = m === '_none' || m === null ? '' : m
+                    setDateMonth(actual)
+                    // Clamp day if it's now beyond the new month's max
+                    if (dateMode === 'full' && dateDay && actual) {
+                      const max = daysInMonth(parseInt(actual), dateYear ? parseInt(dateYear) : undefined)
+                      if (parseInt(dateDay) > max) setDateDay(String(max))
+                    }
+                  }}
+                >
+                  <SelectTrigger className="flex-1" style={{ height: '2.5rem' }}>
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56" alignItemWithTrigger={false}>
+                    <SelectItem value="_none">Month</SelectItem>
                     {MONTHS.map((m, i) => (
-                      <option key={m} value={String(i + 1)}>{m}</option>
+                      <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>
                     ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
-                </div>
+                  </SelectContent>
+                </Select>
               )}
               {/* Year — opens below trigger; scrolls selected year to centre of list on open */}
               <Select
