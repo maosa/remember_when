@@ -142,7 +142,7 @@ export function MomentCard({ moment, currentUserId }: Props) {
       </Link>
 
       {/* ── Action menu — hover-only, top-right of cover ─────────── */}
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity">
         <Menu>
           <MenuTrigger
             render={

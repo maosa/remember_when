@@ -886,11 +886,12 @@ function TransferOwnershipSection({
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
           </div>
         </div>
         <Button
           variant="outline"
+          className="h-8"
           onClick={() => setConfirmOpen(true)}
           disabled={!newOwnerId || isPending}
         >

@@ -38,7 +38,7 @@ export default async function AccountPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Account</h1>
           <form action={signOut}>
-            <Button variant="outline" size="sm" type="submit">
+            <Button variant="ghost" size="sm" type="submit" className="text-rw-text-muted">
               <LogOut className="size-3.5" />
               Sign out
             </Button>
