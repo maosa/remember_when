@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -211,13 +212,15 @@ export function CreateMomentModal() {
             <div className="flex gap-2">
               {/* Day — dropdown 1–N where N = days in selected month/year */}
               {dateMode === 'full' && (
-                <div className="relative w-20">
-                  <select
-                    value={dateDay}
-                    onChange={(e) => setDateDay(e.target.value)}
-                    className="h-10 w-full appearance-none rounded-rw-input border border-rw-border bg-rw-surface pl-3 pr-7 text-sm outline-none focus:border-rw-accent focus:ring-2 focus:ring-rw-accent/[0.12] cursor-pointer"
-                  >
-                    <option value="">—</option>
+                <Select
+                  value={dateDay || '_none'}
+                  onValueChange={(d) => setDateDay(d === '_none' ? '' : d)}
+                >
+                  <SelectTrigger className="w-20" style={{ height: '2.5rem' }}>
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56" alignItemWithTrigger={false}>
+                    <SelectItem value="_none">—</SelectItem>
                     {Array.from(
                       {
                         length: dateMonth
@@ -226,11 +229,10 @@ export function CreateMomentModal() {
                       },
                       (_, i) => i + 1
                     ).map((d) => (
-                      <option key={d} value={String(d)}>{d}</option>
+                      <SelectItem key={d} value={String(d)}>{d}</SelectItem>
                     ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
-                </div>
+                  </SelectContent>
+                </Select>
               )}
               {/* Month (month-year + full) */}
               {(dateMode === 'month-year' || dateMode === 'full') && (
@@ -256,28 +258,32 @@ export function CreateMomentModal() {
                   <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
                 </div>
               )}
-              {/* Year — dropdown 1900–3000, pre-selected to current year so native picker centres there */}
-              <div className={cn('relative', dateMode === 'year' ? 'w-28' : 'w-24')}>
-                <select
-                  value={dateYear}
-                  onChange={(e) => {
-                    const y = e.target.value
-                    setDateYear(y)
-                    // Clamp day if Feb 29 becomes invalid (non-leap year)
-                    if (dateMode === 'full' && dateDay && dateMonth && y) {
-                      const max = daysInMonth(parseInt(dateMonth), parseInt(y))
-                      if (parseInt(dateDay) > max) setDateDay(String(max))
-                    }
-                  }}
-                  className="h-10 w-full appearance-none rounded-rw-input border border-rw-border bg-rw-surface pl-3 pr-8 text-sm outline-none focus:border-rw-accent focus:ring-2 focus:ring-rw-accent/[0.12] cursor-pointer"
+              {/* Year — dropdown 1900–3000; Base UI Select scrolls to the selected item on open */}
+              <Select
+                value={dateYear || '_none'}
+                onValueChange={(y) => {
+                  const actual = y === '_none' ? '' : y
+                  setDateYear(actual)
+                  // Clamp day if Feb 29 becomes invalid (non-leap year)
+                  if (dateMode === 'full' && dateDay && dateMonth && actual) {
+                    const max = daysInMonth(parseInt(dateMonth), parseInt(actual))
+                    if (parseInt(dateDay) > max) setDateDay(String(max))
+                  }
+                }}
+              >
+                <SelectTrigger
+                  className={dateMode === 'year' ? 'w-28' : 'w-24'}
+                  style={{ height: '2.5rem' }}
                 >
-                  <option value="">—</option>
+                  <SelectValue placeholder="—" />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  <SelectItem value="_none">—</SelectItem>
                   {YEARS.map((y) => (
-                    <option key={y} value={String(y)}>{y}</option>
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                   ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
-              </div>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
