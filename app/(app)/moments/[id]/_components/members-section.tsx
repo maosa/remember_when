@@ -885,7 +885,7 @@ function GenerateLinkDialog({
               <Label>Link expires in</Label>
               <Select value={expiry} onValueChange={(v) => { if (v !== null) onExpiryChange(v as ExpiryOption) }}>
                 <SelectTrigger style={{ height: '2.5rem' }}>
-                  <SelectValue />
+                  <SelectValue>{EXPIRY_LABELS[expiry]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
                   {(Object.keys(EXPIRY_LABELS) as ExpiryOption[]).map((opt) => (
