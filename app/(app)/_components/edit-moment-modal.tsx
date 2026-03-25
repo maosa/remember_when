@@ -251,7 +251,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                   <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted" />
                 </div>
               )}
-              {/* Year — dropdown 1900–3000; Base UI Select scrolls to the selected item on open */}
+              {/* Year — opens below trigger; scrolls selected year to centre of list on open */}
               <Select
                 value={dateYear || '_none'}
                 onValueChange={(y) => {
@@ -263,6 +263,15 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                     if (parseInt(dateDay) > max) setDateDay(String(max))
                   }
                 }}
+                onOpenChange={(open) => {
+                  if (!open) return
+                  // Double rAF: wait for portal paint, then scroll selected item to centre
+                  requestAnimationFrame(() => requestAnimationFrame(() => {
+                    document
+                      .querySelector('[data-slot="select-content"] [aria-selected="true"]')
+                      ?.scrollIntoView({ block: 'center', behavior: 'instant' })
+                  }))
+                }}
               >
                 <SelectTrigger
                   className={dateMode === 'year' ? 'w-28' : 'w-24'}
@@ -270,7 +279,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                 >
                   <SelectValue placeholder="—" />
                 </SelectTrigger>
-                <SelectContent className="max-h-56">
+                <SelectContent className="max-h-56" alignItemWithTrigger={false}>
                   <SelectItem value="_none">—</SelectItem>
                   {YEARS.map((y) => (
                     <SelectItem key={y} value={String(y)}>{y}</SelectItem>
