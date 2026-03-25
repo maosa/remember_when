@@ -13,7 +13,7 @@ import {
   MenuTrigger,
 } from '@/components/ui/menu'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/lib/button-variants'
 import { EmptyState } from '@/components/ui/empty-state'
 import { MomentCard } from './moment-card'
 import { CreateMomentModal } from './create-moment-modal'
@@ -102,7 +102,7 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         <Menu>
           <MenuTrigger
             render={
-              <Button variant="outline" className="shrink-0 w-36 h-10" />
+              <button type="button" className={cn(buttonVariants({ variant: 'outline' }), 'shrink-0 w-36 h-10')} />
             }
           >
             <ArrowUpDown className="size-3.5" />
