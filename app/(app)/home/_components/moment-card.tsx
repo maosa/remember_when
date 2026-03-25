@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { MapPin, Calendar, MoreHorizontal, Archive, ArchiveRestore, Pencil, Crown, PenTool, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
 import { archiveMoment, unarchiveMoment, type MomentSummary } from '../actions'
@@ -45,7 +46,20 @@ export function MomentCard({ moment, currentUserId }: Props) {
     })
   }
 
-  const hasBodyContent = date || moment.location || moment.myStatus === 'accepted' || moment.tags.length > 0
+  // Build ordered member list for avatar stack: owner first, then accepted non-owner members
+  const acceptedNonOwner = moment.members.filter(
+    (m) => m.userId !== moment.ownerId && m.status === 'accepted'
+  )
+  const allMembers = [
+    { userId: moment.ownerId, firstName: moment.ownerFirstName, lastName: moment.ownerLastName, photoUrl: moment.ownerPhotoUrl },
+    ...acceptedNonOwner.map((m) => ({ userId: m.userId, firstName: m.firstName, lastName: m.lastName, photoUrl: m.photoUrl })),
+  ]
+  const MAX_AVATARS = 5
+  const showOverflow = allMembers.length > MAX_AVATARS
+  const shownAvatars = showOverflow ? allMembers.slice(0, 4) : allMembers
+  const overflowCount = allMembers.length - 4
+
+  const hasBodyContent = date || moment.location || moment.tags.length > 0 || moment.myStatus === 'accepted'
 
   return (
     <div className="relative group">
@@ -57,7 +71,7 @@ export function MomentCard({ moment, currentUserId }: Props) {
         )}
       >
         {/* ── Cover area ─────────────────────────────────────────── */}
-        <div className="relative aspect-[16/9] overflow-hidden">
+        <div className="relative h-36 overflow-hidden">
           {moment.coverPhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -92,51 +106,75 @@ export function MomentCard({ moment, currentUserId }: Props) {
           </p>
         </div>
 
-        {/* ── Card body — meta only (name lives in cover) ──────── */}
+        {/* ── Card body ────────────────────────────────────────────── */}
         {hasBodyContent && (
-          <div className="p-3.5 space-y-1.5">
-            {/* Date / location + role badge */}
-            {(date || moment.location || moment.myStatus === 'accepted') && (
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-rw-text-muted min-w-0">
-                  {date && (
-                    <span className="flex items-center gap-1">
-                      <Calendar className="size-3 shrink-0" />
-                      {date}
-                    </span>
-                  )}
-                  {moment.location && (
-                    <span className="flex items-center gap-0.5">
-                      <MapPin className="size-3 shrink-0" />
-                      {moment.location}
-                    </span>
-                  )}
-                </div>
-                {moment.myStatus === 'accepted' && (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-rw-text-muted shrink-0">
-                    {moment.myRole === 'owner'  && <><Crown   className="size-3" /> Owner</>}
-                    {moment.myRole === 'editor' && <><PenTool className="size-3" /> Editor</>}
-                    {moment.myRole === 'reader' && <><Eye     className="size-3" /> Reader</>}
+          <div className="px-3.5 pt-3 pb-3.5 flex flex-col gap-1.5">
+
+            {/* Row 1: Date */}
+            {date && (
+              <div className="flex items-center gap-1 text-[12px] text-rw-text-muted">
+                <Calendar className="size-3 shrink-0" />
+                {date}
+              </div>
+            )}
+
+            {/* Row 2: Location */}
+            {moment.location && (
+              <div className="flex items-center gap-1 text-[12px] text-rw-text-muted">
+                <MapPin className="size-3 shrink-0" />
+                {moment.location}
+              </div>
+            )}
+
+            {/* Row 3: Tags */}
+            {moment.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {moment.tags.slice(0, 5).map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center rounded-full bg-rw-accent-subtle text-rw-accent px-2 py-0.5 text-[10px] font-medium"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {moment.tags.length > 5 && (
+                  <span className="inline-flex items-center rounded-full bg-rw-accent-subtle text-rw-accent px-2 py-0.5 text-[10px] font-medium">
+                    +{moment.tags.length - 5}
                   </span>
                 )}
               </div>
             )}
 
-            {/* Tags */}
-            {moment.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {moment.tags.slice(0, 4).map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
-                    {tag}
-                  </Badge>
-                ))}
-                {moment.tags.length > 4 && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                    +{moment.tags.length - 4}
-                  </Badge>
-                )}
+            {/* Row 4: Role badge (left) + Avatar stack (right) */}
+            {moment.myStatus === 'accepted' && (
+              <div className={cn('flex items-center justify-between gap-2', (date || moment.location || moment.tags.length > 0) && 'mt-0.5 pt-1.5 border-t border-rw-border-subtle/60')}>
+                {/* Role badge */}
+                <span className="inline-flex items-center gap-1 text-[11px] text-rw-text-muted">
+                  {moment.myRole === 'owner'  && <><Crown   className="size-3" /> Owner</>}
+                  {moment.myRole === 'editor' && <><PenTool className="size-3" /> Editor</>}
+                  {moment.myRole === 'reader' && <><Eye     className="size-3" /> Reader</>}
+                </span>
+
+                {/* Avatar stack */}
+                <div className="flex -space-x-1.5">
+                  {shownAvatars.map((m) => {
+                    const initials = `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase()
+                    return (
+                      <Avatar key={m.userId} className="size-6 border-2 border-rw-surface">
+                        <AvatarImage src={m.photoUrl ?? undefined} />
+                        <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
+                      </Avatar>
+                    )
+                  })}
+                  {showOverflow && (
+                    <div className="size-6 flex items-center justify-center rounded-full border-2 border-rw-surface bg-rw-surface-raised text-[9px] font-medium text-rw-text-muted">
+                      +{overflowCount}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
+
           </div>
         )}
       </Link>

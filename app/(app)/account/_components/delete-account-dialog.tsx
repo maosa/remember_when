@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Dialog,
+  DialogBody,
+  DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -50,27 +51,31 @@ export function DeleteAccountDialog({ username }: Props) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete your account</DialogTitle>
-          <DialogDescription>
-            This permanently removes your personal data. Your contributions to shared moments will remain and will continue to be attributed to you. This cannot be undone.
-          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-2">
-          <Label htmlFor="confirm-username">
-            Type <strong>{username}</strong> to confirm
-          </Label>
-          <Input
-            id="confirm-username"
-            value={confirmation}
-            onChange={(e) => {
-              setConfirmation(e.target.value)
-              setError(null)
-            }}
-            placeholder={username}
-            autoComplete="off"
-          />
-          {error && <p className="text-xs text-rw-danger">{error}</p>}
-        </div>
+        <DialogBody>
+          <p className="text-sm text-rw-text-muted">
+            This permanently removes your personal data. Your contributions to shared moments will
+            remain and will continue to be attributed to you. This cannot be undone.
+          </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="confirm-username">
+              Type <strong>{username}</strong> to confirm
+            </Label>
+            <Input
+              id="confirm-username"
+              value={confirmation}
+              onChange={(e) => {
+                setConfirmation(e.target.value)
+                setError(null)
+              }}
+              placeholder={username}
+              autoComplete="off"
+            />
+            {error && <p className="text-xs text-rw-danger">{error}</p>}
+          </div>
+        </DialogBody>
         <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
           <Button
             variant="destructive"
             onClick={handleDelete}

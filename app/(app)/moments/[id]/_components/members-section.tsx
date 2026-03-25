@@ -15,12 +15,20 @@ import { Separator } from '@/components/ui/separator'
 import {
   Dialog,
   DialogBody,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Menu,
   MenuTrigger,
@@ -317,19 +325,15 @@ function MemberRow({
                 <DialogHeader>
                   <DialogTitle>Remove member?</DialogTitle>
                 </DialogHeader>
-                <p className="text-sm text-rw-text-muted">
-                  Are you sure you want to remove{' '}
-                  <span className="font-medium text-rw-text-primary">{displayName}</span> from this
-                  moment?
-                </p>
+                <DialogBody>
+                  <p className="text-sm text-rw-text-muted">
+                    Are you sure you want to remove{' '}
+                    <span className="font-medium text-rw-text-primary">{displayName}</span> from this
+                    moment?
+                  </p>
+                </DialogBody>
                 <DialogFooter>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setConfirmRemove(false)}
-                    disabled={isPending}
-                  >
-                    Cancel
-                  </Button>
+                  <DialogClose render={<Button variant="outline" disabled={isPending} />}>Cancel</DialogClose>
                   <Button variant="destructive" onClick={handleRemove} disabled={isPending}>
                     {isPending ? 'Removing…' : 'Remove'}
                   </Button>
@@ -876,28 +880,27 @@ function GenerateLinkDialog({
           <DialogHeader>
             <DialogTitle>Generate invite link</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-1">
+          <DialogBody className="pt-5 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="expiry-select">Link expires in</Label>
-              <select
-                id="expiry-select"
-                value={expiry}
-                onChange={(e) => onExpiryChange(e.target.value as ExpiryOption)}
-                className="w-full rounded-md border bg-rw-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rw-accent/30"
-              >
-                {(Object.keys(EXPIRY_LABELS) as ExpiryOption[]).map((opt) => (
-                  <option key={opt} value={opt}>
-                    {EXPIRY_LABELS[opt]}
-                  </option>
-                ))}
-              </select>
+              <Label>Link expires in</Label>
+              <Select value={expiry} onValueChange={(v) => { if (v !== null) onExpiryChange(v as ExpiryOption) }}>
+                <SelectTrigger style={{ height: '2.5rem' }}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent alignItemWithTrigger={false}>
+                  {(Object.keys(EXPIRY_LABELS) as ExpiryOption[]).map((opt) => (
+                    <SelectItem key={opt} value={opt}>{EXPIRY_LABELS[opt]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <p className="text-xs text-rw-text-muted">
               Generating a new link revokes any existing one. People who already joined keep their
               access.
             </p>
-          </div>
+          </DialogBody>
           <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
             <Button onClick={handleGenerate} disabled={isPending}>
               {isPending ? 'Generating…' : 'Generate link'}
             </Button>
@@ -977,21 +980,17 @@ function TransferOwnershipSection({
           <DialogHeader>
             <DialogTitle>Transfer ownership?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-rw-text-muted">
-            Are you sure you want to transfer ownership to{' '}
-            <span className="font-medium text-rw-text-primary">
-              {selectedEditor?.firstName} {selectedEditor?.lastName}
-            </span>
-            ? This action can only be reversed by the new owner.
-          </p>
+          <DialogBody>
+            <p className="text-sm text-rw-text-muted">
+              Are you sure you want to transfer ownership to{' '}
+              <span className="font-medium text-rw-text-primary">
+                {selectedEditor?.firstName} {selectedEditor?.lastName}
+              </span>
+              ? This action can only be reversed by the new owner.
+            </p>
+          </DialogBody>
           <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setConfirmOpen(false)}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
+            <DialogClose render={<Button variant="outline" disabled={isPending} />}>Cancel</DialogClose>
             <Button onClick={handleTransfer} disabled={isPending}>
               {isPending ? 'Transferring…' : 'Transfer ownership'}
             </Button>
@@ -1046,48 +1045,50 @@ function LeaveSection({ momentId }: { momentId: string }) {
           <DialogHeader>
             <DialogTitle>Leave this moment?</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-1">
+          <DialogBody className="pt-5 gap-4">
             <p className="text-sm text-rw-text-muted">
               You will lose access to this moment. What would you like to do with your posts?
             </p>
-            <div className="space-y-2">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="leave-posts"
-                  checked={!deletePosts}
-                  onChange={() => setDeletePosts(false)}
-                  className="mt-0.5 shrink-0"
-                />
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setDeletePosts(false)}
+                className={cn(
+                  'flex items-start rounded-lg border p-3 text-left transition-colors',
+                  !deletePosts
+                    ? 'border-rw-accent bg-rw-accent-subtle/30 text-rw-text-primary'
+                    : 'border-rw-border text-rw-text-muted hover:border-rw-accent hover:text-rw-text-primary'
+                )}
+              >
                 <div>
                   <p className="text-sm font-medium">Keep my posts</p>
-                  <p className="text-xs text-rw-text-muted">
+                  <p className="text-xs text-rw-text-muted mt-0.5">
                     Your posts remain visible to other members.
                   </p>
                 </div>
-              </label>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="leave-posts"
-                  checked={deletePosts}
-                  onChange={() => setDeletePosts(true)}
-                  className="mt-0.5 shrink-0"
-                />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeletePosts(true)}
+                className={cn(
+                  'flex items-start rounded-lg border p-3 text-left transition-colors',
+                  deletePosts
+                    ? 'border-rw-danger bg-rw-danger-subtle/30 text-rw-text-primary'
+                    : 'border-rw-border text-rw-text-muted hover:border-rw-danger hover:text-rw-text-primary'
+                )}
+              >
                 <div>
                   <p className="text-sm font-medium">Delete my posts</p>
-                  <p className="text-xs text-rw-text-muted">
+                  <p className="text-xs text-rw-text-muted mt-0.5">
                     All posts you wrote will be permanently removed.
                   </p>
                 </div>
-              </label>
+              </button>
             </div>
             {error && <p className="text-sm text-rw-danger">{error}</p>}
-          </div>
+          </DialogBody>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
-              Cancel
-            </Button>
+            <DialogClose render={<Button variant="outline" disabled={isPending} />}>Cancel</DialogClose>
             <Button variant="destructive" onClick={handleLeave} disabled={isPending}>
               {isPending ? 'Leaving…' : 'Leave moment'}
             </Button>
@@ -1149,15 +1150,15 @@ function DeleteMomentSection({
           <DialogHeader>
             <DialogTitle>Delete this moment?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-rw-text-muted">
-            This will permanently delete &ldquo;{momentName}&rdquo; and all its content for
-            everyone. This cannot be undone.
-          </p>
-          {error && <p className="text-sm text-rw-danger">{error}</p>}
+          <DialogBody>
+            <p className="text-sm text-rw-text-muted">
+              This will permanently delete &ldquo;{momentName}&rdquo; and all its content for
+              everyone. This cannot be undone.
+            </p>
+            {error && <p className="text-sm text-rw-danger">{error}</p>}
+          </DialogBody>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
-              Cancel
-            </Button>
+            <DialogClose render={<Button variant="outline" disabled={isPending} />}>Cancel</DialogClose>
             <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
               {isPending ? 'Deleting…' : 'Delete moment'}
             </Button>
@@ -1213,14 +1214,14 @@ function ReaderView({ momentId }: { momentId: string }) {
               <DialogHeader>
                 <DialogTitle>Leave this moment?</DialogTitle>
               </DialogHeader>
-              <p className="text-sm text-rw-text-muted">
-                Are you sure you want to leave? You will lose access to this moment.
-              </p>
-              {error && <p className="text-sm text-rw-danger">{error}</p>}
+              <DialogBody>
+                <p className="text-sm text-rw-text-muted">
+                  Are you sure you want to leave? You will lose access to this moment.
+                </p>
+                {error && <p className="text-sm text-rw-danger">{error}</p>}
+              </DialogBody>
               <DialogFooter>
-                <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
-                  Cancel
-                </Button>
+                <DialogClose render={<Button variant="outline" disabled={isPending} />}>Cancel</DialogClose>
                 <Button variant="destructive" onClick={handleLeave} disabled={isPending}>
                   {isPending ? 'Leaving…' : 'Leave moment'}
                 </Button>

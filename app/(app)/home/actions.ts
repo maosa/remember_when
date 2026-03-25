@@ -28,6 +28,9 @@ export type MomentSummary = {
   location: string | null
   coverPhotoUrl: string | null
   ownerId: string
+  ownerFirstName: string
+  ownerLastName: string
+  ownerPhotoUrl: string | null
   createdAt: string
   tags: string[]
   members: MomentMember[]
@@ -63,6 +66,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
     .from('moments')
     .select(`
       id, name, date_year, date_month, date_day, location, cover_photo_url, owner_id, created_at,
+      owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
       moment_tags(tag),
       moment_members(
         user_id, role, status,
@@ -95,6 +99,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       status: 'pending' | 'accepted' | 'declined'
       user: { id: string; first_name: string; last_name: string; profile_photo_url: string | null } | null
     }>)
+    const owner = (m as unknown as { owner: { id: string; first_name: string; last_name: string; profile_photo_url: string | null } | null }).owner
     const myMembership = rawMembers.find((mm) => mm.user_id === user.id)
     const isArchived = (m.moment_archive as unknown as Array<{ user_id: string }>)
       .some((a) => a.user_id === user.id)
@@ -110,6 +115,9 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       location: m.location ?? null,
       coverPhotoUrl: coverPath ? (signedCovers.get(coverPath) ?? null) : null,
       ownerId: m.owner_id,
+      ownerFirstName: owner?.first_name ?? '',
+      ownerLastName: owner?.last_name ?? '',
+      ownerPhotoUrl: owner?.profile_photo_url ?? null,
       createdAt: m.created_at,
       tags: (m.moment_tags as unknown as Array<{ tag: string }>).map((t) => t.tag),
       members: rawMembers
