@@ -271,11 +271,15 @@ export function CreateMomentModal() {
                 }}
                 onOpenChange={(open) => {
                   if (!open) return
-                  // Double rAF: wait for portal paint, then scroll selected item to centre
+                  // Double rAF: wait for portal paint, then scroll the selected item to the
+                  // centre of the popup by setting scrollTop directly on the scroll container.
+                  // Using scrollIntoView would propagate up the ancestor chain and scroll the
+                  // page body, causing visible background jump on every open.
                   requestAnimationFrame(() => requestAnimationFrame(() => {
-                    document
-                      .querySelector('[data-slot="select-content"] [aria-selected="true"]')
-                      ?.scrollIntoView({ block: 'center', behavior: 'instant' })
+                    const popup = document.querySelector('[data-slot="select-content"]') as HTMLElement | null
+                    const selected = popup?.querySelector('[aria-selected="true"]') as HTMLElement | null
+                    if (!popup || !selected) return
+                    popup.scrollTop = selected.offsetTop - popup.clientHeight / 2 + selected.offsetHeight / 2
                   }))
                 }}
               >
