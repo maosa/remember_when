@@ -34,8 +34,6 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
   const [isPending, startTransition] = useTransition()
   const [inviteError, setInviteError] = useState<string | null>(null)
 
-  const canEdit = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
-
   const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = myStatus === 'pending'
 
@@ -87,26 +85,6 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
       >
         <div className="mx-auto max-w-[720px] px-4 md:px-6 h-full flex items-center gap-2">
           <h1 className="font-serif font-normal text-base truncate flex-1">{moment.name}</h1>
-          {canEdit && (
-            <Menu>
-              <MenuTrigger
-                render={
-                  <button
-                    type="button"
-                    className="flex size-11 md:size-7 shrink-0 items-center justify-center rounded-md text-rw-text-muted hover:text-rw-text-primary hover:bg-rw-surface-raised transition-colors"
-                    aria-label="Moment options"
-                  />
-                }
-              >
-                <MoreHorizontal className="size-4" />
-              </MenuTrigger>
-              <MenuContent align="end">
-                <MenuItem onClick={() => setEditOpen(true)} className="gap-2">
-                  <Pencil className="size-3.5" /> Edit moment
-                </MenuItem>
-              </MenuContent>
-            </Menu>
-          )}
         </div>
       </div>
 

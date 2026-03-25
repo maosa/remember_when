@@ -47,7 +47,7 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
     <section className="mx-auto max-w-[720px] px-4 md:px-6 py-3 border-b border-rw-border-subtle space-y-2">
       <div className="flex flex-wrap items-center gap-1.5">
         {tags.map((t) => (
-          <Badge key={t.id} variant="default" className="gap-1 pl-2 pr-1.5">
+          <Badge key={t.id} variant="default" className="h-6 gap-1 pl-2 pr-1.5">
             {t.tag}
             {canEdit && (
               <button
