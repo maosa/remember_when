@@ -125,7 +125,7 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
           <TabsTrigger value="moments">
             Moments
             {active.length > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-rw-surface-raised px-1.5 py-0.5 text-[11px] font-medium text-rw-text-muted group-data-[selected]:bg-rw-accent/15 group-data-[selected]:text-rw-accent">
+              <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-rw-surface-raised px-1.5 py-0.5 text-[11px] font-medium text-rw-text-muted group-data-[active]:bg-rw-accent/15 group-data-[active]:text-rw-accent">
                 {active.length}
               </span>
             )}
@@ -133,7 +133,7 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
           <TabsTrigger value="archived">
             Archived
             {archived.length > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-rw-surface-raised px-1.5 py-0.5 text-[11px] font-medium text-rw-text-muted group-data-[selected]:bg-rw-accent/15 group-data-[selected]:text-rw-accent">
+              <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-rw-surface-raised px-1.5 py-0.5 text-[11px] font-medium text-rw-text-muted group-data-[active]:bg-rw-accent/15 group-data-[active]:text-rw-accent">
                 {archived.length}
               </span>
             )}

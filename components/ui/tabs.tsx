@@ -39,7 +39,7 @@ function TabsTrigger({
         "focus-visible:ring-2 focus-visible:ring-rw-accent/30 rounded-sm",
         "disabled:pointer-events-none disabled:opacity-50",
         // Active — accent underline, primary text
-        "data-[selected]:border-rw-accent data-[selected]:text-rw-text-primary",
+        "data-[active]:border-rw-accent data-[active]:text-rw-text-primary",
         className
       )}
       {...props}
