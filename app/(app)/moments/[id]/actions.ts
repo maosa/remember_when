@@ -1142,12 +1142,14 @@ export async function preparePostUpload(
 
   if (postError || !post) return { error: postError?.message ?? 'Failed to create post.' }
 
-  // Generate signed upload URLs in parallel
+  // Generate signed upload URLs in parallel.
+  // Must use the user's authenticated client (not admin) so the signed URL
+  // token carries the user's JWT claims — the storage RLS policy checks auth.uid().
   const urlResults = await Promise.all(
     files.map(async (f) => {
       const ext = safeExt(f.type)
       const path = `${momentId}/${post.id}/${f.index}.${ext}`
-      const { data, error } = await admin.storage.from('post-media').createSignedUploadUrl(path)
+      const { data, error } = await supabase.storage.from('post-media').createSignedUploadUrl(path)
       return { f, path, data, error }
     }),
   )
