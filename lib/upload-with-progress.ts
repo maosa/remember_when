@@ -50,6 +50,10 @@ export function uploadWithProgress(
     xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')))
 
     xhr.open('POST', signedUrl)
+    // Supabase Storage signed-upload endpoints require the token in both the
+    // URL query string AND the Authorization header (mirrors what storage-js does).
+    const token = new URL(signedUrl).searchParams.get('token')
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
     xhr.send(body)
   })
 }
