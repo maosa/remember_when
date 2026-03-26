@@ -50,7 +50,7 @@ function shuffleIndices(len: number): number[] {
   return a
 }
 
-const QUOTE_DISPLAY_MS = 5000
+const QUOTE_DISPLAY_MS = 4000
 const QUOTE_FADE_MS    = 600
 
 const QUOTE_MARK_STYLE: React.CSSProperties = {
