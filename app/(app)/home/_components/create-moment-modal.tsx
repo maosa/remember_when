@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Plus, X, Search, UserRound } from 'lucide-react'
+import { Plus, X, Search, UserRound, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -321,24 +321,27 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
           {/* Tags */}
           <div className="space-y-1.5">
             <Label>Tags <span className="text-rw-text-muted text-xs font-normal">(optional · max 20 chars)</span></Label>
-            <div className="flex flex-wrap gap-1.5 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 min-h-9 cursor-text" onClick={() => document.getElementById('tag-input')?.focus()}>
-              {tags.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-rw-accent-subtle text-rw-accent px-2.5 py-1 text-xs font-medium">
-                  {tag}
-                  <button type="button" onClick={() => removeTag(tag)} className="text-rw-accent/60 hover:text-rw-accent">
-                    <X className="size-3" />
-                  </button>
-                </span>
-              ))}
-              <input
-                id="tag-input"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value.slice(0, 20))}
-                onKeyDown={handleTagKeyDown}
-                onBlur={() => addTag(tagInput)}
-                placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
-                className="min-w-24 flex-1 bg-transparent text-base md:text-sm outline-none placeholder:text-rw-text-muted"
-              />
+            <div className="flex items-start gap-2 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 min-h-9 cursor-text" onClick={() => document.getElementById('tag-input')?.focus()}>
+              <Tag className="size-4 shrink-0 mt-0.5 text-rw-text-placeholder" />
+              <div className="flex flex-wrap gap-1.5 flex-1">
+                {tags.map((tag) => (
+                  <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-rw-accent-subtle text-rw-accent px-2.5 py-1 text-xs font-medium">
+                    {tag}
+                    <button type="button" onClick={() => removeTag(tag)} className="text-rw-accent/60 hover:text-rw-accent">
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                ))}
+                <input
+                  id="tag-input"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value.slice(0, 20))}
+                  onKeyDown={handleTagKeyDown}
+                  onBlur={() => addTag(tagInput)}
+                  placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
+                  className="min-w-24 flex-1 bg-transparent text-base md:text-sm outline-none placeholder:text-rw-text-placeholder"
+                />
+              </div>
             </div>
             <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
           </div>
