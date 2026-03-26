@@ -6,7 +6,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification, sendNotifications } from '@/lib/notifications'
-import { validateCoverFile, validateMediaFile, safeExt } from '@/lib/upload'
+import { validateCoverFile, validateMediaFile, validateMediaMimeType, safeExt } from '@/lib/upload'
 import { signStoragePath, signStoragePaths } from '@/lib/storage'
 import { logAuditEvent } from '@/lib/audit'
 
@@ -543,22 +543,13 @@ export async function updateMemberRole(
 
   const admin = createAdminClient()
 
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id, name')
-    .eq('id', momentId)
-    .single()
+  const [{ data: moment }, { data: target }] = await Promise.all([
+    admin.from('moments').select('owner_id, name').eq('id', momentId).single(),
+    admin.from('moment_members').select('id, user_id, role').eq('id', memberId).eq('moment_id', momentId).single(),
+  ])
 
   if (!moment) return { error: 'Moment not found.' }
   if (moment.owner_id !== user.id) return { error: 'Only the owner can change member roles.' }
-
-  const { data: target } = await admin
-    .from('moment_members')
-    .select('id, user_id, role')
-    .eq('id', memberId)
-    .eq('moment_id', momentId)
-    .single()
-
   if (!target) return { error: 'Member not found.' }
   if (target.role === newRole) return {}
 
@@ -775,17 +766,11 @@ export async function deleteCoverPhoto(momentId: string): Promise<{ error?: stri
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch current cover URL so we can decide whether to remove from storage
-  const { data: moment } = await supabase
-    .from('moments')
-    .select('cover_photo_url')
-    .eq('id', momentId)
-    .single()
-
-  const { error } = await supabase
-    .from('moments')
-    .update({ cover_photo_url: null })
-    .eq('id', momentId)
+  // Fetch current cover URL (for storage cleanup) and clear it in parallel
+  const [{ data: moment }, { error }] = await Promise.all([
+    supabase.from('moments').select('cover_photo_url').eq('id', momentId).single(),
+    supabase.from('moments').update({ cover_photo_url: null }).eq('id', momentId),
+  ])
 
   if (error) return { error: error.message }
 
@@ -1012,38 +997,39 @@ export async function createPost(momentId: string, formData: FormData): Promise<
 
   if (postError || !post) return { error: postError?.message ?? 'Failed to create post.' }
 
-  // Upload media files
+  // Upload all media files in parallel, then batch-insert all post_media rows at once
   if (validFiles.length > 0) {
-    for (let i = 0; i < validFiles.length; i++) {
-      const file = validFiles[i]
-      const ext = safeExt(file.type)
-      const filePath = `${momentId}/${post.id}/${i}.${ext}`
+    type UploadResult =
+      | { ok: true;  row: { post_id: string; media_type: string; storage_url: string } }
+      | { ok: false; message: string }
 
-      const { error: uploadError } = await supabase.storage
-        .from('post-media')
-        .upload(filePath, file, { upsert: false })
-
-      if (uploadError) {
-        // Best-effort cleanup: soft-delete the post
-        await admin.from('posts').update({ deleted_at: new Date().toISOString() }).eq('id', post.id)
-        return { error: `Upload failed: ${uploadError.message}` }
-      }
-
-      // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
-      const storagePath = `post-media/${filePath}`
-
-      const mediaType = file.type.startsWith('video/')
-        ? 'video'
-        : file.type.startsWith('audio/')
-          ? 'audio'
-          : 'photo'
-
-      await admin.from('post_media').insert({
-        post_id: post.id,
-        media_type: mediaType,
-        storage_url: storagePath,
+    const uploadResults = await Promise.all<UploadResult>(
+      validFiles.map(async (file, i) => {
+        const ext = safeExt(file.type)
+        const filePath = `${momentId}/${post.id}/${i}.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('post-media')
+          .upload(filePath, file, { upsert: false })
+        if (uploadError) return { ok: false, message: uploadError.message }
+        const mediaType = file.type.startsWith('video/')
+          ? 'video'
+          : file.type.startsWith('audio/')
+            ? 'audio'
+            : 'photo'
+        return { ok: true, row: { post_id: post.id, media_type: mediaType, storage_url: `post-media/${filePath}` } }
       })
+    )
+
+    const firstFailure = uploadResults.find((r): r is Extract<UploadResult, { ok: false }> => !r.ok)
+    if (firstFailure) {
+      // Best-effort cleanup: soft-delete the post so it doesn't appear as empty
+      await admin.from('posts').update({ deleted_at: new Date().toISOString() }).eq('id', post.id)
+      return { error: `Upload failed: ${firstFailure.message}` }
     }
+
+    await admin.from('post_media').insert(
+      (uploadResults as Extract<UploadResult, { ok: true }>[]).map((r) => r.row)
+    )
   }
 
   // Notify accepted members (excluding author) + owner (if not author)
@@ -1073,13 +1059,136 @@ export async function createPost(momentId: string, formData: FormData): Promise<
   return {}
 }
 
-export async function deletePost(postId: string, momentId: string): Promise<{ error?: string }> {
+// ─── Two-phase post creation (for posts with media attachments) ───────────────
+//
+// When a post includes media files the client uses a two-step flow so it can
+// upload directly to Supabase Storage via XHR and show real upload progress:
+//
+//   1. preparePostUpload  — validates, creates the post record, returns signed
+//                           upload URLs.  The client XHR-uploads each file.
+//   2. finalizePostUpload — inserts post_media rows and sends notifications.
+//
+// Text-only posts still use the original createPost action above.
+
+export type PreparedUpload = {
+  /** Index matching the position in the `files` array passed to preparePostUpload */
+  index: number
+  /** Full signed URL (including token) to POST the file to */
+  signedUrl: string
+  /** Storage path relative to the bucket root, e.g. "{momentId}/{postId}/{i}.mp4" */
+  path: string
+  mediaType: 'photo' | 'video' | 'audio'
+}
+
+/**
+ * Phase 1 — validates the request, creates the post record, and returns a
+ * signed upload URL for every file so the client can upload directly to Storage.
+ */
+export async function preparePostUpload(
+  momentId: string,
+  content: string | null,
+  files: Array<{ name: string; type: string; size: number; index: number }>,
+): Promise<{ error?: string; postId?: string; uploads?: PreparedUpload[] }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const trimmedContent = content?.trim() || null
+  const clampedContent = trimmedContent ? trimmedContent.slice(0, 10_000) : null
+
+  if (!clampedContent && files.length === 0) {
+    return { error: 'A post must have text or at least one media file.' }
+  }
+
+  for (const f of files) {
+    if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
+    const mimeError = validateMediaMimeType(f.type)
+    if (mimeError) return { error: mimeError }
+  }
+
+  const admin = createAdminClient()
+
+  // Verify access: accepted member or owner
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+
+  if (!moment) return { error: 'Moment not found.' }
+
+  const isOwner = moment.owner_id === user.id
+  if (!isOwner) {
+    const { data: membership } = await admin
+      .from('moment_members')
+      .select('role, status')
+      .eq('moment_id', momentId)
+      .eq('user_id', user.id)
+      .single()
+    if (!membership || membership.status !== 'accepted') {
+      return { error: 'You do not have permission to post in this moment.' }
+    }
+    if (membership.role === 'reader') {
+      return { error: 'Readers cannot post in this moment.' }
+    }
+  }
+
+  // Create post record
+  const { data: post, error: postError } = await admin
+    .from('posts')
+    .insert({ moment_id: momentId, author_id: user.id, content: clampedContent })
+    .select('id')
+    .single()
+
+  if (postError || !post) return { error: postError?.message ?? 'Failed to create post.' }
+
+  // Generate signed upload URLs in parallel
+  const urlResults = await Promise.all(
+    files.map(async (f) => {
+      const ext = safeExt(f.type)
+      const path = `${momentId}/${post.id}/${f.index}.${ext}`
+      const { data, error } = await admin.storage.from('post-media').createSignedUploadUrl(path)
+      return { f, path, data, error }
+    }),
+  )
+
+  const firstUrlFailure = urlResults.find((r) => r.error || !r.data)
+  if (firstUrlFailure) {
+    // Best-effort cleanup: soft-delete the post so it doesn't appear as empty
+    await admin.from('posts').update({ deleted_at: new Date().toISOString() }).eq('id', post.id)
+    return { error: firstUrlFailure.error?.message ?? 'Failed to generate upload URL.' }
+  }
+
+  const uploads: PreparedUpload[] = urlResults.map((r) => ({
+    index: r.f.index,
+    signedUrl: r.data!.signedUrl,
+    path: r.path,
+    mediaType: r.f.type.startsWith('video/')
+      ? 'video'
+      : r.f.type.startsWith('audio/')
+        ? 'audio'
+        : 'photo',
+  }))
+
+  return { postId: post.id, uploads }
+}
+
+/**
+ * Phase 2 — called after all client-side uploads complete.
+ * Inserts post_media rows and sends new-post notifications to moment members.
+ */
+export async function finalizePostUpload(
+  postId: string,
+  momentId: string,
+  media: Array<{ path: string; mediaType: 'photo' | 'video' | 'audio' }>,
+): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const admin = createAdminClient()
 
+  // Verify the post belongs to this user
   const { data: post } = await admin
     .from('posts')
     .select('author_id, moment_id')
@@ -1087,13 +1196,64 @@ export async function deletePost(postId: string, momentId: string): Promise<{ er
     .is('deleted_at', null)
     .single()
 
-  if (!post || post.moment_id !== momentId) return { error: 'Post not found.' }
+  if (!post || post.author_id !== user.id || post.moment_id !== momentId) {
+    return { error: 'Post not found.' }
+  }
 
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .single()
+  if (media.length > 0) {
+    const { error: mediaError } = await admin.from('post_media').insert(
+      media.map((m) => ({
+        post_id: postId,
+        media_type: m.mediaType,
+        storage_url: `post-media/${m.path}`,
+      })),
+    )
+    if (mediaError) return { error: mediaError.message }
+  }
+
+  // Notify accepted members (excluding author) + owner (if not the author)
+  const [{ data: members }, { data: moment }] = await Promise.all([
+    admin
+      .from('moment_members')
+      .select('user_id')
+      .eq('moment_id', momentId)
+      .eq('status', 'accepted')
+      .neq('user_id', user.id),
+    admin.from('moments').select('owner_id').eq('id', momentId).single(),
+  ])
+
+  const recipientIds = new Set<string>((members ?? []).map((m) => m.user_id))
+  if (moment?.owner_id && moment.owner_id !== user.id) recipientIds.add(moment.owner_id)
+
+  if (recipientIds.size > 0) {
+    await sendNotifications(
+      Array.from(recipientIds).map((uid) => ({
+        user_id: uid,
+        type: 'new_post' as const,
+        related_user_id: user.id,
+        related_moment_id: momentId,
+        post_id: postId,
+      })),
+    )
+  }
+
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
+export async function deletePost(postId: string, momentId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const [{ data: post }, { data: moment }] = await Promise.all([
+    admin.from('posts').select('author_id, moment_id').eq('id', postId).is('deleted_at', null).single(),
+    admin.from('moments').select('owner_id').eq('id', momentId).single(),
+  ])
+
+  if (!post || post.moment_id !== momentId) return { error: 'Post not found.' }
 
   const isAuthor = post.author_id === user.id
   const isMomentOwner = moment?.owner_id === user.id
@@ -1181,52 +1341,57 @@ export async function editPost(postId: string, momentId: string, formData: FormD
         .in('id', removeMediaIds)
         .eq('post_id', postId)
 
-      // Best-effort Storage deletions — storage_url is now "{bucket}/{path}"
-      for (const row of toRemove) {
-        try {
-          const objectPath = row.storage_url.startsWith('post-media/')
+      // Best-effort Storage deletions — batch all paths into a single remove call.
+      // All storage_url values use the "post-media/{path}" prefix format since the
+      // migration to path-based storage; the legacy signed-URL format is no longer used.
+      const objectPaths = toRemove
+        .map((row) =>
+          row.storage_url.startsWith('post-media/')
             ? row.storage_url.slice('post-media/'.length)
-            : row.storage_url.split('/post-media/')[1]?.split('?')[0] // legacy URL fallback
-          if (objectPath) {
-            await supabase.storage.from('post-media').remove([objectPath])
-          }
-        } catch {
-          // non-fatal
-        }
+            : null
+        )
+        .filter(Boolean) as string[]
+      if (objectPaths.length > 0) {
+        await supabase.storage.from('post-media').remove(objectPaths).catch((err: unknown) => {
+          console.error('[editPost] Storage cleanup failed:', err)
+        })
       }
     }
   }
 
-  // Upload new media files
+  // Upload new media files in parallel, then batch-insert all post_media rows at once
   if (newFiles.length > 0) {
-    // Use a timestamp-based offset to avoid collisions with existing files
+    // Timestamp-based offset avoids filename collisions with existing files
     const offset = Date.now()
-    for (let i = 0; i < newFiles.length; i++) {
-      const file = newFiles[i]
-      const ext = safeExt(file.type)
-      const filePath = `${momentId}/${postId}/${offset}-${i}.${ext}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('post-media')
-        .upload(filePath, file, { upsert: false })
+    type EditUploadResult =
+      | { ok: true;  row: { post_id: string; media_type: string; storage_url: string } }
+      | { ok: false; message: string }
 
-      if (uploadError) return { error: `Upload failed: ${uploadError.message}` }
-
-      // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
-      const storagePath = `post-media/${filePath}`
-
-      const mediaType = file.type.startsWith('video/')
-        ? 'video'
-        : file.type.startsWith('audio/')
-          ? 'audio'
-          : 'photo'
-
-      await admin.from('post_media').insert({
-        post_id: postId,
-        media_type: mediaType,
-        storage_url: storagePath,
+    const uploadResults = await Promise.all<EditUploadResult>(
+      newFiles.map(async (file, i) => {
+        const ext = safeExt(file.type)
+        const filePath = `${momentId}/${postId}/${offset}-${i}.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('post-media')
+          .upload(filePath, file, { upsert: false })
+        if (uploadError) return { ok: false, message: uploadError.message }
+        const mediaType = file.type.startsWith('video/')
+          ? 'video'
+          : file.type.startsWith('audio/')
+            ? 'audio'
+            : 'photo'
+        // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
+        return { ok: true, row: { post_id: postId, media_type: mediaType, storage_url: `post-media/${filePath}` } }
       })
-    }
+    )
+
+    const firstFailure = uploadResults.find((r): r is Extract<EditUploadResult, { ok: false }> => !r.ok)
+    if (firstFailure) return { error: `Upload failed: ${firstFailure.message}` }
+
+    await admin.from('post_media').insert(
+      (uploadResults as Extract<EditUploadResult, { ok: true }>[]).map((r) => r.row)
+    )
   }
 
   // Update post content and edited_at

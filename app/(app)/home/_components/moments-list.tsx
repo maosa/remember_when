@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ArrowUpDown, BookOpen } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { ArrowUpDown, BookOpen, Plus } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Menu,
@@ -12,12 +13,16 @@ import {
   MenuTrigger,
 } from '@/components/ui/menu'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/lib/button-variants'
 import { EmptyState } from '@/components/ui/empty-state'
 import { MomentCard } from './moment-card'
-import { CreateMomentModal } from './create-moment-modal'
 import { type MomentSummary } from '../actions'
+
+const CreateMomentModal = dynamic(() =>
+  import('./create-moment-modal').then((m) => ({ default: m.CreateMomentModal }))
+)
 
 type SortMode = 'newest' | 'oldest' | 'split'
 
@@ -63,9 +68,11 @@ function filterMoments(moments: MomentSummary[], query: string): MomentSummary[]
 export function MomentsList({ moments, currentUserId, firstName }: Props) {
   const [sort, setSort] = useState<SortMode>('newest')
   const [search, setSearch] = useState('')
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createEverOpened, setCreateEverOpened] = useState(false)
 
-  const active = moments.filter((m) => !m.isArchived)
-  const archived = moments.filter((m) => m.isArchived)
+  const active = useMemo(() => moments.filter((m) => !m.isArchived), [moments])
+  const archived = useMemo(() => moments.filter((m) => m.isArchived), [moments])
 
   const filteredActive = useMemo(() => filterMoments(active, search), [active, search])
   const filteredArchived = useMemo(() => filterMoments(archived, search), [archived, search])
@@ -87,8 +94,18 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         <h1 className="text-[28px] font-semibold text-rw-text-primary leading-tight">
           Hey, {firstName}.
         </h1>
-        <CreateMomentModal />
+        <Button
+          className="w-36 h-10"
+          onClick={() => { setCreateEverOpened(true); setCreateOpen(true) }}
+        >
+          <Plus className="size-4" />
+          New moment
+        </Button>
       </div>
+
+      {createEverOpened && (
+        <CreateMomentModal open={createOpen} onOpenChange={setCreateOpen} />
+      )}
 
       {/* Search + sort row */}
       <div className="flex items-center gap-2">
@@ -187,6 +204,10 @@ function MomentsGrid({
   emptyTitle: string
   emptyDescription: string
 }) {
+  // Hoist split-view filters unconditionally so hooks rules are respected
+  const yours = useMemo(() => moments.filter((m) => m.ownerId === currentUserId), [moments, currentUserId])
+  const shared = useMemo(() => moments.filter((m) => m.ownerId !== currentUserId), [moments, currentUserId])
+
   if (moments.length === 0) {
     return (
       <EmptyState
@@ -199,8 +220,6 @@ function MomentsGrid({
   }
 
   if (sort === 'split') {
-    const yours = moments.filter((m) => m.ownerId === currentUserId)
-    const shared = moments.filter((m) => m.ownerId !== currentUserId)
     return (
       <div className="space-y-8">
         {yours.length > 0 && (

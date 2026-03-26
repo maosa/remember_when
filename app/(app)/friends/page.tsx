@@ -1,61 +1,69 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { FriendsManager } from './_components/friends-manager'
 
 export default async function FriendsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getServerUser()
   if (!user) redirect('/login')
 
-  // Accepted friends
-  const { data: friendships } = await supabase
-    .from('friendships')
-    .select(`
-      id,
-      requester_id,
-      recipient_id,
-      requester:users!friendships_requester_id_fkey(id, first_name, last_name, username, profile_photo_url),
-      recipient:users!friendships_recipient_id_fkey(id, first_name, last_name, username, profile_photo_url)
-    `)
-    .eq('status', 'accepted')
-    .is('deleted_at', null)
-    .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
+  const supabase = await createClient()
 
-  // Pending requests sent by the current user
-  const { data: pendingSent } = await supabase
-    .from('friendships')
-    .select(`
-      id,
-      recipient:users!friendships_recipient_id_fkey(id, first_name, last_name, username, profile_photo_url)
-    `)
-    .eq('requester_id', user.id)
-    .eq('status', 'pending')
-    .is('deleted_at', null)
+  const [
+    { data: friendships },
+    { data: pendingSent },
+    { data: pendingReceived },
+    { data: notifications },
+  ] = await Promise.all([
+    // Accepted friends
+    supabase
+      .from('friendships')
+      .select(`
+        id,
+        requester_id,
+        recipient_id,
+        requester:users!friendships_requester_id_fkey(id, first_name, last_name, username, profile_photo_url),
+        recipient:users!friendships_recipient_id_fkey(id, first_name, last_name, username, profile_photo_url)
+      `)
+      .eq('status', 'accepted')
+      .is('deleted_at', null)
+      .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`),
 
-  // Pending requests received by the current user
-  const { data: pendingReceived } = await supabase
-    .from('friendships')
-    .select(`
-      id,
-      requester_id,
-      requester:users!friendships_requester_id_fkey(id, first_name, last_name, username, profile_photo_url)
-    `)
-    .eq('recipient_id', user.id)
-    .eq('status', 'pending')
-    .is('deleted_at', null)
+    // Pending requests sent by the current user
+    supabase
+      .from('friendships')
+      .select(`
+        id,
+        recipient:users!friendships_recipient_id_fkey(id, first_name, last_name, username, profile_photo_url)
+      `)
+      .eq('requester_id', user.id)
+      .eq('status', 'pending')
+      .is('deleted_at', null),
 
-  // Unread notifications for the current user
-  const { data: notifications } = await supabase
-    .from('notifications')
-    .select(`
-      id,
-      type,
-      created_at,
-      from_user:users!notifications_from_user_id_fkey(id, first_name, last_name, username, profile_photo_url)
-    `)
-    .eq('user_id', user.id)
-    .is('read_at', null)
-    .order('created_at', { ascending: false })
+    // Pending requests received by the current user
+    supabase
+      .from('friendships')
+      .select(`
+        id,
+        requester_id,
+        requester:users!friendships_requester_id_fkey(id, first_name, last_name, username, profile_photo_url)
+      `)
+      .eq('recipient_id', user.id)
+      .eq('status', 'pending')
+      .is('deleted_at', null),
+
+    // Unread notifications for the current user
+    supabase
+      .from('notifications')
+      .select(`
+        id,
+        type,
+        created_at,
+        from_user:users!notifications_from_user_id_fkey(id, first_name, last_name, username, profile_photo_url)
+      `)
+      .eq('user_id', user.id)
+      .is('read_at', null)
+      .order('created_at', { ascending: false }),
+  ])
 
   // Normalise: each friend should be the "other" user
   const friends = (friendships ?? []).map((f) => {

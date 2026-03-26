@@ -1,14 +1,18 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { ArrowDownUp, BookOpen } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { ArrowDownUp, BookOpen, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PostCard } from './post-card'
-import { CreatePostDialog } from './create-post-dialog'
 import type { PostWithMedia } from '../actions'
+
+const CreatePostDialog = dynamic(() =>
+  import('./create-post-dialog').then((m) => ({ default: m.CreatePostDialog }))
+)
 
 interface Props {
   initialPosts: PostWithMedia[]
@@ -31,6 +35,13 @@ interface Author {
 export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId, canPost, isEditor }: Props) {
   const [sort, setSort] = useState<SortOrder>('asc')
   const [filterAuthorId, setFilterAuthorId] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createEverOpened, setCreateEverOpened] = useState(false)
+
+  const openCreate = useCallback(() => {
+    setCreateEverOpened(true)
+    setCreateOpen(true)
+  }, [])
 
   // Collect unique authors from posts
   const authors = useMemo<Author[]>(() => {
@@ -75,7 +86,12 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
         )}
 
         {/* Add entry button */}
-        {canPost && <CreatePostDialog momentId={momentId} />}
+        {canPost && (
+          <Button size="sm" className="gap-1.5 text-xs" onClick={openCreate}>
+            <Plus className="size-4" />
+            Add entry
+          </Button>
+        )}
       </div>
 
       {/* Author filter chips */}
@@ -121,7 +137,12 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
           icon={<BookOpen />}
           title="No entries yet"
           description={canPost ? 'Be the first to add an entry to this moment.' : 'Entries will appear here.'}
-          action={canPost ? <CreatePostDialog momentId={momentId} /> : undefined}
+          action={canPost ? (
+            <Button size="sm" className="gap-1.5 text-xs" onClick={openCreate}>
+              <Plus className="size-4" />
+              Add entry
+            </Button>
+          ) : undefined}
           className="py-16"
         />
       ) : (
@@ -135,6 +156,14 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
             />
           ))}
         </div>
+      )}
+
+      {canPost && createEverOpened && (
+        <CreatePostDialog
+          momentId={momentId}
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+        />
       )}
     </div>
   )

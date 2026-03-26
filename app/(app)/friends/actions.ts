@@ -173,6 +173,7 @@ export async function acceptFriendRequest(friendshipId: string): Promise<{ error
     .eq('read', false)
 
   revalidatePath('/friends')
+  revalidatePath('/', 'layout')
   return {}
 }
 
@@ -183,35 +184,31 @@ export async function declineFriendRequest(friendshipId: string): Promise<{ erro
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { error } = await supabase
+  const { data: friendship, error } = await supabase
     .from('friendships')
     .update({ status: 'declined' })
     .eq('id', friendshipId)
     .eq('recipient_id', user.id)
     .eq('status', 'pending')
+    .select('requester_id')
+    .single()
 
   if (error) return { error: error.message }
 
-  // Mark the incoming friend_request_received notification as read.
-  // Need requester_id to identify the right notification.
-  const admin = createAdminClient()
-  const { data: fr } = await admin
-    .from('friendships')
-    .select('requester_id')
-    .eq('id', friendshipId)
-    .single()
-
-  if (fr) {
+  // Mark the incoming friend_request_received notification as read
+  if (friendship) {
+    const admin = createAdminClient()
     await admin
       .from('notifications')
       .update({ read: true })
       .eq('user_id', user.id)
       .eq('type', 'friend_request_received')
-      .eq('related_user_id', fr.requester_id)
+      .eq('related_user_id', friendship.requester_id)
       .eq('read', false)
   }
 
   revalidatePath('/friends')
+  revalidatePath('/', 'layout')
   return {}
 }
 

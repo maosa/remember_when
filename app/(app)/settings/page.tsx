@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { buttonVariants } from '@/lib/button-variants'
 import { cn } from '@/lib/utils'
 import { NotificationsForm, type NotificationPrefs } from './_components/notifications-form'
@@ -26,9 +26,10 @@ export default async function SettingsPage({
   const { from } = await searchParams
   const backHref = from === 'notifications' ? '/notifications' : '/account'
   const backLabel = from === 'notifications' ? 'Back to notifications' : 'Back to account'
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getServerUser()
   if (!user) redirect('/login')
+
+  const supabase = await createClient()
 
   const { data: row } = await supabase
     .from('notification_preferences')

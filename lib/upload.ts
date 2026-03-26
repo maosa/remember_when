@@ -84,8 +84,14 @@ export function validateCoverFile(file: File): string | null {
 }
 
 export function validateMediaFile(file: File): string | null {
-  if (!(ALLOWED_MEDIA_TYPES as readonly string[]).includes(file.type)) {
-    return `Unsupported file type: ${file.type || 'unknown'}. Allowed types: images, videos, and audio files.`
+  return validateMediaMimeType(file.type)
+}
+
+/** Same check as `validateMediaFile` but accepts a plain MIME type string.
+ *  Useful in server actions that receive file metadata rather than a File object. */
+export function validateMediaMimeType(mimeType: string): string | null {
+  if (!(ALLOWED_MEDIA_TYPES as readonly string[]).includes(mimeType)) {
+    return `Unsupported file type: ${mimeType || 'unknown'}. Allowed types: images, videos, and audio files.`
   }
   return null
 }

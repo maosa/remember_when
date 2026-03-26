@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Bell, ChevronRight, CreditCard, LogOut } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ProfileForm } from './_components/profile-form'
@@ -17,8 +17,8 @@ async function signOut() {
 }
 
 export default async function AccountPage() {
+  const { data: { user } } = await getServerUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
 
   const { data: profile } = await supabase
     .from('users')

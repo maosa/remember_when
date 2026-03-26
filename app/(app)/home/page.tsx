@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Bell } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { fetchHomeMoments } from './actions'
 import { MomentsList } from './_components/moments-list'
 
@@ -10,9 +10,10 @@ interface Props {
 }
 
 export default async function HomePage({ searchParams }: Props) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getServerUser()
   if (!user) redirect('/login')
+
+  const supabase = await createClient()
 
   const [profile, { moments }, { pending_invite }] = await Promise.all([
     supabase

@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -60,8 +59,12 @@ type InviteeDisplay = {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function CreateMomentModal() {
-  const [open, setOpen] = useState(false)
+interface Props {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function CreateMomentModal({ open, onOpenChange }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
@@ -91,7 +94,7 @@ export function CreateMomentModal() {
 
   function handleOpenChange(val: boolean) {
     if (!val) reset()
-    setOpen(val)
+    onOpenChange(val)
   }
 
   function addTag(raw: string) {
@@ -147,7 +150,7 @@ export function CreateMomentModal() {
         return
       }
 
-      setOpen(false)
+      onOpenChange(false)
       reset()
     })
   }
@@ -156,11 +159,6 @@ export function CreateMomentModal() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button className="w-36 h-10" />}>
-        <Plus className="size-4" />
-        New moment
-      </DialogTrigger>
-
       <DialogContent className="sm:max-w-[484px] flex flex-col max-h-[90dvh]">
         <DialogHeader className="border-b-0 pb-0">
           <DialogTitle>New moment</DialogTitle>
@@ -376,6 +374,8 @@ function PeopleInviteInput({
   const [results, setResults] = useState<Array<{ id: string; firstName: string; lastName: string; username: string; photoUrl: string | null }> | null>(null)
   const [searching, setSearching] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Incremented on each dispatch; responses from older in-flight requests are discarded.
+  const searchIdRef = useRef(0)
 
   const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
   const excludeIds = invitees.filter((i) => i.type === 'userId').map((i) => i.value)
@@ -395,8 +395,10 @@ function PeopleInviteInput({
     }
 
     debounceRef.current = setTimeout(async () => {
+      const id = ++searchIdRef.current
       setSearching(true)
       const res = await searchUsersToInvite(q, excludeIds)
+      if (searchIdRef.current !== id) return // stale — a newer query already started
       setSearching(false)
       setResults(res.users ?? [])
     }, 300)

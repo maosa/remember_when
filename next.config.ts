@@ -5,6 +5,20 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   : ''
 
 const nextConfig: NextConfig = {
+  // Vercel's edge network applies Brotli compression to all responses, so
+  // there is no benefit to Next.js also gzip-compressing on the Node.js
+  // server — it just wastes CPU on the function side.
+  compress: false,
+
+  // Allow next/image to optimise images hosted in Supabase Storage.
+  // The Supabase host is read from the public env var at build time so
+  // the pattern matches the correct project URL in every environment.
+  images: {
+    remotePatterns: supabaseHost
+      ? [{ protocol: 'https', hostname: supabaseHost, pathname: '/storage/v1/object/**' }]
+      : [],
+  },
+
   async headers() {
     return [
       {

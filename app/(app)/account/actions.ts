@@ -1,12 +1,13 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { validateAvatarFile, safeExt } from '@/lib/upload'
 import { logAuditEvent } from '@/lib/audit'
+import { layoutProfileTag } from '@/lib/cached-queries'
 
 // ─── Profile (name + username only) ────────────────────────────────────────
 
@@ -27,21 +28,15 @@ export async function updateProfile(formData: FormData) {
     return { error: 'Username must be 3–20 characters: letters, numbers, underscores only.' }
   }
 
-  const { data: current } = await supabase
+  // Check username availability — exclude the current user so unchanged usernames pass
+  const { data: existing } = await supabase
     .from('users')
-    .select('username')
-    .eq('id', user.id)
-    .single()
+    .select('id')
+    .eq('username', username)
+    .neq('id', user.id)
+    .maybeSingle()
 
-  if (current?.username !== username) {
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id')
-      .eq('username', username)
-      .maybeSingle()
-
-    if (existing) return { error: 'Username is already taken.' }
-  }
+  if (existing) return { error: 'Username is already taken.' }
 
   const { error } = await supabase
     .from('users')
@@ -50,6 +45,7 @@ export async function updateProfile(formData: FormData) {
 
   if (error) return { error: error.message }
 
+  revalidateTag(layoutProfileTag(user.id), {})
   revalidatePath('/account')
   return { success: true }
 }
@@ -130,6 +126,7 @@ export async function updateAvatar(formData: FormData) {
 
   if (updateError) return { error: updateError.message }
 
+  revalidateTag(layoutProfileTag(user.id), {})
   revalidatePath('/account')
   return { success: true }
 }
@@ -157,6 +154,7 @@ export async function removeAvatar() {
       .remove(files.map((f) => `${user.id}/${f.name}`))
   }
 
+  revalidateTag(layoutProfileTag(user.id), {})
   revalidatePath('/account')
   return { success: true }
 }

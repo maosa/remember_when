@@ -32,14 +32,22 @@ export async function GET(request: NextRequest) {
       const user = sessionData.user
       const admin = createAdminClient()
 
+      // Fire both checks in parallel: profile existence gate + pending invite resolution.
+      // The pending-rows result is only used if the profile check passes; the wasted
+      // query on a first-time (no-profile) login is acceptable given that path is rare.
+      const [{ data: profile }, { data: pendingRows }] = await Promise.all([
+        admin.from('users').select('id').eq('id', user.id).maybeSingle(),
+        user.email
+          ? admin
+              .from('moment_members')
+              .select('id, moment_id, role, invited_by')
+              .eq('invited_email', user.email.toLowerCase())
+              .is('user_id', null)
+          : Promise.resolve({ data: null }),
+      ])
+
       // If the user has no public.users profile (ghost / invite-created user),
       // send them to complete-profile before anything else.
-      const { data: profile } = await admin
-        .from('users')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle()
-
       if (!profile) {
         return NextResponse.redirect(`${origin}/auth/complete-profile`)
       }
@@ -47,37 +55,30 @@ export async function GET(request: NextRequest) {
       // Resolve any pending moment_members rows where invited_email matches
       // this user's email. This handles the unregistered-email invite flow:
       // the inviter created these rows before the user had an account.
-      if (user.email) {
-        const { data: pendingRows } = await admin
+      // pendingRows is null when user.email is absent (see Promise.all above).
+      if (pendingRows && pendingRows.length > 0) {
+        // Resolve each row: link to the now-existing user
+        await admin
           .from('moment_members')
-          .select('id, moment_id, role, invited_by')
-          .eq('invited_email', user.email.toLowerCase())
+          .update({ user_id: user.id, invited_email: null })
+          .eq('invited_email', user.email!.toLowerCase())
           .is('user_id', null)
 
-        if (pendingRows && pendingRows.length > 0) {
-          // Resolve each row: link to the now-existing user
-          await admin
-            .from('moment_members')
-            .update({ user_id: user.id, invited_email: null })
-            .eq('invited_email', user.email.toLowerCase())
-            .is('user_id', null)
+        // Create moment_invite notifications for each resolved invite
+        const notificationRows = pendingRows.map((row) => ({
+          user_id: user.id,
+          type: 'moment_invite' as const,
+          related_user_id: row.invited_by,
+          related_moment_id: row.moment_id,
+          invite_role: row.role,
+        }))
+        await admin.from('notifications').insert(notificationRows)
 
-          // Create moment_invite notifications for each resolved invite
-          const notificationRows = pendingRows.map((row) => ({
-            user_id: user.id,
-            type: 'moment_invite' as const,
-            related_user_id: row.invited_by,
-            related_moment_id: row.moment_id,
-            invite_role: row.role,
-          }))
-          await admin.from('notifications').insert(notificationRows)
-
-          // Redirect to home with banner flag (append to existing next param if it's /home)
-          const redirectPath = next === '/home' || next.startsWith('/home?')
-            ? '/home?pending_invite=true'
-            : next
-          return NextResponse.redirect(`${origin}${redirectPath}`)
-        }
+        // Redirect to home with banner flag (append to existing next param if it's /home)
+        const redirectPath = next === '/home' || next.startsWith('/home?')
+          ? '/home?pending_invite=true'
+          : next
+        return NextResponse.redirect(`${origin}${redirectPath}`)
       }
 
       return NextResponse.redirect(`${origin}${next}`)

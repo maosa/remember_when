@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { sendNotification } from '@/lib/notifications'
+import { sendNotifications, type NotificationPayload } from '@/lib/notifications'
 import { signStoragePaths } from '@/lib/storage'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -61,7 +61,10 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
 
   const memberMomentIds = (myMemberships ?? []).map((m) => m.moment_id)
 
-  // Fetch all moments user owns or is a member of
+  // Fetch all moments user owns or is a member of.
+  // moment_archive is intentionally NOT embedded here — the join would return archive
+  // rows for ALL members of each moment. Instead we run a separate targeted query for
+  // only the current user's archived moments and join the results in memory.
   let query = admin
     .from('moments')
     .select(`
@@ -71,8 +74,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       moment_members(
         user_id, role, status,
         user:users!moment_members_user_id_fkey(id, first_name, last_name, profile_photo_url)
-      ),
-      moment_archive(user_id)
+      )
     `)
     .order('created_at', { ascending: false })
 
@@ -82,7 +84,13 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
     query = query.eq('owner_id', user.id)
   }
 
-  const { data: moments, error } = await query
+  // Run the moments fetch and the current user's archive list in parallel
+  const [{ data: moments, error }, { data: archivedRows }] = await Promise.all([
+    query,
+    admin.from('moment_archive').select('moment_id').eq('user_id', user.id),
+  ])
+
+  const archivedMomentIds = new Set((archivedRows ?? []).map((a) => a.moment_id))
   if (error) return { moments: [], error: error.message }
 
   // Batch-sign all cover photo paths (moment-covers and post-media are private buckets)
@@ -101,8 +109,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
     }>)
     const owner = (m as unknown as { owner: { id: string; first_name: string; last_name: string; profile_photo_url: string | null } | null }).owner
     const myMembership = rawMembers.find((mm) => mm.user_id === user.id)
-    const isArchived = (m.moment_archive as unknown as Array<{ user_id: string }>)
-      .some((a) => a.user_id === user.id)
+    const isArchived = archivedMomentIds.has(m.id)
 
     const coverPath = m.cover_photo_url ?? null
 
@@ -211,88 +218,123 @@ export async function createMoment(data: {
 
   const admin = createAdminClient()
 
-  // Insert tags
-  if (data.tags.length > 0) {
-    await admin.from('moment_tags').insert(
-      data.tags.map((tag) => ({ moment_id: moment.id, tag: tag.trim(), created_by: user.id }))
-    )
-  }
-
-  // Fetch current user profile for invite email
-  const { data: inviterProfile } = await admin
-    .from('users')
-    .select('first_name, last_name')
-    .eq('id', user.id)
-    .single()
+  // Parallelise: tag inserts + inviter profile fetch (neither depends on the other)
+  const [, { data: inviterProfile }] = await Promise.all([
+    data.tags.length > 0
+      ? admin.from('moment_tags').insert(
+          data.tags.map((tag) => ({ moment_id: moment.id, tag: tag.trim(), created_by: user.id }))
+        )
+      : Promise.resolve(null),
+    admin.from('users').select('first_name, last_name').eq('id', user.id).single(),
+  ])
 
   const inviterName = inviterProfile
     ? `${inviterProfile.first_name} ${inviterProfile.last_name}`
     : 'Someone'
 
-  // Handle invitees
-  const origin = (await headers()).get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  // Separate the two invite types up front
+  type UserIdInvitee = Extract<Invitee, { type: 'userId' }>
+  type EmailInvitee  = Extract<Invitee, { type: 'email' }>
+  const userIdInvitees = data.invitees.filter((i): i is UserIdInvitee => i.type === 'userId')
+  const emailInvitees  = data.invitees.filter((i): i is EmailInvitee  => i.type === 'email')
 
-  for (const invitee of data.invitees) {
-    if (invitee.type === 'userId') {
-      await admin.from('moment_members').insert({
+  // Accumulate all notification payloads; send in a single batch at the end
+  const notificationPayloads: NotificationPayload[] = []
+
+  // ── userId invitees: single batch insert ───────────────────────────────────
+  if (userIdInvitees.length > 0) {
+    await admin.from('moment_members').insert(
+      userIdInvitees.map((i) => ({
         moment_id: moment.id,
-        user_id: invitee.value,
-        role: invitee.role,
+        user_id: i.value,
+        role: i.role,
         status: 'pending',
         invited_by: user.id,
-      })
-      await sendNotification({
-        user_id: invitee.value,
+      }))
+    )
+    for (const i of userIdInvitees) {
+      notificationPayloads.push({
+        user_id: i.value,
         type: 'moment_invite',
         related_user_id: user.id,
         related_moment_id: moment.id,
-        invite_role: invitee.role,
+        invite_role: i.role,
       })
-    } else {
-      // Check if email belongs to an existing user
-      const { data: existingUser } = await admin
-        .from('users')
-        .select('id')
-        .eq('email', invitee.value)
-        .maybeSingle()
+    }
+  }
 
-      if (existingUser) {
-        await admin.from('moment_members').insert({
+  // ── email invitees: parallel lookups, then batched inserts ─────────────────
+  if (emailInvitees.length > 0) {
+    const origin = (await headers()).get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL ?? ''
+
+    // Fan-out: look up all emails in parallel
+    const lookupResults = await Promise.all(
+      emailInvitees.map((i) =>
+        admin.from('users').select('id').eq('email', i.value).maybeSingle()
+      )
+    )
+
+    type ExistingEntry = { invitee: EmailInvitee; userId: string }
+    const existingEntries: ExistingEntry[] = []
+    const newEmailInvitees: EmailInvitee[] = []
+
+    for (let k = 0; k < emailInvitees.length; k++) {
+      const found = lookupResults[k].data
+      if (found) {
+        existingEntries.push({ invitee: emailInvitees[k], userId: found.id })
+      } else {
+        newEmailInvitees.push(emailInvitees[k])
+      }
+    }
+
+    // Batch-insert for existing users
+    if (existingEntries.length > 0) {
+      await admin.from('moment_members').insert(
+        existingEntries.map(({ invitee, userId }) => ({
           moment_id: moment.id,
-          user_id: existingUser.id,
+          user_id: userId,
           role: invitee.role,
           status: 'pending',
           invited_by: user.id,
-        })
-        await sendNotification({
-          user_id: existingUser.id,
+        }))
+      )
+      for (const { invitee, userId } of existingEntries) {
+        notificationPayloads.push({
+          user_id: userId,
           type: 'moment_invite',
           related_user_id: user.id,
           related_moment_id: moment.id,
           invite_role: invitee.role,
         })
-      } else {
-        // Create a pending invite and send a sign-up email
-        const { data: pendingInvite } = await admin
-          .from('pending_moment_invites')
-          .insert({
-            moment_id: moment.id,
-            email: invitee.value,
-            role: invitee.role,
-            invited_by: user.id,
-          })
-          .select('token')
-          .single()
-
-        if (pendingInvite) {
-          await admin.auth.admin.inviteUserByEmail(invitee.value, {
-            data: { invited_by_name: inviterName },
-            redirectTo: `${origin}/auth/callback?next=/invite/${pendingInvite.token}`,
-          })
-        }
       }
     }
+
+    // New users: insert pending_moment_invites in parallel, then fire email invites in parallel
+    if (newEmailInvitees.length > 0) {
+      const pendingResults = await Promise.all(
+        newEmailInvitees.map((i) =>
+          admin.from('pending_moment_invites')
+            .insert({ moment_id: moment.id, email: i.value, role: i.role, invited_by: user.id })
+            .select('token')
+            .single()
+        )
+      )
+
+      await Promise.all(
+        pendingResults.map(({ data: pendingInvite }, k) =>
+          pendingInvite
+            ? admin.auth.admin.inviteUserByEmail(newEmailInvitees[k].value, {
+                data: { invited_by_name: inviterName },
+                redirectTo: `${origin}/auth/callback?next=/invite/${pendingInvite.token}`,
+              })
+            : Promise.resolve()
+        )
+      )
+    }
   }
+
+  // Single batch notification send (one preferences query, one insert)
+  await sendNotifications(notificationPayloads)
 
   revalidatePath('/home')
   return { momentId: moment.id }

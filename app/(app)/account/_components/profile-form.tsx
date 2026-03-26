@@ -43,6 +43,9 @@ export function ProfileForm({ initialData }: Props) {
   const [isVerifying, setIsVerifying] = useState(false)
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Incremented every time a new async check is dispatched; lets us discard responses
+  // from earlier in-flight requests that complete after a newer one already returned.
+  const checkIdRef = useRef(0)
 
   useEffect(() => {
     const trimmed = username.trim().toLowerCase()
@@ -67,6 +70,7 @@ export function ProfileForm({ initialData }: Props) {
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
 
     debounceTimer.current = setTimeout(async () => {
+      const id = ++checkIdRef.current
       const supabase = createClient()
       const { data } = await supabase
         .from('users')
@@ -74,6 +78,8 @@ export function ProfileForm({ initialData }: Props) {
         .eq('username', trimmed)
         .maybeSingle()
 
+      // Discard if a newer check has already been dispatched while this one was in flight
+      if (checkIdRef.current !== id) return
       setUsernameStatus(data ? 'taken' : 'available')
     }, 500)
 

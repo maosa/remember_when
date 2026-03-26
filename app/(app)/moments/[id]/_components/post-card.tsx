@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { memo, useMemo, useState, useTransition } from 'react'
+import dynamic from 'next/dynamic'
 import { Pencil, Trash2, Mic } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -15,7 +16,10 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { deletePost, type PostWithMedia } from '../actions'
-import { EditPostDialog } from './edit-post-dialog'
+
+const EditPostDialog = dynamic(() =>
+  import('./edit-post-dialog').then((m) => ({ default: m.EditPostDialog }))
+)
 
 interface Props {
   post: PostWithMedia
@@ -27,16 +31,25 @@ function formatTimestamp(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-export function PostCard({ post, canDelete, canEdit }: Props) {
+export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [deleted, setDeleted] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [editEverOpened, setEditEverOpened] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   // Track the post's own mutable state so edits reflect immediately
   const [currentPost, setCurrentPost] = useState(post)
 
   if (deleted) return null
+
+  // Partition media by type once; memoised against currentPost.media so the split
+  // only reruns when the post is edited, not on every unrelated re-render.
+  const { photos, videos, audios } = useMemo(() => ({
+    photos: currentPost.media.filter((m) => m.mediaType === 'photo'),
+    videos: currentPost.media.filter((m) => m.mediaType === 'video'),
+    audios: currentPost.media.filter((m) => m.mediaType === 'audio'),
+  }), [currentPost.media])
 
   function handleDelete() {
     setError(null)
@@ -46,10 +59,6 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
       else setDeleted(true)
     })
   }
-
-  const photos = currentPost.media.filter((m) => m.mediaType === 'photo')
-  const videos = currentPost.media.filter((m) => m.mediaType === 'video')
-  const audios = currentPost.media.filter((m) => m.mediaType === 'audio')
 
   return (
     <article className="space-y-3 rounded-rw-card border border-rw-border-subtle bg-rw-surface shadow-rw-card p-5">
@@ -85,7 +94,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
                 variant="ghost"
                 size="icon-sm"
                 className="text-rw-text-muted hover:text-rw-text-primary"
-                onClick={() => setEditOpen(true)}
+                onClick={() => { setEditEverOpened(true); setEditOpen(true) }}
               >
                 <Pencil className="size-3.5" />
                 <span className="sr-only">Edit post</span>
@@ -121,6 +130,8 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
               <img
                 src={m.storageUrl}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="size-40 rounded-lg object-cover bg-rw-surface-raised"
               />
             </a>
@@ -134,6 +145,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
           key={m.id}
           src={m.storageUrl}
           controls
+          preload="none"
           className="w-full rounded-xl bg-rw-surface-raised max-h-72 object-contain"
         />
       ))}
@@ -142,7 +154,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
       {audios.map((m) => (
         <div key={m.id} className="flex items-center gap-3 rounded-xl border border-rw-border-subtle bg-rw-surface-raised/50 px-3 py-2.5">
           <Mic className="size-4 text-rw-text-muted shrink-0" />
-          <audio src={m.storageUrl} controls className="w-full h-8" />
+          <audio src={m.storageUrl} controls preload="none" className="w-full h-8" />
         </div>
       ))}
 
@@ -167,7 +179,7 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
         </DialogContent>
       </Dialog>
 
-      {canEdit && (
+      {canEdit && editEverOpened && (
         <EditPostDialog
           post={currentPost}
           open={editOpen}
@@ -177,4 +189,4 @@ export function PostCard({ post, canDelete, canEdit }: Props) {
       )}
     </article>
   )
-}
+})

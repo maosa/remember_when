@@ -97,6 +97,8 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
             <img
               src={moment.coverPhotoUrl}
               alt={moment.name}
+              fetchPriority="high"
+              decoding="async"
               className={cn('size-full object-cover', isPendingInvite && 'blur-md scale-110')}
             />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(44,42,37,0.75) 0%, rgba(44,42,37,0.3) 50%, transparent 100%)' }} />

@@ -122,7 +122,7 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
                       )}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo.signedUrl} alt="" className="size-full object-cover" />
+                      <img src={photo.signedUrl} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
                     </button>
                   ))}
                 </div>

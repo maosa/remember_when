@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { memo, useMemo, useState, useTransition } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { MapPin, Calendar, MoreHorizontal, Archive, ArchiveRestore, Pencil, Crown, PenTool, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -8,7 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
 import { archiveMoment, unarchiveMoment, type MomentSummary } from '../actions'
-import { EditMomentModal } from '@/app/(app)/_components/edit-moment-modal'
+
+const EditMomentModal = dynamic(() =>
+  import('@/app/(app)/_components/edit-moment-modal').then((m) => ({ default: m.EditMomentModal }))
+)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -27,9 +31,11 @@ interface Props {
   currentUserId: string
 }
 
-export function MomentCard({ moment, currentUserId }: Props) {
+export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Props) {
   const [isPending, startTransition] = useTransition()
   const [editOpen, setEditOpen] = useState(false)
+  // Only mount the modal after first open to avoid N hidden dialog instances in the grid
+  const [editEverOpened, setEditEverOpened] = useState(false)
   const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = moment.myStatus === 'pending'
   const canEdit = moment.myStatus === 'accepted' && (moment.myRole === 'owner' || moment.myRole === 'editor')
@@ -46,18 +52,25 @@ export function MomentCard({ moment, currentUserId }: Props) {
     })
   }
 
-  // Build ordered member list for avatar stack: owner first, then accepted non-owner members
-  const acceptedNonOwner = moment.members.filter(
-    (m) => m.userId !== moment.ownerId && m.status === 'accepted'
-  )
-  const allMembers = [
-    { userId: moment.ownerId, firstName: moment.ownerFirstName, lastName: moment.ownerLastName, photoUrl: moment.ownerPhotoUrl },
-    ...acceptedNonOwner.map((m) => ({ userId: m.userId, firstName: m.firstName, lastName: m.lastName, photoUrl: m.photoUrl })),
-  ]
-  const MAX_AVATARS = 5
-  const showOverflow = allMembers.length > MAX_AVATARS
-  const shownAvatars = showOverflow ? allMembers.slice(0, 4) : allMembers
-  const overflowCount = allMembers.length - 4
+  // Build ordered member list for avatar stack: owner first, then accepted non-owner members.
+  // Memoised so the derived arrays are stable across re-renders caused by local state changes
+  // (e.g. opening/closing the edit modal).
+  const { shownAvatars, showOverflow, overflowCount } = useMemo(() => {
+    const acceptedNonOwner = moment.members.filter(
+      (m) => m.userId !== moment.ownerId && m.status === 'accepted'
+    )
+    const allMembers = [
+      { userId: moment.ownerId, firstName: moment.ownerFirstName, lastName: moment.ownerLastName, photoUrl: moment.ownerPhotoUrl },
+      ...acceptedNonOwner.map((m) => ({ userId: m.userId, firstName: m.firstName, lastName: m.lastName, photoUrl: m.photoUrl })),
+    ]
+    const MAX_AVATARS = 5
+    const overflow = allMembers.length > MAX_AVATARS
+    return {
+      shownAvatars: overflow ? allMembers.slice(0, 4) : allMembers,
+      showOverflow: overflow,
+      overflowCount: allMembers.length - 4,
+    }
+  }, [moment.members, moment.ownerId, moment.ownerFirstName, moment.ownerLastName, moment.ownerPhotoUrl])
 
   const hasBodyContent = date || moment.location || moment.tags.length > 0 || moment.myStatus === 'accepted'
 
@@ -77,6 +90,8 @@ export function MomentCard({ moment, currentUserId }: Props) {
             <img
               src={moment.coverPhotoUrl}
               alt={moment.name}
+              loading="lazy"
+              decoding="async"
               className="size-full object-cover"
             />
           ) : (
@@ -197,7 +212,7 @@ export function MomentCard({ moment, currentUserId }: Props) {
           <MenuContent align="end">
             {canEdit && (
               <MenuItem
-                onClick={(e) => { e.preventDefault(); setEditOpen(true) }}
+                onClick={(e) => { e.preventDefault(); setEditEverOpened(true); setEditOpen(true) }}
                 className="gap-2"
               >
                 <Pencil className="size-3.5" /> Edit
@@ -218,7 +233,7 @@ export function MomentCard({ moment, currentUserId }: Props) {
         </Menu>
       </div>
 
-      {canEdit && (
+      {canEdit && editEverOpened && (
         <EditMomentModal
           moment={{
             id: moment.id,
@@ -235,4 +250,4 @@ export function MomentCard({ moment, currentUserId }: Props) {
       )}
     </div>
   )
-}
+})

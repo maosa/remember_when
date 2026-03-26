@@ -1,25 +1,23 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { AppNav } from '@/components/app-nav'
+import { getLayoutProfile } from '@/lib/cached-queries'
 
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getServerUser()
 
   if (!user) {
     redirect('/login')
   }
 
-  const [profileRes, unreadRes] = await Promise.all([
-    supabase
-      .from('users')
-      .select('first_name, last_name, profile_photo_url')
-      .eq('id', user.id)
-      .single(),
+  const supabase = await createClient()
+
+  const [profile, unreadRes] = await Promise.all([
+    getLayoutProfile(user.id),
     supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
@@ -27,7 +25,6 @@ export default async function AppLayout({
       .eq('read', false),
   ])
 
-  const profile = profileRes.data
   const unreadCount = unreadRes.count ?? 0
 
   return (

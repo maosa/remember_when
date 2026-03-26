@@ -1,5 +1,16 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
+
+/**
+ * Returns the authenticated user for the current request.
+ * Wrapped in React's `cache()` so multiple callers within the same render pass
+ * (e.g. layout + page) share a single auth.getUser() network round-trip.
+ */
+export const getServerUser = cache(async () => {
+  const supabase = await createClient()
+  return supabase.auth.getUser()
+})
 
 export async function createClient() {
   const cookieStore = await cookies()

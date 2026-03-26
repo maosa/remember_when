@@ -263,6 +263,8 @@ function UserSearch() {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [actionStates, setActionStates] = useState<Record<string, 'sending' | 'sent' | 'error'>>({})
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Incremented on each dispatch; responses from older in-flight requests are discarded.
+  const searchIdRef = useRef(0)
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -275,9 +277,11 @@ function UserSearch() {
     }
 
     debounceRef.current = setTimeout(async () => {
+      const id = ++searchIdRef.current
       setSearching(true)
       setSearchError(null)
       const res = await searchUsers(trimmed)
+      if (searchIdRef.current !== id) return // stale — a newer query already started
       setSearching(false)
       if (res.error) {
         setSearchError(res.error)

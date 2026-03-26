@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Settings } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buttonVariants } from '@/lib/button-variants'
 import { cn } from '@/lib/utils'
@@ -21,8 +21,7 @@ export type NotificationRow = {
 }
 
 export default async function NotificationsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getServerUser()
   if (!user) redirect('/login')
 
   const admin = createAdminClient()

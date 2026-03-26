@@ -68,10 +68,10 @@ export async function sendNotifications(payloads: NotificationPayload[]): Promis
   const admin = createAdminClient()
   const userIds = [...new Set(payloads.map((p) => p.user_id))]
 
-  // Batch-fetch all relevant preferences.
+  // Batch-fetch all relevant preferences — explicit columns to avoid over-fetching.
   const { data: allPrefs } = await admin
     .from('notification_preferences')
-    .select('*')
+    .select('user_id, friend_request_received, friend_request_accepted, moment_invite, moment_invite_response, new_post, member_left, ownership_transferred, archived_moment_notifications')
     .in('user_id', userIds)
 
   const prefsMap = new Map((allPrefs ?? []).map((p) => [p.user_id, p]))
