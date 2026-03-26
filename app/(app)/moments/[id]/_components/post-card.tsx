@@ -41,15 +41,15 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
   // Track the post's own mutable state so edits reflect immediately
   const [currentPost, setCurrentPost] = useState(post)
 
-  if (deleted) return null
-
-  // Partition media by type once; memoised against currentPost.media so the split
-  // only reruns when the post is edited, not on every unrelated re-render.
+  // Must be called before any early return — React's rules of hooks require
+  // every hook to be called unconditionally on every render.
   const { photos, videos, audios } = useMemo(() => ({
     photos: currentPost.media.filter((m) => m.mediaType === 'photo'),
     videos: currentPost.media.filter((m) => m.mediaType === 'video'),
     audios: currentPost.media.filter((m) => m.mediaType === 'audio'),
   }), [currentPost.media])
+
+  if (deleted) return null
 
   function handleDelete() {
     // Close the dialog before the async op so Base UI has already torn down
