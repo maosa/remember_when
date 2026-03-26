@@ -5,6 +5,141 @@ import Link from 'next/link'
 import { ArrowRight, ChevronDown, Plus, PenLine, Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+// ─── Rotating hero quote ──────────────────────────────────────────────────────
+
+const HERO_QUOTES = [
+  "you laughed so hard you couldn\u2019t breathe.",
+  "you couldn\u2019t stop smiling for the rest of the day.",
+  "everything just clicked and felt right.",
+  "you didn\u2019t want the night to end.",
+  "you all sang along at the exact same moment.",
+  "someone did something so stupid it became legendary.",
+  "everyone was in the same place at the same time.",
+  "the whole group was finally together again.",
+  "you looked around and thought, I love these people.",
+  "you stayed way longer than you planned.",
+  "nobody wanted to be the first to leave.",
+  "you said \u2018we should do this more often.\u2019",
+  "that trip went completely off-script.",
+  "you got lost and it turned into the best day.",
+  "the plan fell apart and something better happened.",
+  "you all agreed it was the best decision you\u2019d ever made.",
+  "none of you were ready to go home.",
+  "nothing special happened, but it was perfect.",
+  "time slowed down for a little while.",
+  "you wished you could press pause.",
+  "the conversation went on for hours.",
+  "it felt like no time had passed at all.",
+  "you all celebrated like it was the biggest deal in the world.",
+  "someone did the thing they said they\u2019d never do.",
+  "you pulled it off against all odds.",
+  "the hard part was finally over.",
+  "you looked at each other and just knew.",
+  "everything went wrong in the best possible way.",
+  "you still can\u2019t tell the story without laughing.",
+  "someone said something that became an inside joke forever.",
+  "nobody can agree on exactly what happened, but it was brilliant.",
+] as const
+
+function shuffleIndices(len: number): number[] {
+  const a = Array.from({ length: len }, (_, i) => i)
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+const QUOTE_DISPLAY_MS = 6000
+const QUOTE_FADE_MS    = 600
+
+const QUOTE_MARK_STYLE: React.CSSProperties = {
+  color: 'rgba(200,152,64,0.5)',
+  fontSize: '1.05em',
+}
+
+function RotatingQuote() {
+  const [shownIdx, setShownIdx] = useState(0)
+  const [visible,  setVisible]  = useState(true)
+  const queueRef   = useRef<number[]>([])
+  const posRef     = useRef(0)
+  const reducedRef = useRef(false)
+
+  // One-time: detect reduced motion + pick random starting quote
+  useEffect(() => {
+    reducedRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const queue = shuffleIndices(HERO_QUOTES.length)
+    const start = Math.floor(Math.random() * queue.length)
+    queueRef.current = queue
+    posRef.current   = start
+    setShownIdx(queue[start])
+  }, [])
+
+  // Cycling loop — runs once, uses refs for all mutable state
+  useEffect(() => {
+    let alive = true
+    const timers: ReturnType<typeof setTimeout>[] = []
+    const clearAll = () => { timers.forEach(clearTimeout); timers.length = 0 }
+
+    function nextIdx(): number {
+      posRef.current += 1
+      if (posRef.current >= queueRef.current.length) {
+        queueRef.current = shuffleIndices(HERO_QUOTES.length)
+        posRef.current   = 0
+      }
+      return queueRef.current[posRef.current]
+    }
+
+    function tick() {
+      if (!alive) return
+      timers.push(setTimeout(() => {
+        if (!alive) return
+        if (reducedRef.current) {
+          setShownIdx(nextIdx())
+          tick()
+        } else {
+          setVisible(false)
+          timers.push(setTimeout(() => {
+            if (!alive) return
+            setShownIdx(nextIdx())
+            setVisible(true)
+            tick()
+          }, QUOTE_FADE_MS))
+        }
+      }, QUOTE_DISPLAY_MS))
+    }
+
+    function onVisibility() {
+      if (document.hidden) {
+        clearAll()
+        setVisible(true) // snap back if paused mid-fade
+      } else if (alive) {
+        tick()
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibility)
+    tick()
+
+    return () => {
+      alive = false
+      clearAll()
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [])
+
+  return (
+    <span
+      style={{
+        opacity:    visible ? 1 : 0,
+        transition: `opacity ${QUOTE_FADE_MS}ms ease`,
+      }}
+    >
+      {HERO_QUOTES[shownIdx]}
+    </span>
+  )
+}
+
 // ─── Content ──────────────────────────────────────────────────────────────────
 
 const TRIO_ITEMS = [
@@ -145,18 +280,19 @@ export default function LandingPage() {
             Remember when…
           </p>
 
-          {/* Main headline — large italic serif with amber quote marks */}
+          {/* Main headline — large italic serif, quote rotates automatically.
+               min-h values sized to the longest quote at each breakpoint so the
+               tagline below never shifts position as quotes change. */}
           <h1
-            className="font-serif italic font-semibold text-rw-text-primary tracking-[-0.03em] leading-[1.12] mb-7"
+            className="font-serif italic font-semibold text-rw-text-primary tracking-[-0.03em] leading-[1.12] mb-7 min-h-[280px] sm:min-h-[210px] md:min-h-[220px] lg:min-h-[250px]"
             style={{
               fontSize: 'clamp(38px, 6.2vw, 68px)',
               animation: 'landing-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) 0.28s both',
             }}
           >
-            <span aria-hidden style={{ color: 'rgba(200,152,64,0.5)', fontSize: '1.05em' }}>&ldquo;</span>
-            you laughed so hard<br className="hidden sm:block" />
-            you couldn&rsquo;t breathe.
-            <span aria-hidden style={{ color: 'rgba(200,152,64,0.5)', fontSize: '1.05em' }}>&rdquo;</span>
+            <span aria-hidden="true" style={QUOTE_MARK_STYLE}>&ldquo;</span>
+            <RotatingQuote />
+            <span aria-hidden="true" style={QUOTE_MARK_STYLE}>&rdquo;</span>
           </h1>
 
           {/* Tagline */}
