@@ -37,7 +37,9 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault()
-      handleAddTag(input)
+      const value = input
+      setInput('') // clear before async so onBlur doesn't re-submit
+      handleAddTag(value)
     }
   }
 
