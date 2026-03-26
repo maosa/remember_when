@@ -50,7 +50,7 @@ export function uploadWithProgress(
     xhr.addEventListener('error', () => reject(new Error('Network error during upload')))
     xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')))
 
-    xhr.open('POST', signedUrl)
+    xhr.open('PUT', signedUrl)
     // Supabase Storage signed-upload endpoints need the user's session JWT in the
     // Authorization header (mirrors what storage-js does internally). The storage
     // token stays in the URL query string (?token=...) — it is NOT the auth header.
