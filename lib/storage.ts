@@ -85,11 +85,14 @@ export async function signStoragePaths(
         .createSignedUrls(paths, expiresIn)
 
       if (!data) return
-      for (const item of data) {
-        if (item.signedUrl) {
-          result.set(`${bucket}/${item.path}`, item.signedUrl)
+      // Use index-based matching against the input paths array — `item.path`
+      // in the API response is unreliable across storage-js versions and may
+      // be undefined, which would produce a key of "{bucket}/undefined".
+      data.forEach((item, i) => {
+        if (item.signedUrl && paths[i]) {
+          result.set(`${bucket}/${paths[i]}`, item.signedUrl)
         }
-      }
+      })
     }),
   )
 
