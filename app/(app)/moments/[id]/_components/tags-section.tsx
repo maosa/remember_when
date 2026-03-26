@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -16,18 +16,25 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
   const [isPending, startTransition] = useTransition()
   const [input, setInput] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function showError(msg: string) {
+    if (errorTimer.current) clearTimeout(errorTimer.current)
+    setError(msg)
+    errorTimer.current = setTimeout(() => setError(null), 2500)
+  }
 
   function handleAddTag(raw: string) {
     const t = raw.trim().toLowerCase()
     if (!t) return
     if (tags.some((existing) => existing.tag === t)) {
-      setError('This tag has already been added.')
+      showError('This tag has already been added.')
       return
     }
     setError(null)
     startTransition(async () => {
       const res = await addTag(momentId, t)
-      if (res.error) setError(res.error)
+      if (res.error) showError(res.error)
       else setInput('')
     })
   }
