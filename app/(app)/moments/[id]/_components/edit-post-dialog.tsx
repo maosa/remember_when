@@ -125,7 +125,7 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
             rows={4}
             autoFocus
             className={cn(
-              'w-full rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 text-sm outline-none resize-none transition-colors',
+              'w-full rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 text-base md:text-sm outline-none resize-none transition-colors',
               'placeholder:text-rw-text-muted focus-visible:border-rw-accent/60 focus-visible:ring-3 focus-visible:ring-rw-accent/20'
             )}
           />

@@ -10,7 +10,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       data-slot="input"
       className={cn(
         // Base — 40px height, surface bg, border, 8px radius, 14px DM Sans
-        "h-10 w-full min-w-0 rounded-rw-input border border-rw-border bg-rw-surface px-3 py-1 text-[14px] text-rw-text-primary transition-colors outline-none",
+        "h-10 w-full min-w-0 rounded-rw-input border border-rw-border bg-rw-surface px-3 py-1 text-base md:text-[14px] text-rw-text-primary transition-colors outline-none",
         // Placeholder
         "placeholder:text-rw-text-placeholder",
         // Focus — accent border + subtle ring

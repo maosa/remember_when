@@ -191,4 +191,11 @@
   h1, h2, h3 {
     font-family: var(--rw-font-serif);
   }
+  /* Prevent iOS Safari from auto-zooming on input focus.
+     Any focusable form element must render at ≥ 16px on mobile. */
+  @media screen and (max-width: 767px) {
+    input, textarea, select {
+      font-size: 16px;
+    }
+  }
 }
