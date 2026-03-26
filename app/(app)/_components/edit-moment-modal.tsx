@@ -80,7 +80,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
     inferDateMode(moment.dateYear, moment.dateMonth, moment.dateDay)
   )
   const [dateYear, setDateYear] = useState(moment.dateYear ? String(moment.dateYear) : '')
-  const [dateMonth, setDateMonth] = useState(moment.dateMonth ? String(moment.dateMonth) : '')
+  const [dateMonth, setDateMonth] = useState(moment.dateMonth ? MONTHS[moment.dateMonth - 1] ?? '' : '')
   const [dateDay, setDateDay] = useState(moment.dateDay ? String(moment.dateDay) : '')
   const [location, setLocation] = useState(moment.location ?? '')
   const [tags, setTags] = useState<string[]>(moment.tags)
@@ -92,7 +92,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
       setName(moment.name)
       setDateMode(inferDateMode(moment.dateYear, moment.dateMonth, moment.dateDay))
       setDateYear(moment.dateYear ? String(moment.dateYear) : '')
-      setDateMonth(moment.dateMonth ? String(moment.dateMonth) : '')
+      setDateMonth(moment.dateMonth ? MONTHS[moment.dateMonth - 1] ?? '' : '')
       setDateDay(moment.dateDay ? String(moment.dateDay) : '')
       setLocation(moment.location ?? '')
       setTags(moment.tags)
@@ -129,7 +129,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
         name,
         dateYear: dateYear ? parseInt(dateYear) : null,
         dateMonth: (dateMode === 'month-year' || dateMode === 'full') && dateMonth
-          ? parseInt(dateMonth)
+          ? MONTHS.indexOf(dateMonth) + 1
           : null,
         dateDay: dateMode === 'full' && dateDay ? parseInt(dateDay) : null,
         location: location.trim() || null,
@@ -186,7 +186,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                     setDateMode(mode)
                     // Clamp stored day when switching into full mode
                     if (mode === 'full' && dateDay && dateMonth) {
-                      const max = daysInMonth(parseInt(dateMonth), dateYear ? parseInt(dateYear) : undefined)
+                      const max = daysInMonth(MONTHS.indexOf(dateMonth) + 1, dateYear ? parseInt(dateYear) : undefined)
                       if (parseInt(dateDay) > max) setDateDay(String(max))
                     }
                   }}
@@ -216,7 +216,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                     {Array.from(
                       {
                         length: dateMonth
-                          ? daysInMonth(parseInt(dateMonth), dateYear ? parseInt(dateYear) : undefined)
+                          ? daysInMonth(MONTHS.indexOf(dateMonth) + 1, dateYear ? parseInt(dateYear) : undefined)
                           : 31,
                       },
                       (_, i) => i + 1
@@ -235,7 +235,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                     setDateMonth(actual)
                     // Clamp day if it's now beyond the new month's max
                     if (dateMode === 'full' && dateDay && actual) {
-                      const max = daysInMonth(parseInt(actual), dateYear ? parseInt(dateYear) : undefined)
+                      const max = daysInMonth(MONTHS.indexOf(actual) + 1, dateYear ? parseInt(dateYear) : undefined)
                       if (parseInt(dateDay) > max) setDateDay(String(max))
                     }
                   }}
@@ -244,8 +244,8 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56" alignItemWithTrigger={false}>
-                    {MONTHS.map((m, i) => (
-                      <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -258,7 +258,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                   setDateYear(actual)
                   // Clamp day if Feb 29 becomes invalid (non-leap year)
                   if (dateMode === 'full' && dateDay && dateMonth && actual) {
-                    const max = daysInMonth(parseInt(dateMonth), parseInt(actual))
+                    const max = daysInMonth(MONTHS.indexOf(dateMonth) + 1, parseInt(actual))
                     if (parseInt(dateDay) > max) setDateDay(String(max))
                   }
                 }}

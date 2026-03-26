@@ -137,7 +137,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
         name,
         dateYear: dateYear ? parseInt(dateYear) : null,
         dateMonth: (dateMode === 'month-year' || dateMode === 'full') && dateMonth
-          ? parseInt(dateMonth)
+          ? MONTHS.indexOf(dateMonth) + 1
           : null,
         dateDay: dateMode === 'full' && dateDay ? parseInt(dateDay) : null,
         location,
@@ -191,7 +191,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
                     setDateMode(mode)
                     // Clamp stored day when switching into full mode
                     if (mode === 'full' && dateDay && dateMonth) {
-                      const max = daysInMonth(parseInt(dateMonth), dateYear ? parseInt(dateYear) : undefined)
+                      const max = daysInMonth(MONTHS.indexOf(dateMonth) + 1, dateYear ? parseInt(dateYear) : undefined)
                       if (parseInt(dateDay) > max) setDateDay(String(max))
                     }
                   }}
@@ -221,7 +221,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
                     {Array.from(
                       {
                         length: dateMonth
-                          ? daysInMonth(parseInt(dateMonth), dateYear ? parseInt(dateYear) : undefined)
+                          ? daysInMonth(MONTHS.indexOf(dateMonth) + 1, dateYear ? parseInt(dateYear) : undefined)
                           : 31,
                       },
                       (_, i) => i + 1
@@ -240,7 +240,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
                     setDateMonth(actual)
                     // Clamp day if it's now beyond the new month's max
                     if (dateMode === 'full' && dateDay && actual) {
-                      const max = daysInMonth(parseInt(actual), dateYear ? parseInt(dateYear) : undefined)
+                      const max = daysInMonth(MONTHS.indexOf(actual) + 1, dateYear ? parseInt(dateYear) : undefined)
                       if (parseInt(dateDay) > max) setDateDay(String(max))
                     }
                   }}
@@ -249,8 +249,8 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
                   <SelectContent className="max-h-56" alignItemWithTrigger={false}>
-                    {MONTHS.map((m, i) => (
-                      <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -263,7 +263,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
                   setDateYear(actual)
                   // Clamp day if Feb 29 becomes invalid (non-leap year)
                   if (dateMode === 'full' && dateDay && dateMonth && actual) {
-                    const max = daysInMonth(parseInt(dateMonth), parseInt(actual))
+                    const max = daysInMonth(MONTHS.indexOf(dateMonth) + 1, parseInt(actual))
                     if (parseInt(dateDay) > max) setDateDay(String(max))
                   }
                 }}
