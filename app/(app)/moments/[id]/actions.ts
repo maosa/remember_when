@@ -1282,7 +1282,9 @@ export async function deletePost(postId: string, momentId: string): Promise<{ er
 
   if (error) return { error: error.message }
 
-  revalidatePath(`/moments/${momentId}`)
+  // No revalidatePath here — the client handles optimistic removal via setDeleted(true).
+  // Calling revalidatePath inside a useTransition-wrapped server action races with
+  // React's reconciliation and crashes the page.
   return {}
 }
 
