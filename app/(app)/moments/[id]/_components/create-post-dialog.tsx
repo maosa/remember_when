@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { uploadWithProgress } from '@/lib/upload-with-progress'
+import { createClient } from '@/lib/supabase/client'
 import { createPost, preparePostUpload, finalizePostUpload } from '../actions'
 
 interface Props {
@@ -100,6 +101,11 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
     const progress = new Array<number>(previews.length).fill(0)
     setUploadProgress([...progress])
 
+    // Get user session JWT — required as Authorization header for storage uploads
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    const userAccessToken = session?.access_token
+
     // Phase 1: create post record + signed upload URLs
     const prep = await preparePostUpload(
       momentId,
@@ -121,7 +127,7 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
           uploadWithProgress(u.signedUrl, previews[u.index].file, (pct) => {
             progress[u.index] = pct
             setUploadProgress([...progress])
-          }),
+          }, userAccessToken),
         ),
       )
     } catch (err) {

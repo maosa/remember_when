@@ -14,6 +14,7 @@ export function uploadWithProgress(
   signedUrl: string,
   file: File,
   onProgress: (pct: number) => void,
+  userAccessToken?: string,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const body = new FormData()
@@ -50,10 +51,10 @@ export function uploadWithProgress(
     xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')))
 
     xhr.open('POST', signedUrl)
-    // Supabase Storage signed-upload endpoints require the token in both the
-    // URL query string AND the Authorization header (mirrors what storage-js does).
-    const token = new URL(signedUrl).searchParams.get('token')
-    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    // Supabase Storage signed-upload endpoints need the user's session JWT in the
+    // Authorization header (mirrors what storage-js does internally). The storage
+    // token stays in the URL query string (?token=...) — it is NOT the auth header.
+    if (userAccessToken) xhr.setRequestHeader('Authorization', `Bearer ${userAccessToken}`)
     xhr.send(body)
   })
 }
