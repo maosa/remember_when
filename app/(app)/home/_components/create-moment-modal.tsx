@@ -77,6 +77,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
   const [location, setLocation] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
+  const [tagError, setTagError] = useState<string | null>(null)
   const [invitees, setInvitees] = useState<InviteeDisplay[]>([])
 
   function reset() {
@@ -88,6 +89,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
     setLocation('')
     setTags([])
     setTagInput('')
+    setTagError(null)
     setInvitees([])
     setError(null)
   }
@@ -99,7 +101,9 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
 
   function addTag(raw: string) {
     const t = raw.trim().toLowerCase()
-    if (!t || t.length > 20 || tags.includes(t)) return
+    if (!t) return
+    if (tags.includes(t)) { setTagError('This tag has already been added.'); return }
+    setTagError(null)
     setTags((prev) => [...prev, t])
     setTagInput('')
   }
@@ -335,7 +339,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
                 <input
                   id="tag-input"
                   value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value.slice(0, 20))}
+                  onChange={(e) => { setTagInput(e.target.value.slice(0, 20)); setTagError(null) }}
                   onKeyDown={handleTagKeyDown}
                   onBlur={() => addTag(tagInput)}
                   placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
@@ -343,7 +347,10 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
                 />
               </div>
             </div>
-            <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
+            {tagError
+              ? <p className="text-xs text-rw-danger">{tagError}</p>
+              : <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
+            }
           </div>
 
           {error && <p className="text-sm text-rw-danger">{error}</p>}

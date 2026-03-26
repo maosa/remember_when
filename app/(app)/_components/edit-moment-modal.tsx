@@ -85,6 +85,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
   const [location, setLocation] = useState(moment.location ?? '')
   const [tags, setTags] = useState<string[]>(moment.tags)
   const [tagInput, setTagInput] = useState('')
+  const [tagError, setTagError] = useState<string | null>(null)
 
   function handleOpenChange(val: boolean) {
     if (!val) {
@@ -97,6 +98,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
       setLocation(moment.location ?? '')
       setTags(moment.tags)
       setTagInput('')
+      setTagError(null)
       setError(null)
     }
     onOpenChange(val)
@@ -104,7 +106,9 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
 
   function addTag(raw: string) {
     const t = raw.trim().toLowerCase()
-    if (!t || t.length > 20 || tags.includes(t)) return
+    if (!t) return
+    if (tags.includes(t)) { setTagError('This tag has already been added.'); return }
+    setTagError(null)
     setTags((prev) => [...prev, t])
     setTagInput('')
   }
@@ -337,7 +341,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                 <input
                   id="edit-tag-input"
                   value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value.slice(0, 20))}
+                  onChange={(e) => { setTagInput(e.target.value.slice(0, 20)); setTagError(null) }}
                   onKeyDown={handleTagKeyDown}
                   onBlur={() => addTag(tagInput)}
                   placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
@@ -345,7 +349,10 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                 />
               </div>
             </div>
-            <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
+            {tagError
+              ? <p className="text-xs text-rw-danger">{tagError}</p>
+              : <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
+            }
           </div>
 
           {error && <p className="text-sm text-rw-danger">{error}</p>}
