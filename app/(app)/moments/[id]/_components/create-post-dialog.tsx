@@ -101,56 +101,54 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
     const progress = new Array<number>(previews.length).fill(0)
     setUploadProgress([...progress])
 
-    // Get user session JWT — required as Authorization header for storage uploads
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    const userAccessToken = session?.access_token
-
-    // Phase 1: create post record + signed upload URLs
-    const prep = await preparePostUpload(
-      momentId,
-      content.trim() || null,
-      previews.map((p, i) => ({ name: p.file.name, type: p.file.type, size: p.file.size, index: i })),
-    )
-
-    if (prep.error || !prep.postId || !prep.uploads) {
-      setError(prep.error ?? 'Upload preparation failed.')
-      setIsUploading(false)
-      setUploadProgress(null)
-      return
-    }
-
-    // Phase 2: XHR-upload each file directly to Storage with progress events
     try {
-      await Promise.all(
-        prep.uploads.map((u) =>
-          uploadWithProgress(u.signedUrl, previews[u.index].file, (pct) => {
-            progress[u.index] = pct
-            setUploadProgress([...progress])
-          }, userAccessToken),
-        ),
+      // Get user session JWT — required as Authorization header for storage uploads
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const userAccessToken = session?.access_token
+
+      // Phase 1: create post record + signed upload URLs
+      const prep = await preparePostUpload(
+        momentId,
+        content.trim() || null,
+        previews.map((p, i) => ({ name: p.file.name, type: p.file.type, size: p.file.size, index: i })),
       )
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed.')
+
+      if (prep.error || !prep.postId || !prep.uploads) {
+        setError(prep.error ?? 'Upload preparation failed.')
+        return
+      }
+
+      // Phase 2: XHR-upload each file directly to Storage with progress events
+      try {
+        await Promise.all(
+          prep.uploads.map((u) =>
+            uploadWithProgress(u.signedUrl, previews[u.index].file, (pct) => {
+              progress[u.index] = pct
+              setUploadProgress([...progress])
+            }, userAccessToken),
+          ),
+        )
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Upload failed.')
+        return
+      }
+
+      // Phase 3: insert post_media rows + send notifications
+      startTransition(async () => {
+        const res = await finalizePostUpload(
+          prep.postId!,
+          momentId,
+          prep.uploads!.map((u) => ({ path: u.path, mediaType: u.mediaType })),
+        )
+        if (res.error) { setError(res.error); return }
+        onOpenChange(false)
+        reset()
+      })
+    } finally {
       setIsUploading(false)
       setUploadProgress(null)
-      return
     }
-
-    setIsUploading(false)
-    setUploadProgress(null)
-
-    // Phase 3: insert post_media rows + send notifications
-    startTransition(async () => {
-      const res = await finalizePostUpload(
-        prep.postId!,
-        momentId,
-        prep.uploads!.map((u) => ({ path: u.path, mediaType: u.mediaType })),
-      )
-      if (res.error) { setError(res.error); return }
-      onOpenChange(false)
-      reset()
-    })
   }
 
   const overallPct = uploadProgress

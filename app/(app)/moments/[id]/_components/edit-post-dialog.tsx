@@ -120,57 +120,55 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
     const progress = new Array<number>(newPreviews.length).fill(0)
     setUploadProgress([...progress])
 
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    const userAccessToken = session?.access_token
-
-    // Phase 1: get signed upload URLs
-    const prep = await prepareEditUpload(
-      post.id,
-      post.momentId,
-      newPreviews.map((p, i) => ({ name: p.file.name, type: p.file.type, size: p.file.size, index: i })),
-    )
-
-    if (prep.error || !prep.uploads) {
-      setError(prep.error ?? 'Upload preparation failed.')
-      setIsUploading(false)
-      setUploadProgress(null)
-      return
-    }
-
-    // Phase 2: XHR-upload each new file directly to Storage
     try {
-      await Promise.all(
-        prep.uploads.map((u) =>
-          uploadWithProgress(u.signedUrl, newPreviews[u.index].file, (pct) => {
-            progress[u.index] = pct
-            setUploadProgress([...progress])
-          }, userAccessToken),
-        ),
-      )
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed.')
-      setIsUploading(false)
-      setUploadProgress(null)
-      return
-    }
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const userAccessToken = session?.access_token
 
-    setIsUploading(false)
-    setUploadProgress(null)
-
-    // Phase 3: finalize edit (soft-delete removed, insert new media rows, update content)
-    startTransition(async () => {
-      const res = await editPost(
+      // Phase 1: get signed upload URLs
+      const prep = await prepareEditUpload(
         post.id,
         post.momentId,
-        trimmedContent,
-        removeMediaIds,
-        prep.uploads!.map((u) => ({ path: u.path, mediaType: u.mediaType })),
+        newPreviews.map((p, i) => ({ name: p.file.name, type: p.file.type, size: p.file.size, index: i })),
       )
-      if (res.error) { setError(res.error); return }
-      if (res.post) onSaved(res.post)
-      handleOpenChange(false)
-    })
+
+      if (prep.error || !prep.uploads) {
+        setError(prep.error ?? 'Upload preparation failed.')
+        return
+      }
+
+      // Phase 2: XHR-upload each new file directly to Storage
+      try {
+        await Promise.all(
+          prep.uploads.map((u) =>
+            uploadWithProgress(u.signedUrl, newPreviews[u.index].file, (pct) => {
+              progress[u.index] = pct
+              setUploadProgress([...progress])
+            }, userAccessToken),
+          ),
+        )
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Upload failed.')
+        return
+      }
+
+      // Phase 3: finalize edit (soft-delete removed, insert new media rows, update content)
+      startTransition(async () => {
+        const res = await editPost(
+          post.id,
+          post.momentId,
+          trimmedContent,
+          removeMediaIds,
+          prep.uploads!.map((u) => ({ path: u.path, mediaType: u.mediaType })),
+        )
+        if (res.error) { setError(res.error); return }
+        if (res.post) onSaved(res.post)
+        handleOpenChange(false)
+      })
+    } finally {
+      setIsUploading(false)
+      setUploadProgress(null)
+    }
   }
 
   const overallPct = uploadProgress

@@ -1415,7 +1415,7 @@ export async function editPost(
         )
         .filter(Boolean) as string[]
       if (objectPaths.length > 0) {
-        await supabase.storage.from('post-media').remove(objectPaths).catch((err: unknown) => {
+        await admin.storage.from('post-media').remove(objectPaths).catch((err: unknown) => {
           console.error('[editPost] Storage cleanup failed:', err)
         })
       }
@@ -1436,7 +1436,7 @@ export async function editPost(
   // Update post content and edited_at
   const { error } = await admin
     .from('posts')
-    .update({ content, edited_at: new Date().toISOString() })
+    .update({ content: clampedContent, edited_at: new Date().toISOString() })
     .eq('id', postId)
 
   if (error) return { error: error.message }
