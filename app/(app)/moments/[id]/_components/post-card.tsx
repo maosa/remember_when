@@ -52,6 +52,11 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
   }), [currentPost.media])
 
   function handleDelete() {
+    // Close the dialog before the async op so Base UI has already torn down
+    // its portal by the time setDeleted(true) unmounts this component.
+    // Leaving it open causes Base UI to attempt focus-restoration into an
+    // unmounted tree, which crashes the page.
+    setConfirmOpen(false)
     setError(null)
     startTransition(async () => {
       const res = await deletePost(currentPost.id, currentPost.momentId)
