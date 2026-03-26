@@ -18,8 +18,12 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   function handleAddTag(raw: string) {
-    const t = raw.trim()
+    const t = raw.trim().toLowerCase()
     if (!t) return
+    if (tags.some((existing) => existing.tag === t)) {
+      setError('This tag has already been added.')
+      return
+    }
     setError(null)
     startTransition(async () => {
       const res = await addTag(momentId, t)
@@ -69,7 +73,7 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
           <div className="flex items-center gap-1">
             <input
               value={input}
-              onChange={(e) => setInput(e.target.value.slice(0, 20))}
+              onChange={(e) => { setInput(e.target.value.slice(0, 20)); setError(null) }}
               onKeyDown={handleKeyDown}
               onBlur={() => handleAddTag(input)}
               placeholder="Add tag…"
