@@ -337,7 +337,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
                 onKeyDown={handleTagKeyDown}
                 onBlur={() => addTag(tagInput)}
                 placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
-                className="min-w-24 flex-1 bg-transparent text-sm outline-none placeholder:text-rw-text-muted"
+                className="min-w-24 flex-1 bg-transparent text-base md:text-sm outline-none placeholder:text-rw-text-muted"
               />
             </div>
             <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>

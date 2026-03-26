@@ -71,7 +71,7 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
               onKeyDown={handleKeyDown}
               onBlur={() => handleAddTag(input)}
               placeholder="Add tag…"
-              className="h-6 w-24 rounded-md border border-dashed border-rw-border bg-transparent px-2 text-xs outline-none placeholder:text-rw-text-placeholder/60 focus:border-rw-accent"
+              className="h-6 w-24 rounded-md border border-dashed border-rw-border bg-transparent px-2 text-base md:text-xs outline-none placeholder:text-rw-text-placeholder/60 focus:border-rw-accent"
               disabled={isPending}
             />
           </div>
