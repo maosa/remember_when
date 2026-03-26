@@ -1288,7 +1288,78 @@ export async function deletePost(postId: string, momentId: string): Promise<{ er
   return {}
 }
 
-export async function editPost(postId: string, momentId: string, formData: FormData): Promise<{ error?: string; post?: PostWithMedia }> {
+/**
+ * Phase 1 of the edit-post upload flow.
+ * Validates the request and returns a signed upload URL for each new file.
+ * No database writes happen here — the client XHR-uploads each file, then
+ * calls finalizeEditPost to commit everything in one shot.
+ */
+export async function prepareEditUpload(
+  postId: string,
+  momentId: string,
+  files: Array<{ name: string; type: string; size: number; index: number }>,
+): Promise<{ error?: string; uploads?: PreparedUpload[] }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: post } = await admin
+    .from('posts')
+    .select('author_id, moment_id')
+    .eq('id', postId)
+    .is('deleted_at', null)
+    .single()
+
+  if (!post || post.moment_id !== momentId) return { error: 'Post not found.' }
+  if (post.author_id !== user.id) return { error: 'Only the author can edit this post.' }
+
+  for (const f of files) {
+    if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
+    const mimeError = validateMediaMimeType(f.type)
+    if (mimeError) return { error: mimeError }
+  }
+
+  const timestamp = Date.now()
+  const urlResults = await Promise.all(
+    files.map(async (f) => {
+      const ext = safeExt(f.type)
+      const path = `${momentId}/${postId}/${timestamp}-${f.index}.${ext}`
+      const { data, error } = await supabase.storage.from('post-media').createSignedUploadUrl(path)
+      return { f, path, data, error }
+    }),
+  )
+
+  const firstUrlFailure = urlResults.find((r) => r.error || !r.data)
+  if (firstUrlFailure) return { error: firstUrlFailure.error?.message ?? 'Failed to generate upload URL.' }
+
+  const uploads: PreparedUpload[] = urlResults.map((r) => ({
+    index: r.f.index,
+    signedUrl: r.data!.signedUrl,
+    path: r.path,
+    mediaType: r.f.type.startsWith('video/')
+      ? 'video'
+      : r.f.type.startsWith('audio/')
+        ? 'audio'
+        : 'photo',
+  }))
+
+  return { uploads }
+}
+
+/**
+ * Phase 2 of the edit-post upload flow (also handles text-only edits).
+ * Soft-deletes removed media, inserts new post_media rows for already-uploaded
+ * files, updates post content, and returns the refreshed PostWithMedia.
+ */
+export async function editPost(
+  postId: string,
+  momentId: string,
+  content: string | null,
+  removeMediaIds: string[],
+  newMediaPaths: Array<{ path: string; mediaType: 'photo' | 'video' | 'audio' }>,
+): Promise<{ error?: string; post?: PostWithMedia }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -1306,16 +1377,7 @@ export async function editPost(postId: string, momentId: string, formData: FormD
   if (!post || post.moment_id !== momentId) return { error: 'Post not found.' }
   if (post.author_id !== user.id) return { error: 'Only the author can edit this post.' }
 
-  const rawContent = (formData.get('content') as string | null)?.trim() || null
-  const content = rawContent ? rawContent.slice(0, 10_000) : null
-  const removeMediaIds = formData.getAll('removeMediaId') as string[]
-  const newFiles = (formData.getAll('media') as File[]).filter((f) => f && f.size > 0)
-
-  for (const f of newFiles) {
-    if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
-    const mimeError = validateMediaFile(f)
-    if (mimeError) return { error: mimeError }
-  }
+  const clampedContent = content ? content.trim().slice(0, 10_000) || null : null
 
   // Count remaining media after removals + new uploads
   const { data: existingMedia } = await admin
@@ -1324,13 +1386,13 @@ export async function editPost(postId: string, momentId: string, formData: FormD
     .eq('post_id', postId)
     .is('deleted_at', null)
 
-  const remainingCount = ((existingMedia ?? []).length - removeMediaIds.length) + newFiles.length
+  const remainingCount = ((existingMedia ?? []).length - removeMediaIds.length) + newMediaPaths.length
 
-  if (!content && remainingCount <= 0) {
+  if (!clampedContent && remainingCount <= 0) {
     return { error: 'A post must have text or at least one media file.' }
   }
 
-  // Soft-delete removed media items and remove from Storage
+  // Soft-delete removed media items and best-effort remove from Storage
   if (removeMediaIds.length > 0) {
     const { data: toRemove } = await admin
       .from('post_media')
@@ -1345,9 +1407,6 @@ export async function editPost(postId: string, momentId: string, formData: FormD
         .in('id', removeMediaIds)
         .eq('post_id', postId)
 
-      // Best-effort Storage deletions — batch all paths into a single remove call.
-      // All storage_url values use the "post-media/{path}" prefix format since the
-      // migration to path-based storage; the legacy signed-URL format is no longer used.
       const objectPaths = toRemove
         .map((row) =>
           row.storage_url.startsWith('post-media/')
@@ -1363,38 +1422,14 @@ export async function editPost(postId: string, momentId: string, formData: FormD
     }
   }
 
-  // Upload new media files in parallel, then batch-insert all post_media rows at once
-  if (newFiles.length > 0) {
-    // Timestamp-based offset avoids filename collisions with existing files
-    const offset = Date.now()
-
-    type EditUploadResult =
-      | { ok: true;  row: { post_id: string; media_type: string; storage_url: string } }
-      | { ok: false; message: string }
-
-    const uploadResults = await Promise.all<EditUploadResult>(
-      newFiles.map(async (file, i) => {
-        const ext = safeExt(file.type)
-        const filePath = `${momentId}/${postId}/${offset}-${i}.${ext}`
-        const { error: uploadError } = await supabase.storage
-          .from('post-media')
-          .upload(filePath, file, { upsert: false })
-        if (uploadError) return { ok: false, message: uploadError.message }
-        const mediaType = file.type.startsWith('video/')
-          ? 'video'
-          : file.type.startsWith('audio/')
-            ? 'audio'
-            : 'photo'
-        // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
-        return { ok: true, row: { post_id: postId, media_type: mediaType, storage_url: `post-media/${filePath}` } }
-      })
-    )
-
-    const firstFailure = uploadResults.find((r): r is Extract<EditUploadResult, { ok: false }> => !r.ok)
-    if (firstFailure) return { error: `Upload failed: ${firstFailure.message}` }
-
+  // Insert post_media rows for new files (already uploaded to Storage by the client)
+  if (newMediaPaths.length > 0) {
     await admin.from('post_media').insert(
-      (uploadResults as Extract<EditUploadResult, { ok: true }>[]).map((r) => r.row)
+      newMediaPaths.map((m) => ({
+        post_id: postId,
+        media_type: m.mediaType,
+        storage_url: `post-media/${m.path}`,
+      })),
     )
   }
 
