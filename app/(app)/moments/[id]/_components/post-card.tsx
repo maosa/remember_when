@@ -2,7 +2,8 @@
 
 import { memo, useMemo, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
-import { Pencil, Trash2, Mic } from 'lucide-react'
+import { Pencil, Trash2, Mic, Play } from 'lucide-react'
+import { MediaViewer } from './media-viewer'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -38,6 +39,8 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
   const [editOpen, setEditOpen] = useState(false)
   const [editEverOpened, setEditEverOpened] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [viewerOpen, setViewerOpen] = useState(false)
+  const [viewerIndex, setViewerIndex] = useState(0)
   // Track the post's own mutable state so edits reflect immediately
   const [currentPost, setCurrentPost] = useState(post)
 
@@ -50,6 +53,14 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
   }), [currentPost.media])
 
   if (deleted) return null
+
+  function openViewer(mediaId: string) {
+    const idx = currentPost.media.findIndex((m) => m.id === mediaId)
+    if (idx >= 0) {
+      setViewerIndex(idx)
+      setViewerOpen(true)
+    }
+  }
 
   function handleDelete() {
     // Close the dialog before the async op so Base UI has already torn down
@@ -130,37 +141,55 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
       {photos.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {photos.map((m) => (
-            <a key={m.id} href={m.storageUrl} target="_blank" rel="noreferrer" className="block shrink-0">
+            <button
+              key={m.id}
+              onClick={() => openViewer(m.id)}
+              className="block shrink-0 rounded-lg overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={m.storageUrl}
                 alt=""
                 loading="lazy"
                 decoding="async"
-                className="size-40 rounded-lg object-cover bg-rw-surface-raised"
+                className="size-40 object-cover bg-rw-surface-raised"
               />
-            </a>
+            </button>
           ))}
         </div>
       )}
 
       {/* Videos */}
       {videos.map((m) => (
-        <video
+        <button
           key={m.id}
-          src={m.storageUrl}
-          controls
-          preload="none"
-          className="w-full rounded-xl bg-rw-surface-raised max-h-72 object-contain"
-        />
+          onClick={() => openViewer(m.id)}
+          className="relative w-full rounded-xl overflow-hidden bg-rw-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent"
+        >
+          <video
+            src={m.storageUrl}
+            preload="metadata"
+            className="w-full max-h-72 object-contain pointer-events-none"
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <div className="size-12 rounded-full bg-black/50 flex items-center justify-center">
+              <Play className="size-6 text-white fill-white ml-0.5" />
+            </div>
+          </div>
+        </button>
       ))}
 
       {/* Audio */}
       {audios.map((m) => (
-        <div key={m.id} className="flex items-center gap-3 rounded-xl border border-rw-border-subtle bg-rw-surface-raised/50 px-3 py-2.5">
+        <button
+          key={m.id}
+          onClick={() => openViewer(m.id)}
+          className="flex items-center gap-3 w-full text-left rounded-xl border border-rw-border-subtle bg-rw-surface-raised/50 px-3 py-2.5 hover:bg-rw-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent"
+        >
           <Mic className="size-4 text-rw-text-muted shrink-0" />
-          <audio src={m.storageUrl} controls preload="none" className="w-full h-8" />
-        </div>
+          <span className="text-sm text-rw-text-muted flex-1">Audio recording</span>
+          <Play className="size-3.5 text-rw-text-muted shrink-0" />
+        </button>
       ))}
 
       {error && <p className="text-xs text-rw-danger">{error}</p>}
@@ -190,6 +219,17 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
           open={editOpen}
           onOpenChange={setEditOpen}
           onSaved={(updated) => setCurrentPost(updated)}
+        />
+      )}
+
+      {viewerOpen && currentPost.media.length > 0 && (
+        <MediaViewer
+          items={currentPost.media}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerOpen(false)}
+          authorFirstName={currentPost.authorFirstName}
+          authorLastName={currentPost.authorLastName}
+          postCreatedAt={currentPost.createdAt}
         />
       )}
     </article>
