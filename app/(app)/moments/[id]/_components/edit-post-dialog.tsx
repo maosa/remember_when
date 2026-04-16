@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { ImageIcon, Mic, Video, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/lib/button-variants'
@@ -50,16 +50,28 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
   const [newPreviews, setNewPreviews] = useState<NewPreview[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  // Discard unsaved edits whenever the dialog closes
-  function handleOpenChange(val: boolean) {
-    if (!val) {
-      setContent(post.content ?? '')
-      setExisting(post.media.map((m) => ({ kind: 'existing', id: m.id, mediaType: m.mediaType, storageUrl: m.storageUrl, removed: false })))
-      newPreviews.forEach((p) => URL.revokeObjectURL(p.objectUrl))
+  // Always reflect the latest saved post. Using a ref avoids a stale closure:
+  // by the time the dialog opens again the parent has re-rendered with the new
+  // post prop, so postRef.current is up-to-date when the effect runs.
+  const postRef = useRef(post)
+  postRef.current = post
+
+  useEffect(() => {
+    if (open) {
+      const p = postRef.current
+      setContent(p.content ?? '')
+      setExisting(p.media.map((m) => ({ kind: 'existing', id: m.id, mediaType: m.mediaType, storageUrl: m.storageUrl, removed: false })))
       setNewPreviews([])
       setError(null)
       setUploadProgress(null)
       setIsUploading(false)
+    }
+  }, [open]) // intentionally omit post — we read it via ref to avoid resetting mid-session
+
+  // Revoke object URLs and close
+  function handleOpenChange(val: boolean) {
+    if (!val) {
+      newPreviews.forEach((p) => URL.revokeObjectURL(p.objectUrl))
     }
     onOpenChange(val)
   }
