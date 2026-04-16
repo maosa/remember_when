@@ -50,9 +50,9 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
   const [newPreviews, setNewPreviews] = useState<NewPreview[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  // Reset internal state whenever the dialog opens fresh
+  // Discard unsaved edits whenever the dialog closes
   function handleOpenChange(val: boolean) {
-    if (val) {
+    if (!val) {
       setContent(post.content ?? '')
       setExisting(post.media.map((m) => ({ kind: 'existing', id: m.id, mediaType: m.mediaType, storageUrl: m.storageUrl, removed: false })))
       newPreviews.forEach((p) => URL.revokeObjectURL(p.objectUrl))
@@ -60,8 +60,6 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
       setError(null)
       setUploadProgress(null)
       setIsUploading(false)
-    } else {
-      newPreviews.forEach((p) => URL.revokeObjectURL(p.objectUrl))
     }
     onOpenChange(val)
   }
