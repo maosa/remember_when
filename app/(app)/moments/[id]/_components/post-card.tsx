@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useMemo, useState, useTransition } from 'react'
+import React, { memo, useMemo, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { Pencil, Trash2, Mic, Play } from 'lucide-react'
 import { MediaViewer } from './media-viewer'
@@ -30,6 +30,37 @@ interface Props {
 
 function formatTimestamp(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const URL_REGEX = /(https?:\/\/[^\s<>"]+|www\.[^\s<>"]+|[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.(com|org|net|io|co|app|dev|xyz|info|me|tv|ai)(?:\/[^\s<>"]*)?)/g
+
+function linkifyContent(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+  URL_REGEX.lastIndex = 0
+
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    const raw = match[0].replace(/[.,;:!?)]+$/, '')
+    if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index))
+    const href = raw.startsWith('http') ? raw : `https://${raw}`
+    parts.push(
+      <a
+        key={match.index}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-rw-accent underline underline-offset-2 break-all hover:opacity-80"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {raw}
+      </a>
+    )
+    lastIndex = match.index + raw.length
+  }
+
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex))
+  return parts
 }
 
 export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Props) {
@@ -144,7 +175,7 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
 
       {/* Text content */}
       {currentPost.content && (
-        <p className="text-sm whitespace-pre-wrap leading-relaxed">{currentPost.content}</p>
+        <p className="text-sm whitespace-pre-wrap leading-relaxed">{linkifyContent(currentPost.content)}</p>
       )}
 
       {/* Photos */}

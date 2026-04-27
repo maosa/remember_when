@@ -840,15 +840,15 @@ export async function fetchMomentPhotos(
   // Fetch photos for this specific moment (filter in DB, not in JS)
   const { data: posts } = await admin
     .from('posts')
-    .select(`id, post_media(storage_url, deleted_at)`)
+    .select(`id, post_media(media_type, storage_url, deleted_at)`)
     .eq('moment_id', momentId)
     .is('deleted_at', null)
 
   const storagePaths: string[] = []
   for (const post of posts ?? []) {
-    const media = post.post_media as unknown as Array<{ storage_url: string; deleted_at: string | null }>
+    const media = post.post_media as unknown as Array<{ media_type: string; storage_url: string; deleted_at: string | null }>
     for (const m of media) {
-      if (!m.deleted_at && m.storage_url) storagePaths.push(m.storage_url)
+      if (!m.deleted_at && m.storage_url && m.media_type === 'photo') storagePaths.push(m.storage_url)
     }
   }
 
