@@ -52,6 +52,16 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
     audios: currentPost.media.filter((m) => m.mediaType === 'audio'),
   }), [currentPost.media])
 
+  const mediaWithAttribution = useMemo(() =>
+    currentPost.media.map((m) => ({
+      ...m,
+      authorFirstName: currentPost.authorFirstName,
+      authorLastName: currentPost.authorLastName,
+      postCreatedAt: currentPost.createdAt,
+    })),
+    [currentPost]
+  )
+
   if (deleted) return null
 
   function openViewer(mediaId: string) {
@@ -224,12 +234,9 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
 
       {viewerOpen && currentPost.media.length > 0 && (
         <MediaViewer
-          items={currentPost.media}
+          items={mediaWithAttribution}
           initialIndex={viewerIndex}
           onClose={() => setViewerOpen(false)}
-          authorFirstName={currentPost.authorFirstName}
-          authorLastName={currentPost.authorLastName}
-          postCreatedAt={currentPost.createdAt}
         />
       )}
     </article>

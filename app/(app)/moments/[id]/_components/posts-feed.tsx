@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { ArrowDownUp, BookOpen, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PostCard } from './post-card'
+import { useMomentGallery } from './moment-gallery-context'
 import type { PostWithMedia } from '../actions'
 
 const CreatePostDialog = dynamic(() =>
@@ -37,6 +38,23 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
   const [filterAuthorId, setFilterAuthorId] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [createEverOpened, setCreateEverOpened] = useState(false)
+
+  const { registerPostMedia } = useMomentGallery()
+
+  useEffect(() => {
+    // Flatten all post media in chronological order (posts already sorted asc by server)
+    // and attach per-item author attribution for the gallery viewer
+    const items = initialPosts.flatMap((post) =>
+      post.media.map((m) => ({
+        ...m,
+        authorFirstName: post.authorFirstName,
+        authorLastName: post.authorLastName,
+        postCreatedAt: post.createdAt,
+      }))
+    )
+    registerPostMedia(items)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const openCreate = useCallback(() => {
     setCreateEverOpened(true)

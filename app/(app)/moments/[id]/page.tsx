@@ -5,6 +5,7 @@ import { MomentHeader } from './_components/moment-header'
 import { TagsSection } from './_components/tags-section'
 import { MembersRow } from './_components/members-row'
 import { PostsSection } from './_components/posts-section'
+import { MomentGalleryProvider } from './_components/moment-gallery-context'
 
 function PostsSectionSkeleton() {
   return (
@@ -34,29 +35,31 @@ export default async function MomentPage({ params }: Props) {
   const canEdit = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
 
   return (
-    <main className="min-h-screen">
-      {/* Collapsing header + invite banner */}
-      <MomentHeader moment={moment} myRole={myRole} myStatus={myStatus} />
+    <MomentGalleryProvider>
+      <main className="min-h-screen">
+        {/* Collapsing header + invite banner */}
+        <MomentHeader moment={moment} myRole={myRole} myStatus={myStatus} />
 
-      {/* Tags */}
-      <TagsSection
-        momentId={moment.id}
-        tags={moment.tags}
-        canEdit={canEdit}
-      />
-
-      {/* Members row + action buttons */}
-      <MembersRow moment={moment} myRole={myRole} myStatus={myStatus} canEdit={canEdit} />
-
-      {/* Posts & media — streamed independently so header/tags/members appear first */}
-      <Suspense fallback={<PostsSectionSkeleton />}>
-        <PostsSection
+        {/* Tags */}
+        <TagsSection
           momentId={moment.id}
-          momentOwnerId={moment.ownerId}
-          myRole={myRole}
-          myStatus={myStatus}
+          tags={moment.tags}
+          canEdit={canEdit}
         />
-      </Suspense>
-    </main>
+
+        {/* Members row + action buttons */}
+        <MembersRow moment={moment} myRole={myRole} myStatus={myStatus} canEdit={canEdit} />
+
+        {/* Posts & media — streamed independently so header/tags/members appear first */}
+        <Suspense fallback={<PostsSectionSkeleton />}>
+          <PostsSection
+            momentId={moment.id}
+            momentOwnerId={moment.ownerId}
+            myRole={myRole}
+            myStatus={myStatus}
+          />
+        </Suspense>
+      </main>
+    </MomentGalleryProvider>
   )
 }

@@ -867,6 +867,9 @@ export type PostMedia = {
   id: string
   mediaType: 'photo' | 'video' | 'audio'
   storageUrl: string
+  authorFirstName?: string
+  authorLastName?: string
+  postCreatedAt?: string
 }
 
 export type PostWithMedia = {

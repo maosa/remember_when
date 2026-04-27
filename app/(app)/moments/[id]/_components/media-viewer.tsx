@@ -37,9 +37,6 @@ interface MediaViewerProps {
   items: PostMedia[]
   initialIndex: number
   onClose: () => void
-  authorFirstName: string
-  authorLastName: string
-  postCreatedAt: string
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -50,9 +47,6 @@ export function MediaViewer({
   items,
   initialIndex,
   onClose,
-  authorFirstName,
-  authorLastName,
-  postCreatedAt,
 }: MediaViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [itemKey, setItemKey] = useState(0)
@@ -382,9 +376,11 @@ export function MediaViewer({
                 </div>
 
                 {/* Author / date */}
-                <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
-                  {authorFirstName} {authorLastName} · {fmtDate(postCreatedAt)}
-                </div>
+                {item.authorFirstName && item.postCreatedAt && (
+                  <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+                    {item.authorFirstName} {item.authorLastName} · {fmtDate(item.postCreatedAt)}
+                  </div>
+                )}
               </div>
             </div>
           </>

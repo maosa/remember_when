@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Calendar, CheckCircle2, XCircle } from 'lucide-react'
+import { MapPin, Calendar, CheckCircle2, XCircle, ZoomIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { acceptMomentInvite, declineMomentInvite, type MomentDetail } from '../actions'
+import { acceptMomentInvite, declineMomentInvite, type MomentDetail, type PostMedia } from '../actions'
+import { MediaViewer } from './media-viewer'
+import { useMomentGallery } from './moment-gallery-context'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -33,9 +35,23 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [galleryOpen, setGalleryOpen] = useState(false)
+
+  const { postMedia, galleryReady } = useMomentGallery()
 
   const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = myStatus === 'pending'
+
+  // Cover photo as item 0, then all post media in chronological order
+  const galleryItems = useMemo<PostMedia[]>(() => {
+    if (!moment.coverPhotoUrl) return postMedia
+    return [
+      { id: 'moment-cover', mediaType: 'photo', storageUrl: moment.coverPhotoUrl },
+      ...postMedia,
+    ]
+  }, [moment.coverPhotoUrl, postMedia])
+
+  const coverClickable = galleryReady && !isPendingInvite && !!moment.coverPhotoUrl
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -92,7 +108,17 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
       <div className="relative">
         {/* Cover photo */}
         {moment.coverPhotoUrl ? (
-          <div className="relative h-52 sm:h-72 overflow-hidden bg-rw-surface-raised">
+          <div
+            className={cn(
+              'relative h-52 sm:h-72 overflow-hidden bg-rw-surface-raised group',
+              coverClickable && 'cursor-pointer'
+            )}
+            onClick={coverClickable ? () => setGalleryOpen(true) : undefined}
+            role={coverClickable ? 'button' : undefined}
+            tabIndex={coverClickable ? 0 : undefined}
+            onKeyDown={coverClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setGalleryOpen(true) } } : undefined}
+            aria-label={coverClickable ? 'View moment gallery' : undefined}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={moment.coverPhotoUrl}
@@ -102,7 +128,13 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
               className={cn('size-full object-cover', isPendingInvite && 'blur-md scale-110')}
             />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(44,42,37,0.75) 0%, rgba(44,42,37,0.3) 50%, transparent 100%)' }} />
-
+            {coverClickable && (
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full bg-black/40 p-2.5">
+                  <ZoomIn className="size-5 text-white" />
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="h-28 bg-gradient-to-br from-rw-accent-subtle via-rw-surface-raised to-rw-surface" />
@@ -158,6 +190,15 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
 
       {/* Sentinel — when this scrolls out of view the collapsed bar appears */}
       <div ref={sentinelRef} className="h-px" />
+
+      {/* Moment gallery viewer — opens from cover photo click */}
+      {galleryOpen && galleryItems.length > 0 && (
+        <MediaViewer
+          items={galleryItems}
+          initialIndex={0}
+          onClose={() => setGalleryOpen(false)}
+        />
+      )}
 
       {/* ── Pending invite banner ──────────────────────────────── */}
       {isPendingInvite && (
