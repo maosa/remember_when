@@ -867,6 +867,7 @@ export type PostMedia = {
   id: string
   mediaType: 'photo' | 'video' | 'audio'
   storageUrl: string
+  storagePath: string
   authorFirstName?: string
   authorLastName?: string
   postCreatedAt?: string
@@ -926,6 +927,7 @@ export async function fetchPosts(
       id: m.id,
       mediaType: m.media_type as 'photo' | 'video' | 'audio',
       storageUrl: signed.get(m.storage_url) ?? m.storage_url,
+      storagePath: m.storage_url,
     }))
 
     return {
@@ -1483,6 +1485,7 @@ export async function editPost(
       id: m.id,
       mediaType: m.media_type as 'photo' | 'video' | 'audio',
       storageUrl: signed.get(m.storage_url) ?? m.storage_url,
+      storagePath: m.storage_url,
     })),
   }
 

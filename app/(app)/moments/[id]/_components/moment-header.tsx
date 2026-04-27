@@ -42,14 +42,19 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
   const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = myStatus === 'pending'
 
-  // Cover photo as item 0, then all post media in chronological order
+  // Cover photo as item 0, then all post media in chronological order.
+  // If the cover photo was selected from an existing post photo, its storage path
+  // matches that item's storagePath — exclude that duplicate from the post media list.
   const galleryItems = useMemo<PostMedia[]>(() => {
     if (!moment.coverPhotoUrl) return postMedia
+    const deduped = moment.coverPhotoStoragePath
+      ? postMedia.filter((m) => m.storagePath !== moment.coverPhotoStoragePath)
+      : postMedia
     return [
-      { id: 'moment-cover', mediaType: 'photo', storageUrl: moment.coverPhotoUrl },
-      ...postMedia,
+      { id: 'moment-cover', mediaType: 'photo', storageUrl: moment.coverPhotoUrl, storagePath: moment.coverPhotoStoragePath ?? '' },
+      ...deduped,
     ]
-  }, [moment.coverPhotoUrl, postMedia])
+  }, [moment.coverPhotoUrl, moment.coverPhotoStoragePath, postMedia])
 
   const coverClickable = galleryReady && !isPendingInvite && !!moment.coverPhotoUrl
 
