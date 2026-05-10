@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { X, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,6 +15,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { MONTHS, YEARS, daysInMonth, inferDateMode, type DateMode } from '@/lib/date-helpers'
+import { TagInput } from '@/components/ui/tag-input'
 import { updateMoment } from '@/app/(app)/moments/[id]/actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -36,38 +37,6 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-type DateMode = 'year' | 'month-year' | 'full'
-
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-
-// ─── Date helpers ─────────────────────────────────────────────────────────────
-
-const YEARS = Array.from({ length: 3000 - 1900 + 1 }, (_, i) => 1900 + i)
-
-function isLeapYear(year: number): boolean {
-  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)
-}
-
-/** Returns the number of days in a month. When year is omitted, Feb returns 28 (safe default). */
-function daysInMonth(month: number, year?: number): number {
-  if (month === 2) {
-    if (year === undefined) return 28
-    return isLeapYear(year) ? 29 : 28
-  }
-  return [4, 6, 9, 11].includes(month) ? 30 : 31
-}
-
-function inferDateMode(year: number | null, month: number | null, day: number | null): DateMode {
-  if (day) return 'full'
-  if (month) return 'month-year'
-  return 'year'
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function EditMomentModal({ moment, open, onOpenChange }: Props) {
@@ -84,8 +53,6 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
   const [dateDay, setDateDay] = useState(moment.dateDay ? String(moment.dateDay) : '')
   const [location, setLocation] = useState(moment.location ?? '')
   const [tags, setTags] = useState<string[]>(moment.tags)
-  const [tagInput, setTagInput] = useState('')
-  const [tagError, setTagError] = useState<string | null>(null)
 
   function handleOpenChange(val: boolean) {
     if (!val) {
@@ -97,33 +64,9 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
       setDateDay(moment.dateDay ? String(moment.dateDay) : '')
       setLocation(moment.location ?? '')
       setTags(moment.tags)
-      setTagInput('')
-      setTagError(null)
       setError(null)
     }
     onOpenChange(val)
-  }
-
-  function addTag(raw: string) {
-    const t = raw.trim().toLowerCase()
-    if (!t) return
-    if (tags.includes(t)) { setTagError('This tag has already been added.'); return }
-    setTagError(null)
-    setTags((prev) => [...prev, t])
-    setTagInput('')
-  }
-
-  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      addTag(tagInput)
-    } else if (e.key === 'Backspace' && tagInput === '') {
-      setTags((prev) => prev.slice(0, -1))
-    }
-  }
-
-  function removeTag(tag: string) {
-    setTags((prev) => prev.filter((t) => t !== tag))
   }
 
   function handleSubmit() {
@@ -313,50 +256,11 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
 
           {/* Tags */}
           <div className="space-y-1.5">
-            <Label>
+            <Label htmlFor="edit-tag-input">
               Tags{' '}
-              <span className="text-rw-text-muted text-xs font-normal">
-                (optional · max 20 chars)
-              </span>
+              <span className="text-rw-text-muted text-xs font-normal">(optional · max 20 chars)</span>
             </Label>
-            <div
-              className="flex items-start gap-2 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 min-h-9 cursor-text"
-              onClick={() => document.getElementById('edit-tag-input')?.focus()}
-            >
-              <Tag className="size-4 shrink-0 mt-0.5 text-rw-text-placeholder" />
-              <div className="flex flex-wrap gap-1.5 flex-1">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 rounded-full bg-rw-accent-subtle text-rw-accent px-2.5 py-1 text-xs font-medium"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="text-rw-accent/60 hover:text-rw-accent"
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </span>
-                ))}
-                <input
-                  id="edit-tag-input"
-                  value={tagInput}
-                  onChange={(e) => { setTagInput(e.target.value.slice(0, 20)); setTagError(null) }}
-                  onKeyDown={handleTagKeyDown}
-                  onBlur={() => addTag(tagInput)}
-                  placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
-                  className="min-w-24 flex-1 bg-transparent text-base md:text-sm outline-none placeholder:text-rw-text-placeholder"
-                  aria-invalid={!!tagError}
-                  aria-describedby={tagError ? 'edit-tag-error' : undefined}
-                />
-              </div>
-            </div>
-            {tagError
-              ? <p id="edit-tag-error" role="alert" className="text-xs text-rw-danger">{tagError}</p>
-              : <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
-            }
+            <TagInput tags={tags} onChange={setTags} inputId="edit-tag-input" />
           </div>
 
           {error && <p id="edit-moment-error" role="alert" className="text-sm text-rw-danger">{error}</p>}

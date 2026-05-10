@@ -352,7 +352,7 @@ Also audit the `select(...)` columns in each sub-query and remove any fields tha
 
 ---
 
-### [ ] T2-08 · RELIABILITY · Prevent duplicate reminder notifications from cron retries
+### [x] T2-08 · RELIABILITY · Prevent duplicate reminder notifications from cron retries
 
 **File:** `app/api/cron/reminders/route.ts`
 
@@ -376,7 +376,7 @@ Only insert for users not already notified.
 
 ---
 
-### [ ] T2-09 · CODE QUALITY · Extract shared date helper utilities
+### [x] T2-09 · CODE QUALITY · Extract shared date helper utilities
 
 **Files:**
 - `app/(app)/_components/edit-moment-modal.tsx` — contains `MONTHS`, `isLeapYear()`, `daysInMonth()`, `inferDateMode()`, `YEARS` (approximately lines 41–69)
@@ -393,7 +393,7 @@ Only insert for users not already notified.
 
 ---
 
-### [ ] T2-10 · CODE QUALITY · Extract `<TagInput>` into a shared component
+### [x] T2-10 · CODE QUALITY · Extract `<TagInput>` into a shared component
 
 **Files:**
 - `app/(app)/_components/edit-moment-modal.tsx` — `addTag()`, `handleTagKeyDown()`, `removeTag()` and the tag input JSX (~lines 107–127 and corresponding render)
@@ -410,7 +410,7 @@ Only insert for users not already notified.
 
 ---
 
-### [ ] T2-11 · CODE QUALITY · Memoize `Grid` and `MomentsGrid` helper components
+### [x] T2-11 · CODE QUALITY · Memoize `Grid` and `MomentsGrid` helper components
 
 **File:** `app/(app)/home/_components/moments-list.tsx`
 
@@ -422,7 +422,7 @@ Only insert for users not already notified.
 
 ---
 
-### [ ] T2-12 · CODE QUALITY · Extract `PeopleInviteInput` into its own file
+### [x] T2-12 · CODE QUALITY · Extract `PeopleInviteInput` into its own file
 
 **File:** `app/(app)/home/_components/create-moment-modal.tsx`
 
@@ -641,11 +641,11 @@ Remove `heic`, `heif`, `ogg`, `aac`, `x-m4a` from the allowed list. Update any e
 | T2-05 | Fix over-fetching in searchUsers friendships | 2 | Performance | [x] |
 | T2-06 | Guard sub-queries in notifications page | 2 | Performance | [x] |
 | T2-07 | Remove user join from home moments query | 2 | Performance | [x] |
-| T2-08 | Prevent duplicate cron reminder notifications | 2 | Reliability | [ ] |
-| T2-09 | Extract shared date helper utilities | 2 | Code Quality | [ ] |
-| T2-10 | Extract TagInput component | 2 | Code Quality | [ ] |
-| T2-11 | Memoize Grid/MomentsGrid components | 2 | Code Quality | [ ] |
-| T2-12 | Extract PeopleInviteInput to own file | 2 | Code Quality | [ ] |
+| T2-08 | Prevent duplicate cron reminder notifications | 2 | Reliability | [x] |
+| T2-09 | Extract shared date helper utilities | 2 | Code Quality | [x] |
+| T2-10 | Extract TagInput component | 2 | Code Quality | [x] |
+| T2-11 | Memoize Grid/MomentsGrid components | 2 | Code Quality | [x] |
+| T2-12 | Extract PeopleInviteInput to own file | 2 | Code Quality | [x] |
 | T3-01 | Strengthen cron auth with request signing | 3 | Security | [ ] |
 | T3-02 | Replace revalidatePath with tag-based caching | 3 | Performance | [ ] |
 | T3-03 | Add image transformation for storage URLs | 3 | Performance | [ ] |

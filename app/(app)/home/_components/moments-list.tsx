@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, memo } from 'react'
 import dynamic from 'next/dynamic'
 import { ArrowUpDown, BookOpen, Plus } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -191,7 +191,7 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
 
 // ─── Grid (handles split-view logic) ─────────────────────────────────────────
 
-function MomentsGrid({
+const MomentsGrid = memo(function MomentsGrid({
   moments,
   currentUserId,
   sort,
@@ -243,9 +243,9 @@ function MomentsGrid({
   }
 
   return <Grid moments={moments} currentUserId={currentUserId} />
-}
+})
 
-function Grid({ moments, currentUserId }: { moments: MomentSummary[]; currentUserId: string }) {
+const Grid = memo(function Grid({ moments, currentUserId }: { moments: MomentSummary[]; currentUserId: string }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {moments.map((m) => (
@@ -253,4 +253,4 @@ function Grid({ moments, currentUserId }: { moments: MomentSummary[]; currentUse
       ))}
     </div>
   )
-}
+})

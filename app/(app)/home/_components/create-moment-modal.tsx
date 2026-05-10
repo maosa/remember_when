@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
-import { Plus, X, Search, UserRound, Tag } from 'lucide-react'
+import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,47 +14,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
+import { TagInput } from '@/components/ui/tag-input'
 import { cn } from '@/lib/utils'
-import { createMoment, searchUsersToInvite, type Invitee } from '../actions'
-
-// ─── Date mode ───────────────────────────────────────────────────────────────
-
-type DateMode = 'year' | 'month-year' | 'full'
-
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-
-// ─── Date helpers ─────────────────────────────────────────────────────────────
+import { MONTHS, YEARS, daysInMonth, type DateMode } from '@/lib/date-helpers'
+import { createMoment, type Invitee } from '../actions'
+import { PeopleInviteInput, type InviteeDisplay } from './people-invite-input'
 
 const CURRENT_YEAR = new Date().getFullYear()
-const YEARS = Array.from({ length: 3000 - 1900 + 1 }, (_, i) => 1900 + i)
-
-function isLeapYear(year: number): boolean {
-  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)
-}
-
-/** Returns the number of days in a month. When year is omitted, Feb returns 28 (safe default). */
-function daysInMonth(month: number, year?: number): number {
-  if (month === 2) {
-    if (year === undefined) return 28
-    return isLeapYear(year) ? 29 : 28
-  }
-  return [4, 6, 9, 11].includes(month) ? 30 : 31
-}
-
-// ─── Invite list item ─────────────────────────────────────────────────────────
-
-type InviteeDisplay = {
-  type: 'userId' | 'email'
-  value: string
-  role: 'editor' | 'reader'
-  label: string
-  photoUrl?: string | null
-}
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -76,8 +41,6 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
   const [dateDay, setDateDay] = useState('')
   const [location, setLocation] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
-  const [tagError, setTagError] = useState<string | null>(null)
   const [invitees, setInvitees] = useState<InviteeDisplay[]>([])
 
   function reset() {
@@ -88,8 +51,6 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
     setDateDay('')
     setLocation('')
     setTags([])
-    setTagInput('')
-    setTagError(null)
     setInvitees([])
     setError(null)
   }
@@ -97,28 +58,6 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
   function handleOpenChange(val: boolean) {
     if (!val) reset()
     onOpenChange(val)
-  }
-
-  function addTag(raw: string) {
-    const t = raw.trim().toLowerCase()
-    if (!t) return
-    if (tags.includes(t)) { setTagError('This tag has already been added.'); return }
-    setTagError(null)
-    setTags((prev) => [...prev, t])
-    setTagInput('')
-  }
-
-  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      addTag(tagInput)
-    } else if (e.key === 'Backspace' && tagInput === '') {
-      setTags((prev) => prev.slice(0, -1))
-    }
-  }
-
-  function removeTag(tag: string) {
-    setTags((prev) => prev.filter((t) => t !== tag))
   }
 
   function addInvitee(item: InviteeDisplay) {
@@ -326,35 +265,8 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
 
           {/* Tags */}
           <div className="space-y-1.5">
-            <Label>Tags <span className="text-rw-text-muted text-xs font-normal">(optional · max 20 chars)</span></Label>
-            <div className="flex items-start gap-2 rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 min-h-9 cursor-text" onClick={() => document.getElementById('tag-input')?.focus()}>
-              <Tag className="size-4 shrink-0 mt-0.5 text-rw-text-placeholder" />
-              <div className="flex flex-wrap gap-1.5 flex-1">
-                {tags.map((tag) => (
-                  <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-rw-accent-subtle text-rw-accent px-2.5 py-1 text-xs font-medium">
-                    {tag}
-                    <button type="button" onClick={() => removeTag(tag)} className="text-rw-accent/60 hover:text-rw-accent">
-                      <X className="size-3" />
-                    </button>
-                  </span>
-                ))}
-                <input
-                  id="tag-input"
-                  value={tagInput}
-                  onChange={(e) => { setTagInput(e.target.value.slice(0, 20)); setTagError(null) }}
-                  onKeyDown={handleTagKeyDown}
-                  onBlur={() => addTag(tagInput)}
-                  placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
-                  className="min-w-24 flex-1 bg-transparent text-base md:text-sm outline-none placeholder:text-rw-text-placeholder"
-                  aria-invalid={!!tagError}
-                  aria-describedby={tagError ? 'tag-error' : undefined}
-                />
-              </div>
-            </div>
-            {tagError
-              ? <p id="tag-error" role="alert" className="text-xs text-rw-danger">{tagError}</p>
-              : <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
-            }
+            <Label htmlFor="tag-input">Tags <span className="text-rw-text-muted text-xs font-normal">(optional · max 20 chars)</span></Label>
+            <TagInput tags={tags} onChange={setTags} inputId="tag-input" />
           </div>
 
           {error && <p id="moment-error" role="alert" className="text-sm text-rw-danger">{error}</p>}
@@ -371,177 +283,3 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
   )
 }
 
-// ─── People invite input ──────────────────────────────────────────────────────
-
-function PeopleInviteInput({
-  invitees,
-  onAdd,
-  onRemove,
-  onRoleChange,
-}: {
-  invitees: InviteeDisplay[]
-  onAdd: (item: InviteeDisplay) => void
-  onRemove: (value: string) => void
-  onRoleChange: (value: string, role: 'editor' | 'reader') => void
-}) {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<Array<{ id: string; firstName: string; lastName: string; username: string; photoUrl: string | null }> | null>(null)
-  const [searching, setSearching] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Incremented on each dispatch; responses from older in-flight requests are discarded.
-  const searchIdRef = useRef(0)
-
-  const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
-  const excludeIds = invitees.filter((i) => i.type === 'userId').map((i) => i.value)
-  // Keep a ref so the debounce callback always reads the latest excludeIds without
-  // needing it as an effect dependency (which would restart the debounce on every add).
-  const excludeIdsRef = useRef(excludeIds)
-  excludeIdsRef.current = excludeIds
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-
-    const q = query.trim()
-    if (q.length < 2) {
-      setResults(null)
-      return
-    }
-
-    if (isEmail(q)) {
-      setResults(null)
-      return
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      const id = ++searchIdRef.current
-      setSearching(true)
-      const res = await searchUsersToInvite(q, excludeIdsRef.current)
-      if (searchIdRef.current !== id) return // stale — a newer query already started
-      setSearching(false)
-      setResults(res.users ?? [])
-    }, 300)
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [query])
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      const q = query.trim()
-      if (isEmail(q)) {
-        onAdd({ type: 'email', value: q, label: q, role: 'editor' })
-        setQuery('')
-        setResults(null)
-      }
-    }
-  }
-
-  function selectUser(u: { id: string; firstName: string; lastName: string; username: string; photoUrl: string | null }) {
-    onAdd({ type: 'userId', value: u.id, label: `${u.firstName} ${u.lastName}`, photoUrl: u.photoUrl, role: 'editor' })
-    setQuery('')
-    setResults(null)
-  }
-
-  return (
-    <div className="space-y-2">
-      {/* Added people chips */}
-      {invitees.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          {invitees.map((i) => (
-            <div key={i.value} className="inline-flex items-center gap-2 rounded-lg border bg-rw-surface-raised pl-2 pr-1.5 py-1 text-xs">
-              {i.type === 'userId' && (
-                <Avatar className="size-5 shrink-0">
-                  <AvatarImage src={i.photoUrl ?? undefined} />
-                  <AvatarFallback className="text-[9px]">{i.label[0]}</AvatarFallback>
-                </Avatar>
-              )}
-              <span className="font-medium truncate max-w-[120px]">{i.label}</span>
-              {/* Role toggle */}
-              <div className="inline-flex rounded border border-rw-border-subtle overflow-hidden ml-auto shrink-0">
-                {(['editor', 'reader'] as const).map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => onRoleChange(i.value, role)}
-                    className={cn(
-                      'px-2 py-0.5 capitalize transition-colors rounded-[4px]',
-                      i.role === role
-                        ? 'bg-rw-bg text-rw-accent shadow-sm'
-                        : 'text-rw-text-muted hover:text-rw-text-primary'
-                    )}
-                  >
-                    {role === 'editor' ? 'Editor' : 'Reader'}
-                  </button>
-                ))}
-              </div>
-              <button type="button" onClick={() => onRemove(i.value)} className="text-rw-text-muted hover:text-rw-text-primary shrink-0">
-                <X className="size-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Search input */}
-      <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-rw-text-muted pointer-events-none" />
-        <Input
-          type="text"
-          placeholder="Search by name, username, or enter email…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="pl-8"
-          autoComplete="off"
-        />
-      </div>
-
-      {/* Email add hint */}
-      {isEmail(query.trim()) && !invitees.some((i) => i.value === query.trim()) && (
-        <button
-          type="button"
-          onClick={() => {
-            onAdd({ type: 'email', value: query.trim(), label: query.trim(), role: 'editor' })
-            setQuery('')
-          }}
-          className="flex items-center gap-2 w-full rounded-md px-2 py-1.5 text-sm hover:bg-rw-surface-raised transition-colors text-left"
-        >
-          <Plus className="size-3.5 text-rw-text-muted" />
-          Invite <span className="font-medium">{query.trim()}</span> by email
-        </button>
-      )}
-
-      {/* Search results */}
-      {searching && <p className="text-xs text-rw-text-muted px-1">Searching…</p>}
-      {results !== null && !searching && (
-        results.length === 0 ? (
-          <p className="text-xs text-rw-text-muted px-1">No users found.</p>
-        ) : (
-          <ul className="space-y-0.5">
-            {results.map((u) => (
-              <li key={u.id}>
-                <button
-                  type="button"
-                  onClick={() => selectUser(u)}
-                  className="flex items-center gap-2.5 w-full rounded-md px-2 py-1.5 hover:bg-rw-surface-raised transition-colors text-left"
-                >
-                  <Avatar className="size-7 shrink-0">
-                    <AvatarImage src={u.photoUrl ?? undefined} />
-                    <AvatarFallback className="text-xs">{u.firstName[0]}{u.lastName[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{u.firstName} {u.lastName}</p>
-                    <p className="text-xs text-rw-text-muted truncate">@{u.username}</p>
-                  </div>
-                  <UserRound className="size-3.5 text-rw-text-muted ml-auto shrink-0" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )
-      )}
-    </div>
-  )
-}

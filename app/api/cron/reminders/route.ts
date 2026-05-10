@@ -68,14 +68,31 @@ export async function GET(req: Request) {
   }
 
   if (toNotify.length > 0) {
-    const { error: insertError } = await admin.from('notifications').insert(
-      toNotify.map((uid) => ({ user_id: uid, type: 'reminder' }))
-    )
-    if (insertError) {
-      console.error('Cron: failed to insert reminder notifications:', insertError.message)
-      return NextResponse.json({ error: 'Failed to insert notifications' }, { status: 500 })
+    // Idempotency guard: skip users who already received a reminder in the last 12 hours.
+    // Protects against duplicate notifications if Vercel retries or runs the cron concurrently.
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+    const { data: recentReminders } = await admin
+      .from('notifications')
+      .select('user_id')
+      .eq('type', 'reminder')
+      .gte('created_at', twelveHoursAgo)
+      .in('user_id', toNotify)
+
+    const alreadyNotified = new Set((recentReminders ?? []).map((r) => r.user_id))
+    const deduped = toNotify.filter((uid) => !alreadyNotified.has(uid))
+
+    if (deduped.length > 0) {
+      const { error: insertError } = await admin.from('notifications').insert(
+        deduped.map((uid) => ({ user_id: uid, type: 'reminder' }))
+      )
+      if (insertError) {
+        console.error('Cron: failed to insert reminder notifications:', insertError.message)
+        return NextResponse.json({ error: 'Failed to insert notifications' }, { status: 500 })
+      }
     }
+
+    return NextResponse.json({ sent: deduped.length, skipped: toNotify.length - deduped.length })
   }
 
-  return NextResponse.json({ sent: toNotify.length })
+  return NextResponse.json({ sent: 0 })
 }
