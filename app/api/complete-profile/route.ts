@@ -53,7 +53,13 @@ export async function POST(request: NextRequest) {
   }
 
   // Optionally update the auth user's password if one was provided
-  if (password && password.length >= 8) {
+  if (password) {
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters and include an uppercase letter and a number.' },
+        { status: 400 }
+      )
+    }
     await admin.auth.admin.updateUserById(user.id, { password })
   }
 

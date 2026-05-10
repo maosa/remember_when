@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 interface Props {
   params: Promise<{ token: string }>
@@ -25,6 +27,14 @@ export default async function InviteRedemptionPage({ params }: Props) {
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!UUID_RE.test(token)) {
     redirect('/home?invite=invalid')
+  }
+
+  // Rate-limit by IP — max 10 lookups per hour to prevent token enumeration
+  const headersList = await headers()
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const { allowed } = checkRateLimit(`invite:${ip}`, { limit: 10, windowMs: 60 * 60 * 1000 })
+  if (!allowed) {
+    redirect('/home?invite=rate_limited')
   }
 
   const supabase = await createClient()

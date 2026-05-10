@@ -180,8 +180,9 @@ export default function CompleteProfilePage() {
                 onChange={handleChange}
                 autoComplete="new-password"
                 minLength={8}
-                placeholder="At least 8 characters"
+                placeholder="Min 8 chars, 1 uppercase, 1 number"
               />
+              <p className="text-xs text-rw-text-muted">At least 8 characters with one uppercase letter and one number.</p>
             </div>
           </CardContent>
           <CardFooter>

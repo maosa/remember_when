@@ -240,7 +240,7 @@ Each file should be a `'use client'` component that receives `({ error, reset }:
 
 ## Tier 2 — Medium Effort (30 min – 2 hrs each)
 
-### [ ] T2-01 · SECURITY · Add explicit ownership check in `updateMomentDetails` and `updateCoverPhoto`
+### [x] T2-01 · SECURITY · Add explicit ownership check in `updateMomentDetails` and `updateCoverPhoto`
 
 **File:** `app/(app)/moments/[id]/actions.ts`
 
@@ -252,7 +252,7 @@ Each file should be a `'use client'` component that receives `({ error, reset }:
 
 ---
 
-### [ ] T2-02 · SECURITY · Add rate limiting to invite token resolution
+### [x] T2-02 · SECURITY · Add rate limiting to invite token resolution
 
 **File:** `app/(app)/invite/[token]/page.tsx`
 
@@ -264,7 +264,7 @@ Each file should be a `'use client'` component that receives `({ error, reset }:
 
 ---
 
-### [ ] T2-03 · SECURITY · Enforce password complexity in `complete-profile`
+### [x] T2-03 · SECURITY · Enforce password complexity in `complete-profile`
 
 **File:** `app/api/complete-profile/route.ts`
 
@@ -634,9 +634,9 @@ Remove `heic`, `heif`, `ogg`, `aac`, `x-m4a` from the allowed list. Update any e
 | T1-12 | Add error.tsx boundaries to app routes | 1 | Code Quality | [x] |
 | T1-13 | Add descriptive alt text to images | 1 | Accessibility | [x] |
 | T1-14 | Link form errors via aria-describedby | 1 | Accessibility | [x] |
-| T2-01 | Explicit ownership check in updateMomentDetails/updateCoverPhoto | 2 | Security | [ ] |
-| T2-02 | Rate limiting on invite token resolution | 2 | Security | [ ] |
-| T2-03 | Enforce password complexity in complete-profile | 2 | Security | [ ] |
+| T2-01 | Explicit ownership check in updateMomentDetails/updateCoverPhoto | 2 | Security | [x] |
+| T2-02 | Rate limiting on invite token resolution | 2 | Security | [x] |
+| T2-03 | Enforce password complexity in complete-profile | 2 | Security | [x] |
 | T2-04 | Batch pagination in cron reminders job | 2 | Performance | [ ] |
 | T2-05 | Fix over-fetching in searchUsers friendships | 2 | Performance | [ ] |
 | T2-06 | Guard sub-queries in notifications page | 2 | Performance | [ ] |

@@ -713,6 +713,31 @@ export async function updateMomentDetails(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const admin = createAdminClient()
+
+  // Explicit ownership/editor check — defence-in-depth on top of RLS
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+
+  if (!moment) return { error: 'Moment not found.' }
+
+  const isOwner = moment.owner_id === user.id
+  if (!isOwner) {
+    const { data: membership } = await admin
+      .from('moment_members')
+      .select('role, status')
+      .eq('moment_id', momentId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (!membership || membership.status !== 'accepted' || membership.role === 'reader') {
+      return { error: 'You do not have permission to edit this moment.' }
+    }
+  }
+
   const { error } = await supabase
     .from('moments')
     .update({
@@ -735,6 +760,30 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // Explicit ownership/editor check — defence-in-depth on top of RLS
+  const admin = createAdminClient()
+  const { data: momentData } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .single()
+
+  if (!momentData) return { error: 'Moment not found.' }
+
+  const isOwner = momentData.owner_id === user.id
+  if (!isOwner) {
+    const { data: membership } = await admin
+      .from('moment_members')
+      .select('role, status')
+      .eq('moment_id', momentId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (!membership || membership.status !== 'accepted' || membership.role === 'reader') {
+      return { error: 'You do not have permission to edit this moment.' }
+    }
+  }
 
   const file = formData.get('cover') as File
   if (!file || file.size === 0) return { error: 'No file provided.' }
