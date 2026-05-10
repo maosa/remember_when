@@ -71,10 +71,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       id, name, date_year, date_month, date_day, location, cover_photo_url, owner_id, created_at,
       owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
       moment_tags(tag),
-      moment_members(
-        user_id, role, status,
-        user:users!moment_members_user_id_fkey(id, first_name, last_name, profile_photo_url)
-      )
+      moment_members(user_id, role, status)
     `)
     .order('created_at', { ascending: false })
 
@@ -105,17 +102,38 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
   const coverPaths = (moments ?? [])
     .map((m) => m.cover_photo_url)
     .filter((p): p is string => Boolean(p))
-  const signedCovers = await signStoragePaths(coverPaths)
+
+  type RawMember = { user_id: string; role: 'editor' | 'reader'; status: 'pending' | 'accepted' | 'declined' }
+  type RawOwner = { id: string; first_name: string; last_name: string; profile_photo_url: string | null } | null
+
+  // Collect all unique member user IDs across all moments for a single batch fetch.
+  // This replaces the per-moment user JOIN that previously loaded full user rows N times.
+  const allMemberIds = [
+    ...new Set(
+      (moments ?? []).flatMap((m) =>
+        (m.moment_members as unknown as RawMember[]).map((mm) => mm.user_id)
+      )
+    ),
+  ]
+
+  const [signedCovers, memberUsersRes] = await Promise.all([
+    signStoragePaths(coverPaths),
+    allMemberIds.length > 0
+      ? admin
+          .from('users')
+          .select('id, first_name, last_name, profile_photo_url')
+          .in('id', allMemberIds)
+      : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }[] }),
+  ])
+
+  const memberUserMap = new Map(
+    (memberUsersRes.data ?? []).map((u) => [u.id, u])
+  )
 
   const result: MomentSummary[] = (moments ?? []).map((m) => {
     const isOwner = m.owner_id === user.id
-    const rawMembers = (m.moment_members as unknown as Array<{
-      user_id: string
-      role: 'editor' | 'reader'
-      status: 'pending' | 'accepted' | 'declined'
-      user: { id: string; first_name: string; last_name: string; profile_photo_url: string | null } | null
-    }>)
-    const owner = (m as unknown as { owner: { id: string; first_name: string; last_name: string; profile_photo_url: string | null } | null }).owner
+    const rawMembers = m.moment_members as unknown as RawMember[]
+    const owner = (m as unknown as { owner: RawOwner }).owner
     const myMembership = rawMembers.find((mm) => mm.user_id === user.id)
     const isArchived = archivedMomentIds.has(m.id)
 
@@ -135,16 +153,17 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       ownerPhotoUrl: owner?.profile_photo_url ?? null,
       createdAt: m.created_at,
       tags: (m.moment_tags as unknown as Array<{ tag: string }>).map((t) => t.tag),
-      members: rawMembers
-        .filter((mm) => mm.user !== null)
-        .map((mm) => ({
+      members: rawMembers.map((mm) => {
+        const u = memberUserMap.get(mm.user_id)
+        return {
           userId: mm.user_id,
-          firstName: mm.user!.first_name,
-          lastName: mm.user!.last_name,
-          photoUrl: mm.user!.profile_photo_url,
+          firstName: u?.first_name ?? '',
+          lastName: u?.last_name ?? '',
+          photoUrl: u?.profile_photo_url ?? null,
           role: mm.role,
           status: mm.status,
-        })),
+        }
+      }),
       myRole: isOwner ? 'owner' : (myMembership?.role ?? 'editor'),
       myStatus: myMembership?.status ?? (isOwner ? 'accepted' : 'pending'),
       isArchived,

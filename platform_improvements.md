@@ -285,7 +285,7 @@ Also update the client-side form (`app/auth/complete-profile/page.tsx`) to show 
 
 ---
 
-### [ ] T2-04 · PERFORMANCE · Add batched pagination to the cron reminders job
+### [x] T2-04 · PERFORMANCE · Add batched pagination to the cron reminders job
 
 **File:** `app/api/cron/reminders/route.ts`
 
@@ -303,7 +303,7 @@ This keeps memory usage bounded at `BATCH_SIZE` rows per iteration regardless of
 
 ---
 
-### [ ] T2-05 · PERFORMANCE · Fix over-fetching in `searchUsers` — limit friendship query scope
+### [x] T2-05 · PERFORMANCE · Fix over-fetching in `searchUsers` — limit friendship query scope
 
 **File:** `app/(app)/friends/actions.ts`
 
@@ -315,7 +315,7 @@ This keeps memory usage bounded at `BATCH_SIZE` rows per iteration regardless of
 
 ---
 
-### [ ] T2-06 · PERFORMANCE · Guard sub-queries in notifications page against empty ID arrays
+### [x] T2-06 · PERFORMANCE · Guard sub-queries in notifications page against empty ID arrays
 
 **File:** `app/(app)/notifications/page.tsx`
 
@@ -338,7 +338,7 @@ Also audit the `select(...)` columns in each sub-query and remove any fields tha
 
 ---
 
-### [ ] T2-07 · PERFORMANCE · Remove user object join from home-page moments query
+### [x] T2-07 · PERFORMANCE · Remove user object join from home-page moments query
 
 **File:** `app/(app)/home/actions.ts`
 
@@ -637,10 +637,10 @@ Remove `heic`, `heif`, `ogg`, `aac`, `x-m4a` from the allowed list. Update any e
 | T2-01 | Explicit ownership check in updateMomentDetails/updateCoverPhoto | 2 | Security | [x] |
 | T2-02 | Rate limiting on invite token resolution | 2 | Security | [x] |
 | T2-03 | Enforce password complexity in complete-profile | 2 | Security | [x] |
-| T2-04 | Batch pagination in cron reminders job | 2 | Performance | [ ] |
-| T2-05 | Fix over-fetching in searchUsers friendships | 2 | Performance | [ ] |
-| T2-06 | Guard sub-queries in notifications page | 2 | Performance | [ ] |
-| T2-07 | Remove user join from home moments query | 2 | Performance | [ ] |
+| T2-04 | Batch pagination in cron reminders job | 2 | Performance | [x] |
+| T2-05 | Fix over-fetching in searchUsers friendships | 2 | Performance | [x] |
+| T2-06 | Guard sub-queries in notifications page | 2 | Performance | [x] |
+| T2-07 | Remove user join from home moments query | 2 | Performance | [x] |
 | T2-08 | Prevent duplicate cron reminder notifications | 2 | Reliability | [ ] |
 | T2-09 | Extract shared date helper utilities | 2 | Code Quality | [ ] |
 | T2-10 | Extract TagInput component | 2 | Code Quality | [ ] |

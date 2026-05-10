@@ -42,14 +42,25 @@ export async function searchUsers(query: string): Promise<{ users?: UserResult[]
   if (searchError) return { error: searchError.message }
   if (!found || found.length === 0) return { users: [] }
 
-  // Fetch active friendships involving the current user to annotate results
+  // Fetch only friendships between the current user and the search result users.
+  // Two targeted queries (one per direction) are cheaper than a broad .or() that
+  // returns all of the current user's friendships and filters in memory.
   const ids = found.map((u) => u.id)
-  const { data: friendships } = await supabase
-    .from('friendships')
-    .select('id, requester_id, recipient_id, status')
-    .is('deleted_at', null)
-    .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
-    .in('requester_id', [user.id, ...ids])
+  const [{ data: asRequester }, { data: asRecipient }] = await Promise.all([
+    supabase
+      .from('friendships')
+      .select('id, requester_id, recipient_id, status')
+      .is('deleted_at', null)
+      .eq('requester_id', user.id)
+      .in('recipient_id', ids),
+    supabase
+      .from('friendships')
+      .select('id, requester_id, recipient_id, status')
+      .is('deleted_at', null)
+      .eq('recipient_id', user.id)
+      .in('requester_id', ids),
+  ])
+  const friendships = [...(asRequester ?? []), ...(asRecipient ?? [])]
 
   const friendshipMap = new Map<string, { id: string; status: string; requester_id: string }>()
   for (const f of friendships ?? []) {
