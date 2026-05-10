@@ -179,6 +179,8 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
+              aria-invalid={!!error}
+              aria-describedby={error ? 'moment-error' : undefined}
             />
           </div>
 
@@ -344,16 +346,18 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
                   onBlur={() => addTag(tagInput)}
                   placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
                   className="min-w-24 flex-1 bg-transparent text-base md:text-sm outline-none placeholder:text-rw-text-placeholder"
+                  aria-invalid={!!tagError}
+                  aria-describedby={tagError ? 'tag-error' : undefined}
                 />
               </div>
             </div>
             {tagError
-              ? <p className="text-xs text-rw-danger">{tagError}</p>
+              ? <p id="tag-error" role="alert" className="text-xs text-rw-danger">{tagError}</p>
               : <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
             }
           </div>
 
-          {error && <p className="text-sm text-rw-danger">{error}</p>}
+          {error && <p id="moment-error" role="alert" className="text-sm text-rw-danger">{error}</p>}
         </DialogBody>
 
         <DialogFooter>
@@ -389,6 +393,10 @@ function PeopleInviteInput({
 
   const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
   const excludeIds = invitees.filter((i) => i.type === 'userId').map((i) => i.value)
+  // Keep a ref so the debounce callback always reads the latest excludeIds without
+  // needing it as an effect dependency (which would restart the debounce on every add).
+  const excludeIdsRef = useRef(excludeIds)
+  excludeIdsRef.current = excludeIds
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -407,7 +415,7 @@ function PeopleInviteInput({
     debounceRef.current = setTimeout(async () => {
       const id = ++searchIdRef.current
       setSearching(true)
-      const res = await searchUsersToInvite(q, excludeIds)
+      const res = await searchUsersToInvite(q, excludeIdsRef.current)
       if (searchIdRef.current !== id) return // stale — a newer query already started
       setSearching(false)
       setResults(res.users ?? [])
@@ -416,7 +424,6 @@ function PeopleInviteInput({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {

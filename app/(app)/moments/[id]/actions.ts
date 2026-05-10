@@ -345,6 +345,11 @@ export async function inviteMember(
   value: string,
   role: 'editor' | 'reader'
 ): Promise<InviteResult> {
+  // TypeScript types are erased at runtime — validate role before any DB call
+  if (role !== 'editor' && role !== 'reader') {
+    return { error: 'Invalid role.' }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -1049,15 +1054,20 @@ export async function createPost(momentId: string, formData: FormData): Promise<
   if (moment.owner_id !== user.id) recipientIds.add(moment.owner_id)
 
   if (recipientIds.size > 0) {
-    await sendNotifications(
-      Array.from(recipientIds).map((uid) => ({
-        user_id: uid,
-        type: 'new_post' as const,
-        related_user_id: user.id,
-        related_moment_id: momentId,
-        post_id: post.id,
-      }))
-    )
+    // Notifications are best-effort — a failure must not roll back the post creation
+    try {
+      await sendNotifications(
+        Array.from(recipientIds).map((uid) => ({
+          user_id: uid,
+          type: 'new_post' as const,
+          related_user_id: user.id,
+          related_moment_id: momentId,
+          post_id: post.id,
+        }))
+      )
+    } catch (err) {
+      console.error('Failed to send post notifications:', err)
+    }
   }
 
   revalidatePath(`/moments/${momentId}`)
@@ -1725,28 +1735,15 @@ export async function transferOwnership(
     return { error: 'Ownership can only be transferred to an accepted editor.' }
   }
 
-  // Step 1: Insert current owner as accepted editor BEFORE making any other changes.
-  // This ensures we never end up in a state where the owner has neither ownership nor membership.
-  const { error: insertError } = await admin.from('moment_members').insert({
-    moment_id: momentId,
-    user_id: user.id,
-    role: 'editor',
-    status: 'accepted',
-    invited_by: user.id,
+  // All three mutations run inside a single DB transaction via the
+  // transfer_moment_ownership RPC so a mid-flight failure leaves no inconsistent state.
+  const { error: transferError } = await admin.rpc('transfer_moment_ownership', {
+    p_moment_id:       momentId,
+    p_new_owner_id:    newOwnerId,
+    p_current_user_id: user.id,
   })
 
-  if (insertError) return { error: insertError.message }
-
-  // Step 2: Remove the new owner from members (they become the owner via moments.owner_id).
-  await admin.from('moment_members').delete().eq('id', target.id)
-
-  // Step 3: Update owner_id.
-  const { error } = await admin
-    .from('moments')
-    .update({ owner_id: newOwnerId })
-    .eq('id', momentId)
-
-  if (error) return { error: error.message }
+  if (transferError) return { error: transferError.message }
 
   // Notify the new owner
   await sendNotification({

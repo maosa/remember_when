@@ -53,8 +53,7 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
       }))
     )
     registerPostMedia(items)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [initialPosts, registerPostMedia])
 
   const openCreate = useCallback(() => {
     setCreateEverOpened(true)

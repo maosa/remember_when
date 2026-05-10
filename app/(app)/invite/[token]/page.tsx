@@ -21,6 +21,12 @@ interface Props {
 export default async function InviteRedemptionPage({ params }: Props) {
   const { token } = await params
 
+  // Reject non-UUID tokens immediately — no DB query needed
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!UUID_RE.test(token)) {
+    redirect('/home?invite=invalid')
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')

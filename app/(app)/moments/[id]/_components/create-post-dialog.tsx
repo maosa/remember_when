@@ -185,7 +185,7 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
                 <div key={i} className="relative size-28 sm:size-40 rounded-lg overflow-hidden bg-rw-surface-raised shrink-0">
                   {p.kind === 'photo' && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.objectUrl} alt="" className="size-full object-cover" />
+                    <img src={p.objectUrl} alt="Photo preview" className="size-full object-cover" />
                   )}
                   {p.kind === 'video' && (
                     <video src={p.objectUrl} className="size-full object-cover" muted />

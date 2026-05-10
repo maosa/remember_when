@@ -28,6 +28,8 @@ export async function searchUsers(query: string): Promise<{ users?: UserResult[]
 
   const q = query.trim()
   if (q.length < 2) return { users: [] }
+  // Block characters that could break PostgREST filter syntax inside the .or() string
+  if (q.length > 50 || /[,.()\n\r]/.test(q)) return { users: [] }
 
   // Fetch matching users (excluding self)
   const { data: found, error: searchError } = await supabase

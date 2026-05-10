@@ -92,13 +92,15 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
   const [isPending, startTransition] = useTransition()
   const [actionError, setActionError] = useState<string | null>(null)
 
-  // Dismiss notifications on mount if any are present
+  // Capture the count at render time via a ref so the effect doesn't need
+  // `notifications` as a dependency — we only want to fire once on mount.
+  const hasNotificationsOnMount = useRef(notifications.length > 0)
+
   useEffect(() => {
-    if (notifications.length > 0) {
+    if (hasNotificationsOnMount.current) {
       markNotificationsRead()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []) // intentionally mount-only; ref value is captured above
 
   function handleAction(fn: () => Promise<{ error?: string } | void>) {
     setActionError(null)

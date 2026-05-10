@@ -216,7 +216,7 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
                 <div key={m.id} className="relative size-28 sm:size-40 rounded-lg overflow-hidden bg-rw-surface-raised shrink-0">
                   {m.mediaType === 'photo' && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.storageUrl} alt="" className="size-full object-cover" />
+                    <img src={m.storageUrl} alt="Post photo" className="size-full object-cover" />
                   )}
                   {m.mediaType === 'video' && (
                     <video src={m.storageUrl} className="size-full object-cover" muted />
@@ -241,7 +241,7 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
                 <div key={i} className="relative size-28 sm:size-40 rounded-lg overflow-hidden bg-rw-surface-raised shrink-0 ring-2 ring-rw-accent/30">
                   {p.mediaType === 'photo' && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.objectUrl} alt="" className="size-full object-cover" />
+                    <img src={p.objectUrl} alt="New photo preview" className="size-full object-cover" />
                   )}
                   {p.mediaType === 'video' && (
                     <video src={p.objectUrl} className="size-full object-cover" muted />

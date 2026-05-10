@@ -79,7 +79,15 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
     .order('created_at', { ascending: false })
 
   if (memberMomentIds.length > 0) {
-    query = query.or(`owner_id.eq.${user.id},id.in.(${memberMomentIds.join(',')})`)
+    // Validate IDs are UUIDs before interpolating into a raw PostgREST filter string.
+    // They come from our own DB but defence-in-depth guards against any upstream anomaly.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const safeMemberMomentIds = memberMomentIds.filter((id) => UUID_RE.test(id))
+    if (safeMemberMomentIds.length > 0) {
+      query = query.or(`owner_id.eq.${user.id},id.in.(${safeMemberMomentIds.join(',')})`)
+    } else {
+      query = query.eq('owner_id', user.id)
+    }
   } else {
     query = query.eq('owner_id', user.id)
   }
@@ -158,6 +166,8 @@ export async function searchUsersToInvite(
 
   const q = query.trim()
   if (q.length < 2) return { users: [] }
+  // Block characters that could break PostgREST filter syntax inside the .or() string
+  if (q.length > 50 || /[,.()\n\r]/.test(q)) return { users: [] }
 
   const exclude = [user.id, ...excludeIds]
 

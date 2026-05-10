@@ -250,7 +250,7 @@ export function MediaViewer({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={item.storageUrl}
-            alt=""
+            alt={`Photo ${currentIndex + 1} of ${items.length}`}
             draggable={false}
             style={{
               maxWidth: '90vw',

@@ -64,9 +64,14 @@ export async function GET(req: Request) {
   }
 
   if (toNotify.length > 0) {
-    await admin.from('notifications').insert(
+    const { error: insertError } = await admin.from('notifications').insert(
       toNotify.map((uid) => ({ user_id: uid, type: 'reminder' }))
     )
+    if (insertError) {
+      console.error('Cron: failed to insert reminder notifications:', insertError.message)
+      // Return 500 so Vercel Cron retries rather than silently dropping reminders
+      return NextResponse.json({ error: 'Failed to insert notifications' }, { status: 500 })
+    }
   }
 
   return NextResponse.json({ sent: toNotify.length })

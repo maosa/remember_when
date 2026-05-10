@@ -171,6 +171,8 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
+              aria-invalid={!!error}
+              aria-describedby={error ? 'edit-moment-error' : undefined}
             />
           </div>
 
@@ -346,16 +348,18 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
                   onBlur={() => addTag(tagInput)}
                   placeholder={tags.length === 0 ? 'Type and press Enter…' : ''}
                   className="min-w-24 flex-1 bg-transparent text-base md:text-sm outline-none placeholder:text-rw-text-placeholder"
+                  aria-invalid={!!tagError}
+                  aria-describedby={tagError ? 'edit-tag-error' : undefined}
                 />
               </div>
             </div>
             {tagError
-              ? <p className="text-xs text-rw-danger">{tagError}</p>
+              ? <p id="edit-tag-error" role="alert" className="text-xs text-rw-danger">{tagError}</p>
               : <p className="text-xs text-rw-text-muted">Press Enter or comma to add a tag.</p>
             }
           </div>
 
-          {error && <p className="text-sm text-rw-danger">{error}</p>}
+          {error && <p id="edit-moment-error" role="alert" className="text-sm text-rw-danger">{error}</p>}
         </DialogBody>
 
         <DialogFooter>
