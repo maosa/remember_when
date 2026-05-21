@@ -857,6 +857,35 @@ export async function setCoverPhotoFromPath(momentId: string, storagePath: strin
   if (permCheck.error) return permCheck
 
   const admin = createAdminClient()
+
+  // Validate that storagePath is an actual, non-deleted photo that belongs to a
+  // post in this specific moment.  Without this check an editor could set the
+  // cover to any storage path they know of — including photos from a different
+  // moment or an arbitrary object in another user's bucket.
+  //
+  // Two explicit lookups rather than a join filter so the intent is unambiguous:
+  //   1. Confirm the media item exists, is a photo, and has not been soft-deleted.
+  //   2. Confirm its parent post belongs to *this* moment and is also not deleted.
+  const { data: mediaRow } = await admin
+    .from('post_media')
+    .select('id, post_id')
+    .eq('storage_url', storagePath)
+    .eq('media_type', 'photo')
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (!mediaRow) return { error: 'Photo not found in this moment.' }
+
+  const { data: owningPost } = await admin
+    .from('posts')
+    .select('id')
+    .eq('id', mediaRow.post_id)
+    .eq('moment_id', momentId)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (!owningPost) return { error: 'Photo not found in this moment.' }
+
   const { error } = await admin
     .from('moments')
     .update({ cover_photo_url: storagePath })
