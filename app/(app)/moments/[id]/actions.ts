@@ -876,24 +876,10 @@ export async function fetchMomentPhotos(
 
   const admin = createAdminClient()
 
-  // Verify the caller has access to this moment
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .single()
-
-  if (!moment) return { photos: [] }
-
-  if (moment.owner_id !== user.id) {
-    const { data: membership } = await admin
-      .from('moment_members')
-      .select('status')
-      .eq('moment_id', momentId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-    if (!membership || membership.status !== 'accepted') return { photos: [] }
-  }
+  // Verify the caller has access to this moment using the shared helper
+  // so the read-authorization logic stays in one place.
+  const access = await assertCanViewMoment(momentId, user.id)
+  if (access.error) return { photos: [] }
 
   // Fetch photos for this specific moment (filter in DB, not in JS)
   const { data: posts } = await admin
@@ -963,6 +949,12 @@ export async function fetchPosts(
   if (!user) redirect('/login')
 
   const admin = createAdminClient()
+
+  // Access check — unlike fetchMomentDetail the admin client bypasses RLS here,
+  // so we must verify membership explicitly. Any authenticated user who guesses
+  // a valid moment UUID would otherwise receive all signed media URLs for it.
+  const access = await assertCanViewMoment(momentId, user.id)
+  if (access.error) return { posts: [], nextCursor: null, currentUserId: user.id }
 
   // Build the base filter, optionally adding a cursor for subsequent pages.
   // We fetch `limit + 1` rows; if we get that many there are more pages.
@@ -1582,7 +1574,33 @@ export async function editPost(
   return { post: updatedPost }
 }
 
-// ─── Auth helper: owner or accepted editor ────────────────────────────────────
+// ─── Auth helpers ─────────────────────────────────────────────────────────────
+
+// Returns {} if the user may read the moment (owner or accepted member).
+// Returns a generic 'Not found.' error in all other cases so callers cannot
+// distinguish a non-existent moment from one they are not permitted to access.
+async function assertCanViewMoment(momentId: string, userId: string): Promise<{ error?: string }> {
+  const admin = createAdminClient()
+
+  const { data: moment } = await admin
+    .from('moments')
+    .select('owner_id')
+    .eq('id', momentId)
+    .maybeSingle()
+
+  if (!moment) return { error: 'Not found.' }
+  if (moment.owner_id === userId) return {}
+
+  const { data: membership } = await admin
+    .from('moment_members')
+    .select('status')
+    .eq('moment_id', momentId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (membership?.status === 'accepted') return {}
+  return { error: 'Not found.' }
+}
 
 async function assertCanEditMoment(momentId: string, userId: string): Promise<{ error?: string }> {
   const admin = createAdminClient()
