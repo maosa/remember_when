@@ -158,6 +158,41 @@ function AudioRow({ m, label, onClick }: { m: MediaItem; label: string; onClick:
   )
 }
 
+// ─── Video thumbnail ──────────────────────────────────────────────────────────
+
+function VideoThumbnail({ m, onClick }: { m: MediaItem; onClick: () => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [duration, setDuration] = useState<string | null>(null)
+
+  return (
+    <button
+      onClick={onClick}
+      className="relative w-full rounded-xl overflow-hidden bg-rw-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent"
+    >
+      <video
+        ref={videoRef}
+        src={m.storageUrl}
+        preload="metadata"
+        className="w-full max-h-72 object-contain pointer-events-none"
+        onLoadedMetadata={() => {
+          const d = videoRef.current?.duration
+          if (d && isFinite(d)) setDuration(fmtDuration(d))
+        }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+        <div className="size-12 rounded-full bg-black/50 flex items-center justify-center">
+          <Play className="size-6 text-white fill-white ml-0.5" />
+        </div>
+      </div>
+      {duration && (
+        <span className="absolute bottom-2 left-2 rounded-sm bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white tabular-nums">
+          {duration}
+        </span>
+      )}
+    </button>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 function formatTimestamp(iso: string): string {
@@ -317,22 +352,7 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
 
       {/* Videos */}
       {videos.map((m) => (
-        <button
-          key={m.id}
-          onClick={() => openViewer(m.id)}
-          className="relative w-full rounded-xl overflow-hidden bg-rw-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent"
-        >
-          <video
-            src={m.storageUrl}
-            preload="metadata"
-            className="w-full max-h-72 object-contain pointer-events-none"
-          />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-            <div className="size-12 rounded-full bg-black/50 flex items-center justify-center">
-              <Play className="size-6 text-white fill-white ml-0.5" />
-            </div>
-          </div>
-        </button>
+        <VideoThumbnail key={m.id} m={m} onClick={() => openViewer(m.id)} />
       ))}
 
       {/* Audio */}
