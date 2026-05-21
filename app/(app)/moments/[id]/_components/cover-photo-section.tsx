@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { updateCoverPhoto, setCoverPhotoFromPath, deleteCoverPhoto, fetchMomentPhotos } from '../actions'
+import { toast } from 'sonner'
 
 interface Props {
   momentId: string
@@ -52,8 +53,8 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
     fd.append('cover', file)
     startTransition(async () => {
       const res = await updateCoverPhoto(momentId, fd)
-      if (res.error) setError(res.error)
-      else setOpen(false)
+      if (res.error) { setError(res.error) }
+      else { toast.success('Cover photo updated'); setOpen(false) }
     })
   }
 
@@ -61,8 +62,8 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
     setError(null)
     startTransition(async () => {
       const res = await deleteCoverPhoto(momentId)
-      if (res.error) setError(res.error)
-      else setOpen(false)
+      if (res.error) { setError(res.error) }
+      else { toast.success('Cover photo removed'); setOpen(false) }
     })
   }
 
@@ -70,8 +71,8 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
     setError(null)
     startTransition(async () => {
       const res = await setCoverPhotoFromPath(momentId, storagePath)
-      if (res.error) setError(res.error)
-      else setOpen(false)
+      if (res.error) { setError(res.error) }
+      else { toast.success('Cover photo updated'); setOpen(false) }
     })
   }
 

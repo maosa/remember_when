@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient, getServerUser } from '@/lib/supabase/server'
 import { AppNav } from '@/components/app-nav'
 import { getLayoutProfile } from '@/lib/cached-queries'
+import { Toaster } from 'sonner'
 
 export default async function AppLayout({
   children,
@@ -41,6 +42,7 @@ export default async function AppLayout({
       <div className="md:pt-14 pb-20 md:pb-0">
         {children}
       </div>
+      <Toaster position="bottom-center" richColors />
     </div>
   )
 }

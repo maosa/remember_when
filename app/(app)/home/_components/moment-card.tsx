@@ -10,6 +10,7 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
 import { archiveMoment, unarchiveMoment, type MomentSummary } from '../actions'
 import { getOptimizedUrl } from '@/lib/storage'
+import { toast } from 'sonner'
 
 const EditMomentModal = dynamic(() =>
   import('@/app/(app)/_components/edit-moment-modal').then((m) => ({ default: m.EditMomentModal }))
@@ -46,9 +47,13 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
     e.stopPropagation()
     startTransition(async () => {
       if (moment.isArchived) {
-        await unarchiveMoment(moment.id)
+        const res = await unarchiveMoment(moment.id)
+        if (res.error) toast.error(res.error)
+        else toast.success('Moment unarchived')
       } else {
-        await archiveMoment(moment.id)
+        const res = await archiveMoment(moment.id)
+        if (res.error) toast.error(res.error)
+        else toast.success('Moment archived')
       }
     })
   }

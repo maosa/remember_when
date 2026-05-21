@@ -37,6 +37,7 @@ import {
   MenuSeparator,
 } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 import {
   inviteMember,
   removeMember,
@@ -251,6 +252,7 @@ function MemberRow({
     startTransition(async () => {
       const res = await updateMemberRole(momentId, member.id, newRole)
       if (res.error) setError(res.error)
+      else toast.success('Role updated')
     })
   }
 
@@ -384,9 +386,6 @@ type LookupStatus = 'idle' | 'checking' | 'found' | 'not_found' | 'unregistered'
 type FeedbackKind =
   | 'error'
   | 'not_found'
-  | 'success_user'
-  | 'success_email_registered'
-  | 'success_email_unregistered'
 
 interface InviteFeedback {
   kind: FeedbackKind
@@ -499,19 +498,13 @@ export function InviteDialog({
         return
       }
       if (res.success === 'email_unregistered') {
-        setFeedback({
-          kind: 'success_email_unregistered',
-          message: "No account found with that email. We've sent them an invite to join Remember When and accept your invitation.",
-        })
+        toast.success("Invite sent — they'll receive an email to join.")
         setInput('')
         resetLookup()
         return
       }
       const username = res.invitedUsername
-      setFeedback({
-        kind: res.success === 'user' ? 'success_user' : 'success_email_registered',
-        message: `Invite successfully sent to @${username}.`,
-      })
+      toast.success(`Invite sent to @${username}`)
       setInput('')
       resetLookup()
     })
@@ -629,18 +622,9 @@ export function InviteDialog({
                 )}
               </div>
 
-              {/* Post-send feedback */}
+              {/* Post-send feedback (errors / not-found only; successes go to toast) */}
               {feedback && (
-                <p
-                  className={cn(
-                    'text-sm rounded-md px-3 py-2',
-                    feedback.kind === 'error' || feedback.kind === 'not_found'
-                      ? 'bg-rw-danger-subtle text-rw-danger'
-                      : feedback.kind === 'success_email_unregistered'
-                      ? 'bg-rw-blue-subtle text-rw-blue'
-                      : 'bg-rw-accent-subtle text-rw-accent'
-                  )}
-                >
+                <p className="text-sm rounded-md px-3 py-2 bg-rw-danger-subtle text-rw-danger">
                   {feedback.message}
                 </p>
               )}
@@ -736,6 +720,7 @@ function InviteLinkSection({
         expiresAt: res.expiresAt ?? null,
         createdAt: new Date().toISOString(),
       })
+      toast.success('Invite link generated')
     })
   }
 
@@ -748,6 +733,7 @@ function InviteLinkSection({
         return
       }
       setLink(null)
+      toast.success('Invite link revoked')
     })
   }
 
