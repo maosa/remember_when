@@ -34,6 +34,94 @@ interface Props {
   canEdit: boolean
 }
 
+// ─── Adaptive photo grid ──────────────────────────────────────────────────────
+
+type MediaItem = PostWithMedia['media'][number]
+
+function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: string) => void }) {
+  const count = photos.length
+  const btnBase = 'overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent'
+
+  if (count === 1) {
+    return (
+      <button onClick={() => onOpen(photos[0].id)} className={`w-full rounded-xl ${btnBase}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={getOptimizedUrl(photos[0].storageUrl, 800) ?? photos[0].storageUrl}
+          alt="" loading="lazy" decoding="async"
+          className="w-full max-h-72 object-cover bg-rw-surface-raised"
+        />
+      </button>
+    )
+  }
+
+  if (count === 2) {
+    return (
+      <div className="grid grid-cols-2 gap-1">
+        {photos.map((m) => (
+          <button key={m.id} onClick={() => onOpen(m.id)} className={`rounded-lg ${btnBase}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={getOptimizedUrl(m.storageUrl, 640) ?? m.storageUrl}
+              alt="" loading="lazy" decoding="async"
+              className="w-full aspect-square object-cover bg-rw-surface-raised"
+            />
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  if (count === 3) {
+    return (
+      <div className="grid grid-cols-2 gap-1">
+        <button onClick={() => onOpen(photos[0].id)} className={`col-span-2 rounded-xl ${btnBase}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={getOptimizedUrl(photos[0].storageUrl, 800) ?? photos[0].storageUrl}
+            alt="" loading="lazy" decoding="async"
+            className="w-full aspect-video object-cover bg-rw-surface-raised"
+          />
+        </button>
+        {photos.slice(1).map((m) => (
+          <button key={m.id} onClick={() => onOpen(m.id)} className={`rounded-lg ${btnBase}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={getOptimizedUrl(m.storageUrl, 640) ?? m.storageUrl}
+              alt="" loading="lazy" decoding="async"
+              className="w-full aspect-square object-cover bg-rw-surface-raised"
+            />
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  // 4+ photos: 2×2 grid; overlay "+N" on the 4th tile when there are more than 4
+  const overflow = count - 4
+  return (
+    <div className="grid grid-cols-2 gap-1">
+      {photos.slice(0, 4).map((m, idx) => (
+        <button key={m.id} onClick={() => onOpen(m.id)} className={`relative rounded-lg ${btnBase}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={getOptimizedUrl(m.storageUrl, 640) ?? m.storageUrl}
+            alt="" loading="lazy" decoding="async"
+            className="w-full aspect-square object-cover bg-rw-surface-raised"
+          />
+          {idx === 3 && overflow > 0 && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+              <span className="text-white font-semibold text-xl">+{overflow}</span>
+            </div>
+          )}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function formatTimestamp(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
@@ -186,24 +274,7 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
 
       {/* Photos */}
       {photos.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {photos.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => openViewer(m.id)}
-              className="block shrink-0 rounded-lg overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={getOptimizedUrl(m.storageUrl, 640) ?? m.storageUrl}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="size-40 object-cover bg-rw-surface-raised"
-              />
-            </button>
-          ))}
-        </div>
+        <PhotoGrid photos={photos} onOpen={openViewer} />
       )}
 
       {/* Videos */}
