@@ -91,7 +91,7 @@ export async function GET(req: Request) {
 
     if (deduped.length > 0) {
       const { error: insertError } = await admin.from('notifications').insert(
-        deduped.map((uid) => ({ user_id: uid, type: 'reminder' }))
+        deduped.map((uid) => ({ user_id: uid, type: 'reminder' as const }))
       )
       if (insertError) {
         console.error('Cron: failed to insert reminder notifications:', insertError.message)

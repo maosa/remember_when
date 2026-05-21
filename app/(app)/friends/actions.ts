@@ -127,14 +127,14 @@ export async function sendFriendRequest(recipientId: string): Promise<{ error?: 
 
     const { error: updateError } = await supabase
       .from('friendships')
-      .update({ requester_id: user.id, recipient_id: recipientId, status: 'pending', deleted_at: null })
+      .update({ requester_id: user.id, recipient_id: recipientId, status: 'pending' as const, deleted_at: null })
       .eq('id', existing.id)
 
     if (updateError) return { error: updateError.message }
   } else {
     const { error: insertError } = await supabase
       .from('friendships')
-      .insert({ requester_id: user.id, recipient_id: recipientId, status: 'pending' })
+      .insert({ requester_id: user.id, recipient_id: recipientId, status: 'pending' as const })
 
     if (insertError) return { error: insertError.message }
   }
@@ -159,7 +159,7 @@ export async function acceptFriendRequest(friendshipId: string): Promise<{ error
 
   const { data: friendship, error: updateError } = await supabase
     .from('friendships')
-    .update({ status: 'accepted' })
+    .update({ status: 'accepted' as const })
     .eq('id', friendshipId)
     .eq('recipient_id', user.id)   // only the recipient can accept
     .eq('status', 'pending')
@@ -199,7 +199,7 @@ export async function declineFriendRequest(friendshipId: string): Promise<{ erro
 
   const { data: friendship, error } = await supabase
     .from('friendships')
-    .update({ status: 'declined' })
+    .update({ status: 'declined' as const })
     .eq('id', friendshipId)
     .eq('recipient_id', user.id)
     .eq('status', 'pending')

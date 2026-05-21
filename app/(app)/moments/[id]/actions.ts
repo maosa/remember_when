@@ -164,7 +164,7 @@ export async function acceptMomentInvite(
 
   const { data: updated, error } = await admin
     .from('moment_members')
-    .update({ status: 'accepted' })
+    .update({ status: 'accepted' as const })
     .eq('moment_id', momentId)
     .eq('user_id', user.id)
     .eq('status', 'pending')
@@ -234,7 +234,7 @@ export async function declineMomentInvite(
 
   const { data: updated, error } = await admin
     .from('moment_members')
-    .update({ status: 'declined' })
+    .update({ status: 'declined' as const })
     .eq('moment_id', momentId)
     .eq('user_id', user.id)
     .eq('status', 'pending')
@@ -314,7 +314,7 @@ async function upsertMembership(
     // status === 'declined' — re-invite by resetting to pending
     const { error } = await admin
       .from('moment_members')
-      .update({ status: 'pending', role, invited_by: invitedBy })
+      .update({ status: 'pending' as const, role, invited_by: invitedBy })
       .eq('id', existing.id)
     if (error) return error.message
     return null
@@ -324,7 +324,7 @@ async function upsertMembership(
     moment_id: momentId,
     user_id: userId,
     role,
-    status: 'pending',
+    status: 'pending' as const,
     invited_by: invitedBy,
   })
   if (error) return error.message
@@ -442,7 +442,7 @@ export async function inviteMember(
     user_id: null,
     invited_email: value.toLowerCase(),
     role,
-    status: 'pending',
+    status: 'pending' as const,
     invited_by: user.id,
   })
   // Ignore duplicate (already invited at this email for this moment)
@@ -631,7 +631,7 @@ export async function deleteMoment(momentId: string): Promise<{ error?: string }
     await admin.from('notifications').insert(
       recipientIds.map((uid) => ({
         user_id: uid,
-        type: 'moment_deleted',
+        type: 'moment_deleted' as const,
         related_user_id: user.id,
         metadata: { moment_name: momentName },
       }))

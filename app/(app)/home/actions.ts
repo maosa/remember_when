@@ -276,7 +276,7 @@ export async function createMoment(data: {
         moment_id: moment.id,
         user_id: i.value,
         role: i.role,
-        status: 'pending',
+        status: 'pending' as const,
         invited_by: user.id,
       }))
     )
@@ -322,7 +322,7 @@ export async function createMoment(data: {
           moment_id: moment.id,
           user_id: userId,
           role: invitee.role,
-          status: 'pending',
+          status: 'pending' as const,
           invited_by: user.id,
         }))
       )
