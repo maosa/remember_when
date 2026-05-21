@@ -1083,7 +1083,7 @@ export async function createPost(momentId: string, formData: FormData): Promise<
           .from('post-media')
           .upload(filePath, file, { upsert: false })
         if (uploadError) return { ok: false, message: uploadError.message }
-        const mediaType: 'photo' | 'video' | 'audio' = file.type.startsWith('video/')
+        const mediaType = file.type.startsWith('video/')
           ? 'video'
           : file.type.startsWith('audio/')
             ? 'audio'
