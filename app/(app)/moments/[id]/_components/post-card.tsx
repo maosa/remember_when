@@ -1,6 +1,6 @@
 'use client'
 
-import React, { memo, useMemo, useState, useTransition } from 'react'
+import React, { memo, useRef, useMemo, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { Pencil, Trash2, Mic, Play } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -117,6 +117,44 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
         </button>
       ))}
     </div>
+  )
+}
+
+// ─── Audio row ────────────────────────────────────────────────────────────────
+
+function fmtDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function AudioRow({ m, label, onClick }: { m: MediaItem; label: string; onClick: () => void }) {
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [duration, setDuration] = useState<string | null>(null)
+
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 w-full text-left rounded-xl border border-rw-border-subtle bg-rw-surface-raised/50 px-3 py-2.5 hover:bg-rw-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent"
+    >
+      {/* Hidden audio element — loads only metadata (duration), no full buffering */}
+      <audio
+        ref={audioRef}
+        src={m.storageUrl}
+        preload="metadata"
+        className="sr-only"
+        onLoadedMetadata={() => {
+          const d = audioRef.current?.duration
+          if (d && isFinite(d)) setDuration(fmtDuration(d))
+        }}
+      />
+      <Mic className="size-4 text-rw-text-muted shrink-0" />
+      <span className="text-sm text-rw-text-muted flex-1 truncate">{label}</span>
+      {duration && (
+        <span className="text-xs text-rw-text-muted tabular-nums shrink-0">{duration}</span>
+      )}
+      <Play className="size-3.5 text-rw-text-muted shrink-0" />
+    </button>
   )
 }
 
@@ -298,16 +336,13 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
       ))}
 
       {/* Audio */}
-      {audios.map((m) => (
-        <button
+      {audios.map((m, idx) => (
+        <AudioRow
           key={m.id}
+          m={m}
+          label={audios.length === 1 ? 'Audio recording' : `Recording ${idx + 1}`}
           onClick={() => openViewer(m.id)}
-          className="flex items-center gap-3 w-full text-left rounded-xl border border-rw-border-subtle bg-rw-surface-raised/50 px-3 py-2.5 hover:bg-rw-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent"
-        >
-          <Mic className="size-4 text-rw-text-muted shrink-0" />
-          <span className="text-sm text-rw-text-muted flex-1">Audio recording</span>
-          <Play className="size-3.5 text-rw-text-muted shrink-0" />
-        </button>
+        />
       ))}
 
       {error && <p className="text-xs text-rw-danger">{error}</p>}
