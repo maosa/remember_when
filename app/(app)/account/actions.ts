@@ -45,7 +45,7 @@ export async function updateProfile(formData: FormData) {
 
   if (error) return { error: error.message }
 
-  revalidateTag(layoutProfileTag(user.id), {})
+  revalidateTag(layoutProfileTag(user.id), { expire: 0 })
   revalidatePath('/account')
   return { success: true }
 }
@@ -126,7 +126,7 @@ export async function updateAvatar(formData: FormData) {
 
   if (updateError) return { error: updateError.message }
 
-  revalidateTag(layoutProfileTag(user.id), {})
+  revalidateTag(layoutProfileTag(user.id), { expire: 0 })
   revalidatePath('/account')
   return { success: true }
 }
@@ -154,7 +154,7 @@ export async function removeAvatar() {
       .remove(files.map((f) => `${user.id}/${f.name}`))
   }
 
-  revalidateTag(layoutProfileTag(user.id), {})
+  revalidateTag(layoutProfileTag(user.id), { expire: 0 })
   revalidatePath('/account')
   return { success: true }
 }

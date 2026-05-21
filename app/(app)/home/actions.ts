@@ -52,7 +52,7 @@ type RawOwner = { id: string; first_name: string; last_name: string; profile_pho
 /**
  * Inner cached fetch — runs DB queries using the admin client (no cookie
  * dependency) so the result can be stored in the Next.js data cache keyed by
- * userId. The cache is busted via revalidateTag(homeMomentsTag(userId)) after
+ * userId. The cache is busted via revalidateTag(homeMomentsTag(userId), { expire: 0 }) after
  * any mutation that changes which moments the user sees on /home.
  */
 function fetchHomeMomentsData(userId: string) {
@@ -364,7 +364,7 @@ export async function createMoment(data: {
   // Single batch notification send (one preferences query, one insert)
   await sendNotifications(notificationPayloads)
 
-  revalidateTag(homeMomentsTag(user.id))
+  revalidateTag(homeMomentsTag(user.id), { expire: 0 })
   return { momentId: moment.id }
 }
 
@@ -380,7 +380,7 @@ export async function archiveMoment(momentId: string): Promise<{ error?: string 
     .insert({ moment_id: momentId, user_id: user.id })
 
   if (error) return { error: error.message }
-  revalidateTag(homeMomentsTag(user.id))
+  revalidateTag(homeMomentsTag(user.id), { expire: 0 })
   return {}
 }
 
@@ -396,6 +396,6 @@ export async function unarchiveMoment(momentId: string): Promise<{ error?: strin
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
-  revalidateTag(homeMomentsTag(user.id))
+  revalidateTag(homeMomentsTag(user.id), { expire: 0 })
   return {}
 }

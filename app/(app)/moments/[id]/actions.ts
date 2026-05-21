@@ -279,7 +279,7 @@ export async function declineMomentInvite(
   }
 
   revalidatePath(`/moments/${momentId}`)
-  revalidateTag(homeMomentsTag(user.id))
+  revalidateTag(homeMomentsTag(user.id), { expire: 0 })
   revalidatePath('/notifications')
   return {}
 }
@@ -640,7 +640,7 @@ export async function deleteMoment(momentId: string): Promise<{ error?: string }
 
   // Bust home-moments cache for the owner and every former member
   for (const id of [user.id, ...recipientIds]) {
-    revalidateTag(homeMomentsTag(id))
+    revalidateTag(homeMomentsTag(id), { expire: 0 })
   }
   return {}
 }
@@ -1760,7 +1760,7 @@ export async function leaveMoment(
     related_moment_id: momentId,
   })
 
-  revalidateTag(homeMomentsTag(user.id))
+  revalidateTag(homeMomentsTag(user.id), { expire: 0 })
   return {}
 }
 
@@ -1829,8 +1829,8 @@ export async function transferOwnership(
   })
 
   revalidatePath(`/moments/${momentId}`)
-  revalidateTag(homeMomentsTag(user.id))
-  revalidateTag(homeMomentsTag(newOwnerId))
+  revalidateTag(homeMomentsTag(user.id), { expire: 0 })
+  revalidateTag(homeMomentsTag(newOwnerId), { expire: 0 })
   return {}
 }
 
@@ -1918,7 +1918,7 @@ export async function updateMoment(
     if (mm.user_id) allMemberIds.add(mm.user_id)
   }
   for (const id of allMemberIds) {
-    revalidateTag(homeMomentsTag(id))
+    revalidateTag(homeMomentsTag(id), { expire: 0 })
   }
   return {}
 }
