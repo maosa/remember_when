@@ -9,7 +9,7 @@ export async function updateNotificationPreferences(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const cadence = formData.get('reminder_cadence') as string
+  const cadence = formData.get('reminder_cadence') as 'weekly' | 'biweekly' | 'monthly' | 'never'
   const validCadences = ['weekly', 'biweekly', 'monthly', 'never']
   if (!validCadences.includes(cadence)) return { error: 'Invalid reminder cadence.' }
 
