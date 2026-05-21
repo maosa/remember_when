@@ -728,32 +728,11 @@ export async function updateMomentDetails(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return permCheck
+
   const admin = createAdminClient()
-
-  // Explicit ownership/editor check — defence-in-depth on top of RLS
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .single()
-
-  if (!moment) return { error: 'Moment not found.' }
-
-  const isOwner = moment.owner_id === user.id
-  if (!isOwner) {
-    const { data: membership } = await admin
-      .from('moment_members')
-      .select('role, status')
-      .eq('moment_id', momentId)
-      .eq('user_id', user.id)
-      .single()
-
-    if (!membership || membership.status !== 'accepted' || membership.role === 'reader') {
-      return { error: 'You do not have permission to edit this moment.' }
-    }
-  }
-
-  const { error } = await supabase
+  const { error } = await admin
     .from('moments')
     .update({
       ...(data.name !== undefined && { name: data.name }),
@@ -776,29 +755,8 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Explicit ownership/editor check — defence-in-depth on top of RLS
-  const admin = createAdminClient()
-  const { data: momentData } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .single()
-
-  if (!momentData) return { error: 'Moment not found.' }
-
-  const isOwner = momentData.owner_id === user.id
-  if (!isOwner) {
-    const { data: membership } = await admin
-      .from('moment_members')
-      .select('role, status')
-      .eq('moment_id', momentId)
-      .eq('user_id', user.id)
-      .single()
-
-    if (!membership || membership.status !== 'accepted' || membership.role === 'reader') {
-      return { error: 'You do not have permission to edit this moment.' }
-    }
-  }
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return permCheck
 
   const file = formData.get('cover') as File
   if (!file || file.size === 0) return { error: 'No file provided.' }
@@ -835,10 +793,18 @@ export async function deleteCoverPhoto(momentId: string): Promise<{ error?: stri
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch current cover URL (for storage cleanup) and clear it in parallel
+  // Explicit ownership/editor check — previously missing, relied on RLS alone.
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return permCheck
+
+  const admin = createAdminClient()
+
+  // Fetch current cover URL (for storage cleanup) and clear it in parallel.
+  // Use admin so the update is not blocked by moments-table RLS that may
+  // restrict writes to the owner only (assertCanEditMoment already validated).
   const [{ data: moment }, { error }] = await Promise.all([
-    supabase.from('moments').select('cover_photo_url').eq('id', momentId).single(),
-    supabase.from('moments').update({ cover_photo_url: null }).eq('id', momentId),
+    admin.from('moments').select('cover_photo_url').eq('id', momentId).single(),
+    admin.from('moments').update({ cover_photo_url: null }).eq('id', momentId),
   ])
 
   if (error) return { error: error.message }
@@ -1080,31 +1046,12 @@ export async function createPost(momentId: string, formData: FormData): Promise<
     if (mimeError) return { error: mimeError }
   }
 
-  // Verify access: accepted member or owner
+  // Verify access: accepted member or owner (readers cannot post)
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return { error: 'You do not have permission to post in this moment.' }
+  const momentOwnerId = permCheck.ownerId!
+
   const admin = createAdminClient()
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .single()
-
-  if (!moment) return { error: 'Moment not found.' }
-
-  const isOwner = moment.owner_id === user.id
-  if (!isOwner) {
-    const { data: membership } = await admin
-      .from('moment_members')
-      .select('role, status')
-      .eq('moment_id', momentId)
-      .eq('user_id', user.id)
-      .single()
-    if (!membership || membership.status !== 'accepted') {
-      return { error: 'You do not have permission to post in this moment.' }
-    }
-    if (membership.role === 'reader') {
-      return { error: 'Readers cannot post in this moment.' }
-    }
-  }
 
   // Create post record
   const { data: post, error: postError } = await admin
@@ -1161,7 +1108,7 @@ export async function createPost(momentId: string, formData: FormData): Promise<
   const recipientIds = new Set<string>(
     (members ?? []).map((m) => m.user_id).filter((id): id is string => id !== null)
   )
-  if (moment.owner_id !== user.id) recipientIds.add(moment.owner_id)
+  if (momentOwnerId !== user.id) recipientIds.add(momentOwnerId)
 
   if (recipientIds.size > 0) {
     // Notifications are best-effort — a failure must not roll back the post creation
@@ -1231,32 +1178,11 @@ export async function preparePostUpload(
     if (mimeError) return { error: mimeError }
   }
 
+  // Verify access: accepted member or owner (readers cannot post)
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return { error: 'You do not have permission to post in this moment.' }
+
   const admin = createAdminClient()
-
-  // Verify access: accepted member or owner
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .single()
-
-  if (!moment) return { error: 'Moment not found.' }
-
-  const isOwner = moment.owner_id === user.id
-  if (!isOwner) {
-    const { data: membership } = await admin
-      .from('moment_members')
-      .select('role, status')
-      .eq('moment_id', momentId)
-      .eq('user_id', user.id)
-      .single()
-    if (!membership || membership.status !== 'accepted') {
-      return { error: 'You do not have permission to post in this moment.' }
-    }
-    if (membership.role === 'reader') {
-      return { error: 'Readers cannot post in this moment.' }
-    }
-  }
 
   // Create post record
   const { data: post, error: postError } = await admin
@@ -1690,7 +1616,9 @@ async function assertCanViewMoment(momentId: string, userId: string): Promise<{ 
   return { error: 'Not found.' }
 }
 
-async function assertCanEditMoment(momentId: string, userId: string): Promise<{ error?: string }> {
+// Returns { ownerId } on success so callers that need the moment owner's id
+// (e.g. for cache busting or notifications) can reuse it without a second query.
+async function assertCanEditMoment(momentId: string, userId: string): Promise<{ error?: string; ownerId?: string }> {
   const admin = createAdminClient()
   const { data: moment } = await admin
     .from('moments')
@@ -1698,7 +1626,7 @@ async function assertCanEditMoment(momentId: string, userId: string): Promise<{ 
     .eq('id', momentId)
     .single()
   if (!moment) return { error: 'Moment not found.' }
-  if (moment.owner_id === userId) return {}
+  if (moment.owner_id === userId) return { ownerId: moment.owner_id }
   const { data: membership } = await admin
     .from('moment_members')
     .select('role, status')
@@ -1708,7 +1636,7 @@ async function assertCanEditMoment(momentId: string, userId: string): Promise<{ 
   if (!membership || membership.status !== 'accepted' || membership.role === 'reader') {
     return { error: 'Permission denied.' }
   }
-  return {}
+  return { ownerId: moment.owner_id }
 }
 
 // ─── Manage tags ──────────────────────────────────────────────────────────────
@@ -1979,30 +1907,12 @@ export async function updateMoment(
   if (!name) return { error: 'Moment name is required.' }
   const location = data.location?.trim().slice(0, 200) ?? null
 
-  const admin = createAdminClient()
-
   // Verify the caller is owner or an accepted editor
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .single()
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return { error: permCheck.error }
+  const momentOwnerId = permCheck.ownerId!
 
-  if (!moment) return { error: 'Moment not found.' }
-
-  const isOwner = moment.owner_id === user.id
-  if (!isOwner) {
-    const { data: membership } = await admin
-      .from('moment_members')
-      .select('role, status')
-      .eq('moment_id', momentId)
-      .eq('user_id', user.id)
-      .single()
-
-    if (!membership || membership.status !== 'accepted' || membership.role === 'reader') {
-      return { error: 'You do not have permission to edit this moment.' }
-    }
-  }
+  const admin = createAdminClient()
 
   // Update moment row
   const { error: updateError } = await admin
@@ -2037,7 +1947,7 @@ export async function updateMoment(
 
   revalidatePath(`/moments/${momentId}`)
   // Bust home-moments cache for the owner and every accepted member
-  const allMemberIds = new Set<string>([moment.owner_id, user.id])
+  const allMemberIds = new Set<string>([momentOwnerId, user.id])
   for (const mm of momentMembers ?? []) {
     if (mm.user_id) allMemberIds.add(mm.user_id)
   }
