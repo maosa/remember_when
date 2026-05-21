@@ -98,7 +98,7 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
             onClick={() => setSort((s) => (s === 'asc' ? 'desc' : 'asc'))}
           >
             <ArrowDownUp className="size-3.5" />
-            {sort === 'asc' ? 'Oldest first' : 'Newest first'}
+            {sort === 'asc' ? 'Newest first' : 'Oldest first'}
           </Button>
         )}
 
