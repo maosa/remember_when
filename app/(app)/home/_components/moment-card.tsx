@@ -3,7 +3,7 @@
 import { memo, useMemo, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { MapPin, Calendar, MoreHorizontal, Archive, ArchiveRestore, Pencil, Crown, PenTool, Eye } from 'lucide-react'
+import { MapPin, Calendar, MoreHorizontal, Archive, ArchiveRestore, Pencil, Crown, PenTool, Eye, MessageSquare } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
@@ -147,7 +147,15 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
               </div>
             )}
 
-            {/* Row 3: Tags */}
+            {/* Row 3: Entry count */}
+            {moment.postCount > 0 && moment.myStatus === 'accepted' && (
+              <div className="flex items-center gap-1 text-[12px] text-rw-text-muted">
+                <MessageSquare className="size-3 shrink-0" />
+                {moment.postCount} {moment.postCount === 1 ? 'entry' : 'entries'}
+              </div>
+            )}
+
+            {/* Row 5: Tags */}
             {moment.tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {moment.tags.slice(0, 5).map((tag) => (
@@ -166,7 +174,7 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
               </div>
             )}
 
-            {/* Row 4: Role badge (left) + Avatar stack (right) */}
+            {/* Row 6: Role badge (left) + Avatar stack (right) */}
             {moment.myStatus === 'accepted' && (
               <div className={cn('flex items-center justify-between gap-2', (date || moment.location || moment.tags.length > 0) && 'mt-0.5 pt-1.5 border-t border-rw-border-subtle/60')}>
                 {/* Role badge */}

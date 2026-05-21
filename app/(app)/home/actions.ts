@@ -38,6 +38,7 @@ export type MomentSummary = {
   myRole: 'owner' | 'editor' | 'reader'
   myStatus: 'pending' | 'accepted' | 'declined'
   isArchived: boolean
+  postCount: number
 }
 
 export type Invitee =
@@ -103,14 +104,19 @@ function fetchHomeMomentsData(userId: string) {
         .map((m) => m.cover_photo_url)
         .filter((p): p is string => Boolean(p))
 
-      const [signedCovers, memberUsersRes] = await Promise.all([
+      const allMomentIds = (moments ?? []).map((m) => m.id)
+
+      const [signedCovers, memberUsersRes, postCountRes] = await Promise.all([
         signStoragePaths(coverPaths),
         allMemberIds.length > 0
           ? admin.from('users').select('id, first_name, last_name, profile_photo_url').in('id', allMemberIds)
           : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }[] }),
+        allMomentIds.length > 0
+          ? admin.from('posts').select('moment_id').in('moment_id', allMomentIds).is('deleted_at', null)
+          : Promise.resolve({ data: [] as { moment_id: string }[] }),
       ])
 
-      return { moments, archivedRows, signedCovers, memberUsers: memberUsersRes.data ?? [], error }
+      return { moments, archivedRows, signedCovers, memberUsers: memberUsersRes.data ?? [], postRows: postCountRes.data ?? [], error }
     },
     [`home-moments-${userId}`],
     { tags: [homeMomentsTag(userId)], revalidate: 3600 },
@@ -122,13 +128,18 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { moments, archivedRows, signedCovers, memberUsers, error } =
+  const { moments, archivedRows, signedCovers, memberUsers, postRows, error } =
     await fetchHomeMomentsData(user.id)
 
   const archivedMomentIds = new Set((archivedRows ?? []).map((a) => a.moment_id))
   if (error) return { moments: [], error: error.message }
 
   const memberUserMap = new Map(memberUsers.map((u) => [u.id, u]))
+
+  const postCountMap = new Map<string, number>()
+  for (const row of postRows) {
+    postCountMap.set(row.moment_id, (postCountMap.get(row.moment_id) ?? 0) + 1)
+  }
 
   const result: MomentSummary[] = (moments ?? []).map((m) => {
     const isOwner = m.owner_id === user.id
@@ -166,6 +177,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       myRole: isOwner ? 'owner' : (myMembership?.role ?? 'editor'),
       myStatus: myMembership?.status ?? (isOwner ? 'accepted' : 'pending'),
       isArchived,
+      postCount: postCountMap.get(m.id) ?? 0,
     }
   })
 
