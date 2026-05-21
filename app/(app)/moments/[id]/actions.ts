@@ -181,10 +181,16 @@ export async function acceptMomentInvite(
   // Only stamp the specific notification that was acted on to keep each
   // notification's response independent.
   if (notificationId) {
+    // Scope the update to the caller's own moment_invite notification for this
+    // moment — prevents a caller from corrupting another user's notification row
+    // by supplying a foreign notificationId (admin client bypasses RLS).
     await admin
       .from('notifications')
       .update({ metadata: { invite_response: 'accepted' } })
       .eq('id', notificationId)
+      .eq('user_id', user.id)
+      .eq('type', 'moment_invite')
+      .eq('related_moment_id', momentId)
   } else {
     // Called from the moment page — stamp the most recent unstamped invite notification.
     const { data: notif } = await admin
@@ -245,10 +251,15 @@ export async function declineMomentInvite(
   if (!updated || updated.length === 0) return { noop: true }
 
   if (notificationId) {
+    // Same scope as the accept branch — only the caller's own moment_invite
+    // notification for this moment, not any arbitrary notification by ID.
     await admin
       .from('notifications')
       .update({ metadata: { invite_response: 'declined' } })
       .eq('id', notificationId)
+      .eq('user_id', user.id)
+      .eq('type', 'moment_invite')
+      .eq('related_moment_id', momentId)
   } else {
     const { data: notif } = await admin
       .from('notifications')
