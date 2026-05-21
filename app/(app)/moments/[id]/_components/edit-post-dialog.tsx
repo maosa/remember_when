@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { ImageIcon, Mic, Video, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/lib/button-variants'
@@ -40,6 +41,7 @@ type ExistingItem = {
 }
 
 export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<number[] | null>(null)
@@ -116,6 +118,7 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
         const res = await editPost(post.id, post.momentId, trimmedContent, removeMediaIds, [])
         if (res.error) { setError(res.error); return }
         if (res.post) onSaved(res.post)
+        router.refresh()
         handleOpenChange(false)
       })
       return
@@ -173,6 +176,7 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
         )
         if (res.error) { setError(res.error); return }
         if (res.post) onSaved(res.post)
+        router.refresh()
         handleOpenChange(false)
       })
     } finally {

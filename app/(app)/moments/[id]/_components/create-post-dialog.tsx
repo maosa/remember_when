@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { ImageIcon, Mic, Video, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/lib/button-variants'
@@ -30,6 +31,7 @@ type PreviewFile = {
 }
 
 export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<number[] | null>(null)
@@ -86,6 +88,7 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
         fd.append('content', content)
         const res = await createPost(momentId, fd)
         if (res.error) { setError(res.error); return }
+        router.refresh()
         onOpenChange(false)
         reset()
       })
@@ -142,6 +145,7 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
           prep.uploads!.map((u) => ({ path: u.path, mediaType: u.mediaType })),
         )
         if (res.error) { setError(res.error); return }
+        router.refresh()
         onOpenChange(false)
         reset()
       })
