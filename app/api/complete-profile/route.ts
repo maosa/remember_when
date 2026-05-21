@@ -20,6 +20,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 })
   }
 
+  if (!user.email) {
+    return NextResponse.json({ error: 'User email not found.' }, { status: 400 })
+  }
+
   const { firstName, lastName, username, password } = await request.json()
 
   if (!firstName || !lastName || !username) {
