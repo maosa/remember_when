@@ -64,91 +64,106 @@ export function NotificationsForm({ initialPrefs }: Props) {
         </p>
       )}
 
-      <div className="space-y-4">
-        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted">Friends</p>
+      <div className="space-y-6">
+        {/* ── Friends ──────────────────────────────────────────────── */}
+        <fieldset className="border-0 p-0 m-0 space-y-4">
+          <legend className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted mb-4">
+            Friends
+          </legend>
 
-        <NotifRow
-          label="Friend request received"
-          description="When someone sends you a friend request"
-          checked={prefs.friendRequestReceived}
-          onCheckedChange={() => toggle('friendRequestReceived')}
-        />
-        <Separator />
-        <NotifRow
-          label="Friend request accepted"
-          description="When someone accepts your friend request"
-          checked={prefs.friendRequestAccepted}
-          onCheckedChange={() => toggle('friendRequestAccepted')}
-        />
+          <NotifRow
+            label="Friend request received"
+            description="When someone sends you a friend request"
+            checked={prefs.friendRequestReceived}
+            onCheckedChange={() => toggle('friendRequestReceived')}
+          />
+          <Separator />
+          <NotifRow
+            label="Friend request accepted"
+            description="When someone accepts your friend request"
+            checked={prefs.friendRequestAccepted}
+            onCheckedChange={() => toggle('friendRequestAccepted')}
+          />
+        </fieldset>
 
-        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted pt-2">Moments</p>
+        {/* ── Moments ──────────────────────────────────────────────── */}
+        <fieldset className="border-0 p-0 m-0 space-y-4">
+          <legend className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted mb-4">
+            Moments
+          </legend>
 
-        <NotifRow
-          label="Moment invite"
-          description="When someone invites you to a moment"
-          checked={prefs.momentInvite}
-          onCheckedChange={() => toggle('momentInvite')}
-        />
-        <Separator />
-        <NotifRow
-          label="Invite accepted or declined"
-          description="When someone responds to your moment invite"
-          checked={prefs.momentInviteResponse}
-          onCheckedChange={() => toggle('momentInviteResponse')}
-        />
-        <Separator />
-        <NotifRow
-          label="New post"
-          description="When someone adds a post to a moment you're part of"
-          checked={prefs.newPost}
-          onCheckedChange={() => toggle('newPost')}
-        />
-        <Separator />
-        <NotifRow
-          label="Member left"
-          description="When someone leaves a moment you own"
-          checked={prefs.memberLeft}
-          onCheckedChange={() => toggle('memberLeft')}
-        />
-        <Separator />
-        <NotifRow
-          label="Ownership transferred"
-          description="When someone transfers ownership of a moment to you"
-          checked={prefs.ownershipTransferred}
-          onCheckedChange={() => toggle('ownershipTransferred')}
-        />
-        <Separator />
-        <NotifRow
-          label="Archived moment activity"
-          description="Receive notifications for moments you've archived"
-          checked={prefs.archivedMomentNotifications}
-          onCheckedChange={() => toggle('archivedMomentNotifications')}
-        />
+          <NotifRow
+            label="Moment invite"
+            description="When someone invites you to a moment"
+            checked={prefs.momentInvite}
+            onCheckedChange={() => toggle('momentInvite')}
+          />
+          <Separator />
+          <NotifRow
+            label="Invite accepted or declined"
+            description="When someone responds to your moment invite"
+            checked={prefs.momentInviteResponse}
+            onCheckedChange={() => toggle('momentInviteResponse')}
+          />
+          <Separator />
+          <NotifRow
+            label="New post"
+            description="When someone adds a post to a moment you're part of"
+            checked={prefs.newPost}
+            onCheckedChange={() => toggle('newPost')}
+          />
+          <Separator />
+          <NotifRow
+            label="Member left"
+            description="When someone leaves a moment you own"
+            checked={prefs.memberLeft}
+            onCheckedChange={() => toggle('memberLeft')}
+          />
+          <Separator />
+          <NotifRow
+            label="Ownership transferred"
+            description="When someone transfers ownership of a moment to you"
+            checked={prefs.ownershipTransferred}
+            onCheckedChange={() => toggle('ownershipTransferred')}
+          />
+          <Separator />
+          <NotifRow
+            label="Archived moment activity"
+            description="Receive notifications for moments you've archived"
+            checked={prefs.archivedMomentNotifications}
+            onCheckedChange={() => toggle('archivedMomentNotifications')}
+          />
+        </fieldset>
 
-        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted pt-2">Reminders</p>
+        {/* ── Reminders ────────────────────────────────────────────── */}
+        <fieldset className="border-0 p-0 m-0 space-y-4">
+          <legend className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted mb-4">
+            Reminders
+          </legend>
 
-        <div className="space-y-3">
-          <div>
-            <p className="text-sm font-medium">Capture reminders</p>
-            <p className="text-sm text-rw-text-muted">Periodic prompts to revisit and add new moments</p>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm font-medium">Capture reminders</p>
+              <p className="text-sm text-rw-text-muted">Periodic prompts to revisit and add new moments</p>
+            </div>
+            <Select
+              value={prefs.reminderCadence}
+              onValueChange={(v) => v && setPrefs((p) => ({ ...p, reminderCadence: v }))}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue>
+                  {{ weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly', never: 'Never' }[prefs.reminderCadence] ?? prefs.reminderCadence}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="never">Never</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Select
-            value={prefs.reminderCadence}
-            onValueChange={(v) => v && setPrefs((p) => ({ ...p, reminderCadence: v }))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue>
-                {{ weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly', never: 'Never' }[prefs.reminderCadence] ?? prefs.reminderCadence}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="biweekly">Bi-weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="never">Never</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        </fieldset>
       </div>
 
       <Button type="submit" disabled={isPending}>

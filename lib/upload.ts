@@ -22,44 +22,32 @@ export const ALLOWED_COVER_TYPES = [
 ] as const
 
 export const ALLOWED_MEDIA_TYPES = [
-  // Images
+  // Images — widely supported, safe to process
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
-  'image/heic',
-  'image/heif',
-  // Videos
+  // Videos — universally supported in modern browsers
   'video/mp4',
   'video/webm',
-  'video/quicktime',
-  // Audio
-  'audio/mpeg',
+  // Audio — broad browser support; quicktime/.mov excluded (video container)
+  'audio/mpeg',   // mp3
   'audio/wav',
-  'audio/ogg',
-  'audio/mp4',
-  'audio/aac',
-  'audio/x-m4a',
+  'audio/mp4',    // m4a
 ] as const
 
 // ─── MIME → canonical extension map ──────────────────────────────────────────
 
 const MIME_EXT: Record<string, string> = {
-  'image/jpeg':      'jpg',
-  'image/png':       'png',
-  'image/webp':      'webp',
-  'image/gif':       'gif',
-  'image/heic':      'heic',
-  'image/heif':      'heif',
-  'video/mp4':       'mp4',
-  'video/webm':      'webm',
-  'video/quicktime': 'mov',
-  'audio/mpeg':      'mp3',
-  'audio/wav':       'wav',
-  'audio/ogg':       'ogg',
-  'audio/mp4':       'm4a',
-  'audio/aac':       'aac',
-  'audio/x-m4a':     'm4a',
+  'image/jpeg': 'jpg',
+  'image/png':  'png',
+  'image/webp': 'webp',
+  'image/gif':  'gif',
+  'video/mp4':  'mp4',
+  'video/webm': 'webm',
+  'audio/mpeg': 'mp3',
+  'audio/wav':  'wav',
+  'audio/mp4':  'm4a',
 }
 
 /** Returns a canonical file extension derived from the MIME type, never from the filename. */
@@ -91,7 +79,7 @@ export function validateMediaFile(file: File): string | null {
  *  Useful in server actions that receive file metadata rather than a File object. */
 export function validateMediaMimeType(mimeType: string): string | null {
   if (!(ALLOWED_MEDIA_TYPES as readonly string[]).includes(mimeType)) {
-    return `Unsupported file type: ${mimeType || 'unknown'}. Allowed types: images, videos, and audio files.`
+    return `Unsupported file type: ${mimeType || 'unknown'}. Supported formats: JPEG, PNG, WebP, GIF · MP4, WebM · MP3, WAV, M4A.`
   }
   return null
 }

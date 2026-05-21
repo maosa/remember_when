@@ -921,15 +921,24 @@ export async function fetchMomentPhotos(
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
 
-export type PostMedia = {
+// Shared fields present on every media item regardless of type
+type PostMediaBase = {
   id: string
-  mediaType: 'photo' | 'video' | 'audio'
   storageUrl: string
   storagePath: string
   authorFirstName?: string
   authorLastName?: string
   postCreatedAt?: string
 }
+
+// Discriminated union keyed on `mediaType` — each branch can carry type-specific
+// fields in the future without polluting the other branches.
+export type PhotoMedia = PostMediaBase & { mediaType: 'photo' }
+export type VideoMedia = PostMediaBase & { mediaType: 'video' }
+export type AudioMedia = PostMediaBase & { mediaType: 'audio' }
+
+/** A piece of media attached to a post. Use `mediaType` to narrow. */
+export type PostMedia = PhotoMedia | VideoMedia | AudioMedia
 
 export type PostWithMedia = {
   id: string
@@ -986,7 +995,7 @@ export async function fetchPosts(
       mediaType: m.media_type as 'photo' | 'video' | 'audio',
       storageUrl: signed.get(m.storage_url) ?? m.storage_url,
       storagePath: m.storage_url,
-    }))
+    } as PostMedia))
 
     return {
       id: row.id,
@@ -1549,7 +1558,7 @@ export async function editPost(
       mediaType: m.media_type as 'photo' | 'video' | 'audio',
       storageUrl: signed.get(m.storage_url) ?? m.storage_url,
       storagePath: m.storage_url,
-    })),
+    } as PostMedia)),
   }
 
   return { post: updatedPost }

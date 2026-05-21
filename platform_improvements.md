@@ -521,7 +521,7 @@ The `ssr: false` option is appropriate since these are dialog overlays that don'
 
 ---
 
-### [ ] T3-06 · RELIABILITY · Add React `cache()` wrapper to layout profile fetch
+### [x] T3-06 · RELIABILITY · Add React `cache()` wrapper to layout profile fetch
 
 **File:** `lib/cached-queries.ts`
 
@@ -545,7 +545,7 @@ This ensures that within a single server render pass, the function is called at 
 
 ---
 
-### [ ] T3-07 · ACCESSIBILITY · Add `<fieldset>` and `<legend>` groupings to settings form
+### [x] T3-07 · ACCESSIBILITY · Add `<fieldset>` and `<legend>` groupings to settings form
 
 **File:** `app/(app)/settings/_components/notifications-form.tsx`
 
@@ -564,7 +564,7 @@ Use existing Tailwind classes to style `fieldset` with `border-0 p-0 m-0` and `l
 
 ---
 
-### [ ] T3-08 · TYPE SAFETY · Generate Supabase TypeScript types and eliminate manual casts
+### [x] T3-08 · TYPE SAFETY · Generate Supabase TypeScript types and eliminate manual casts
 
 **Files:** All action files (`home/actions.ts`, `friends/actions.ts`, `moments/[id]/actions.ts`, etc.)
 
@@ -580,7 +580,7 @@ Use existing Tailwind classes to style `fieldset` with `border-0 p-0 m-0` and `l
 
 ---
 
-### [ ] T3-09 · TYPE SAFETY · Refactor `PostMedia` to a discriminated union
+### [x] T3-09 · TYPE SAFETY · Refactor `PostMedia` to a discriminated union
 
 **Files:** Wherever `PostMedia` type is defined and used (likely `types/` or inline in `moments/[id]/_components/post-card.tsx`, `posts-feed.tsx`, `media-viewer.tsx`)
 
@@ -599,7 +599,7 @@ Update all media rendering code to use type narrowing (`if (media.type === 'phot
 
 ---
 
-### [ ] T3-10 · SECURITY/DX · Restrict allowed media upload types
+### [x] T3-10 · SECURITY/DX · Restrict allowed media upload types
 
 **File:** `lib/upload.ts` (or wherever `ALLOWED_MEDIA_TYPES` is defined)
 
@@ -646,13 +646,13 @@ Remove `heic`, `heif`, `ogg`, `aac`, `x-m4a` from the allowed list. Update any e
 | T2-10 | Extract TagInput component | 2 | Code Quality | [x] |
 | T2-11 | Memoize Grid/MomentsGrid components | 2 | Code Quality | [x] |
 | T2-12 | Extract PeopleInviteInput to own file | 2 | Code Quality | [x] |
-| T3-01 | Strengthen cron auth with request signing | 3 | Security | [ ] |
+| T3-01 | Strengthen cron auth with request signing | 3 | Security | [x] |
 | T3-02 | Replace revalidatePath with tag-based caching | 3 | Performance | [x] |
-| T3-03 | Add image transformation for storage URLs | 3 | Performance | [ ] |
+| T3-03 | Add image transformation for storage URLs | 3 | Performance | [x] |
 | T3-04 | Paginate friends list server-side | 3 | Performance | [x] |
-| T3-05 | Dynamic imports for large modal components | 3 | Performance | [ ] |
-| T3-06 | Add React cache() to layout profile fetch | 3 | Reliability | [ ] |
-| T3-07 | Add fieldset/legend to settings form | 3 | Accessibility | [ ] |
-| T3-08 | Generate Supabase TypeScript types | 3 | Type Safety | [ ] |
-| T3-09 | Refactor PostMedia to discriminated union | 3 | Type Safety | [ ] |
-| T3-10 | Restrict allowed media upload types | 3 | Security/DX | [ ] |
+| T3-05 | Dynamic imports for large modal components | 3 | Performance | [x] |
+| T3-06 | Add React cache() to layout profile fetch | 3 | Reliability | [x] |
+| T3-07 | Add fieldset/legend to settings form | 3 | Accessibility | [x] |
+| T3-08 | Generate Supabase TypeScript types | 3 | Type Safety | [x] |
+| T3-09 | Refactor PostMedia to discriminated union | 3 | Type Safety | [x] |
+| T3-10 | Restrict allowed media upload types | 3 | Security/DX | [x] |

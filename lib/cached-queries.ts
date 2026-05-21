@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -20,20 +21,29 @@ export function homeMomentsTag(userId: string) {
 
 /**
  * Cached fetch of the fields the app layout needs to render the nav bar.
- * Uses the admin client so there is no cookie dependency inside the cache function.
- * Revalidates when the user updates their profile or avatar.
+ *
+ * Two-layer caching:
+ *  - React `cache()` — deduplicates within a single server render pass so
+ *    multiple components that call this in the same request share one result.
+ *  - `unstable_cache` — persists the result across requests in the Next.js
+ *    data cache, keyed per userId. Busted via revalidateTag(layoutProfileTag(userId))
+ *    after profile mutations.
+ *
+ * Uses the admin client so there is no cookie dependency inside the cache fn.
  */
-export const getLayoutProfile = (userId: string) =>
-  unstable_cache(
-    async () => {
-      const admin = createAdminClient()
-      const { data } = await admin
-        .from('users')
-        .select('first_name, last_name, profile_photo_url')
-        .eq('id', userId)
-        .single()
-      return data
-    },
-    [layoutProfileTag(userId)],
-    { tags: [layoutProfileTag(userId)] },
-  )()
+export const getLayoutProfile = cache(
+  async (userId: string) =>
+    unstable_cache(
+      async () => {
+        const admin = createAdminClient()
+        const { data } = await admin
+          .from('users')
+          .select('first_name, last_name, profile_photo_url')
+          .eq('id', userId)
+          .single()
+        return data
+      },
+      [layoutProfileTag(userId)],
+      { tags: [layoutProfileTag(userId)], revalidate: 3600 },
+    )(),
+)
