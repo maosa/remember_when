@@ -140,6 +140,81 @@ function RotatingQuote() {
   )
 }
 
+// ─── Hero headline with JS-measured min-height ────────────────────────────────
+//
+// Static Tailwind min-h breakpoints were empirically measured for specific
+// viewport widths but over- or under-shoot at intermediate sizes (e.g. a 600px
+// viewport is still in the "mobile" range yet needs only ~130px, not 280px).
+// Instead we measure the natural height of every quote in a hidden offscreen
+// clone and set minHeight to the maximum, so the tagline below never shifts.
+// The hero fades in over 280 ms, so the first-frame unstyled state is invisible.
+
+function HeroHeadline() {
+  const h1Ref = useRef<HTMLHeadingElement>(null)
+  const [minH, setMinH] = useState<number | undefined>(undefined)
+
+  useEffect(() => {
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null
+
+    function measure() {
+      const h1 = h1Ref.current
+      if (!h1) return
+
+      // Clone the h1 — copies class + inline style (font-size, etc.) — then
+      // pin it offscreen so its layout matches the live element exactly.
+      const clone = h1.cloneNode(false) as HTMLHeadingElement
+      Object.assign(clone.style, {
+        position:   'absolute',
+        top:        '-9999px',
+        left:       '-9999px',
+        visibility: 'hidden',
+        width:      `${h1.offsetWidth}px`,
+        minHeight:  '',
+        animation:  'none',
+      })
+      document.body.appendChild(clone)
+
+      let max = 0
+      for (const quote of HERO_QUOTES) {
+        // Mirror the real h1 content: open-quote + text + close-quote
+        clone.textContent = `“${quote}”`
+        max = Math.max(max, clone.offsetHeight)
+      }
+
+      document.body.removeChild(clone)
+      setMinH(max)
+    }
+
+    function handleResize() {
+      if (resizeTimer) clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(measure, 150)
+    }
+
+    measure()
+    window.addEventListener('resize', handleResize)
+    return () => {
+      if (resizeTimer) clearTimeout(resizeTimer)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
+
+  return (
+    <h1
+      ref={h1Ref}
+      className="font-serif italic font-semibold text-rw-text-primary tracking-[-0.03em] leading-[1.12] mb-7"
+      style={{
+        fontSize:  'clamp(38px, 6.2vw, 68px)',
+        animation: 'landing-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) 0.28s both',
+        minHeight: minH,
+      }}
+    >
+      <span aria-hidden="true" style={QUOTE_MARK_STYLE}>&ldquo;</span>
+      <RotatingQuote />
+      <span aria-hidden="true" style={QUOTE_MARK_STYLE}>&rdquo;</span>
+    </h1>
+  )
+}
+
 // ─── Content ──────────────────────────────────────────────────────────────────
 
 const TRIO_ITEMS = [
@@ -281,19 +356,9 @@ export default function LandingPage() {
           </p>
 
           {/* Main headline — large italic serif, quote rotates automatically.
-               min-h values sized to the longest quote at each breakpoint so the
-               tagline below never shifts position as quotes change. */}
-          <h1
-            className="font-serif italic font-semibold text-rw-text-primary tracking-[-0.03em] leading-[1.12] mb-7 min-h-[280px] sm:min-h-[210px] md:min-h-[220px] lg:min-h-[250px]"
-            style={{
-              fontSize: 'clamp(38px, 6.2vw, 68px)',
-              animation: 'landing-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) 0.28s both',
-            }}
-          >
-            <span aria-hidden="true" style={QUOTE_MARK_STYLE}>&ldquo;</span>
-            <RotatingQuote />
-            <span aria-hidden="true" style={QUOTE_MARK_STYLE}>&rdquo;</span>
-          </h1>
+               minHeight is set via JS measurement at runtime so the tagline
+               below never shifts position as quotes change, at any viewport. */}
+          <HeroHeadline />
 
           {/* Tagline */}
           <p
