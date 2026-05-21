@@ -9,6 +9,7 @@
  */
 
 import { createAdminClient } from './supabase/admin'
+import type { Json } from '@/types/database.types'
 
 export type AuditEvent =
   | 'account_deleted'
@@ -26,7 +27,7 @@ export type AuditEvent =
 export async function logAuditEvent(
   userId: string,
   event: AuditEvent,
-  metadata?: Record<string, unknown>,
+  metadata?: Json,
 ): Promise<void> {
   try {
     const admin = createAdminClient()
