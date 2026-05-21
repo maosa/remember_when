@@ -1112,7 +1112,9 @@ export async function createPost(momentId: string, formData: FormData): Promise<
     .eq('status', 'accepted')
     .neq('user_id', user.id)
 
-  const recipientIds = new Set<string>((members ?? []).map((m) => m.user_id))
+  const recipientIds = new Set<string>(
+    (members ?? []).map((m) => m.user_id).filter((id): id is string => id !== null)
+  )
   if (moment.owner_id !== user.id) recipientIds.add(moment.owner_id)
 
   if (recipientIds.size > 0) {
@@ -1301,7 +1303,9 @@ export async function finalizePostUpload(
     admin.from('moments').select('owner_id').eq('id', momentId).single(),
   ])
 
-  const recipientIds = new Set<string>((members ?? []).map((m) => m.user_id))
+  const recipientIds = new Set<string>(
+    (members ?? []).map((m) => m.user_id).filter((id): id is string => id !== null)
+  )
   if (moment?.owner_id && moment.owner_id !== user.id) recipientIds.add(moment.owner_id)
 
   if (recipientIds.size > 0) {
