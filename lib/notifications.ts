@@ -1,4 +1,5 @@
 import { createAdminClient } from './supabase/admin'
+import type { Json } from '@/types/database.types'
 
 // These must exactly match the live notification_type enum values.
 export type NotificationType =
@@ -50,7 +51,7 @@ export interface NotificationPayload {
   /** Role value carried by role_changed / moment_invite notifications */
   invite_role?: 'editor' | 'reader'
   /** Arbitrary metadata (e.g. moment_name after the moment is deleted) */
-  metadata?: Record<string, unknown>
+  metadata?: Json
 }
 
 /**
