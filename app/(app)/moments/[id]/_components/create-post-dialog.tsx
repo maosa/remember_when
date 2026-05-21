@@ -38,6 +38,7 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
   const [content, setContent] = useState('')
   const [previews, setPreviews] = useState<PreviewFile[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   function reset() {
     setContent('')
@@ -46,6 +47,7 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
     setError(null)
     setUploadProgress(null)
     setIsUploading(false)
+    setIsDragOver(false)
   }
 
   function handleOpenChange(val: boolean) {
@@ -169,7 +171,12 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
           <DialogTitle>New entry</DialogTitle>
         </DialogHeader>
 
-        <DialogBody className="gap-4">
+        <DialogBody
+          className={cn('gap-4 rounded-lg transition-colors', isDragOver && !isBusy && 'ring-2 ring-dashed ring-rw-accent bg-rw-accent-subtle/20')}
+          onDragOver={(e) => { e.preventDefault(); if (!isBusy) setIsDragOver(true) }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false) }}
+          onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (!isBusy) handleFiles(e.dataTransfer.files) }}
+        >
           <textarea
             placeholder="Write something…"
             value={content}

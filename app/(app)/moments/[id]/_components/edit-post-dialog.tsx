@@ -51,6 +51,7 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
   )
   const [newPreviews, setNewPreviews] = useState<NewPreview[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   // Always reflect the latest saved post. Using a ref avoids a stale closure:
   // by the time the dialog opens again the parent has re-rendered with the new
@@ -67,6 +68,7 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
       setError(null)
       setUploadProgress(null)
       setIsUploading(false)
+      setIsDragOver(false)
     }
   }, [open]) // intentionally omit post — we read it via ref to avoid resetting mid-session
 
@@ -200,7 +202,12 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
           <DialogTitle>Edit entry</DialogTitle>
         </DialogHeader>
 
-        <DialogBody className="gap-4">
+        <DialogBody
+          className={cn('gap-4 rounded-lg transition-colors', isDragOver && !isBusy && 'ring-2 ring-dashed ring-rw-accent bg-rw-accent-subtle/20')}
+          onDragOver={(e) => { e.preventDefault(); if (!isBusy) setIsDragOver(true) }}
+          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false) }}
+          onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (!isBusy) handleFiles(e.dataTransfer.files) }}
+        >
           <textarea
             placeholder="Write something…"
             value={content}
