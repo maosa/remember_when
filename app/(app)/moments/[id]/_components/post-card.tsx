@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { getOptimizedUrl } from '@/lib/storage'
 import { deletePost, type PostWithMedia } from '../actions'
 
 const EditPostDialog = dynamic(() =>
@@ -194,7 +195,7 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={m.storageUrl}
+                src={getOptimizedUrl(m.storageUrl, 640) ?? m.storageUrl}
                 alt=""
                 loading="lazy"
                 decoding="async"

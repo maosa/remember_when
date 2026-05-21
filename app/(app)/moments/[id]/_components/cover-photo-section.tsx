@@ -102,7 +102,11 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
             <div className="space-y-2">
               <p className="text-xs font-medium text-rw-text-muted uppercase tracking-wide">From this moment</p>
               {loadingPhotos && (
-                <p className="text-sm text-rw-text-muted">Loading…</p>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="size-20 rounded-lg bg-rw-surface-raised animate-pulse" />
+                  ))}
+                </div>
               )}
               {!loadingPhotos && momentPhotos !== null && momentPhotos.length === 0 && (
                 <p className="text-sm text-rw-text-muted">No photos uploaded yet.</p>
