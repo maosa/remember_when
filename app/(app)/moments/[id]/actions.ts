@@ -1288,6 +1288,11 @@ export async function finalizePostUpload(
   }
 
   if (media.length > 0) {
+    // Validate every path before any DB write — prevents a caller from pointing
+    // post_media rows at foreign storage objects by swapping in another user's IDs.
+    const pathError = validateUploadPaths(media, momentId, postId)
+    if (pathError) return { error: pathError }
+
     const { error: mediaError } = await admin.from('post_media').insert(
       media.map((m) => ({
         post_id: postId,
@@ -1511,6 +1516,11 @@ export async function editPost(
 
   // Insert post_media rows for new files (already uploaded to Storage by the client)
   if (newMediaPaths.length > 0) {
+    // Same path-integrity check as finalizePostUpload — prevents a caller from
+    // linking their edited post to another user's storage objects.
+    const pathError = validateUploadPaths(newMediaPaths, momentId, postId)
+    if (pathError) return { error: pathError }
+
     await admin.from('post_media').insert(
       newMediaPaths.map((m) => ({
         post_id: postId,
@@ -1575,6 +1585,44 @@ export async function editPost(
 }
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Validates the path and mediaType of each upload entry that the client hands
+ * back to the server in the two-phase upload flow (finalizePostUpload / editPost).
+ *
+ * Three invariants are checked:
+ *   1. mediaType is one of the three permitted literals — TypeScript types are
+ *      erased at runtime so this must be an explicit runtime check.
+ *   2. No `..` path-traversal sequences that could escape the expected prefix.
+ *   3. The path starts with `{momentId}/{postId}/` — prevents a user from
+ *      pointing a post_media row at another user's storage object by swapping in
+ *      a foreign moment/post UUID.  The Storage RLS INSERT policy enforces the
+ *      same constraint at upload time, but this server-side check is needed for
+ *      the finalizer step where only DB writes happen (no re-upload).
+ *
+ * Returns an error string on the first violation, or null if all entries pass.
+ */
+function validateUploadPaths(
+  entries: Array<{ path: string; mediaType: string }>,
+  momentId: string,
+  postId: string,
+): string | null {
+  const ALLOWED_TYPES = new Set(['photo', 'video', 'audio'])
+  const expectedPrefix = `${momentId}/${postId}/`
+
+  for (const { path, mediaType } of entries) {
+    if (!ALLOWED_TYPES.has(mediaType)) {
+      return `Invalid media type: "${mediaType}".`
+    }
+    if (path.includes('..')) {
+      return 'Invalid upload path.'
+    }
+    if (!path.startsWith(expectedPrefix)) {
+      return 'Invalid upload path.'
+    }
+  }
+  return null
+}
 
 // Returns {} if the user may read the moment (owner or accepted member).
 // Returns a generic 'Not found.' error in all other cases so callers cannot
