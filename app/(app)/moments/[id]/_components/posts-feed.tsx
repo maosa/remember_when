@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { ArrowDownUp, BookOpen, Plus } from 'lucide-react'
+import { ArrowDownUp, BookOpen, Loader2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PostCard } from './post-card'
 import { useMomentGallery } from './moment-gallery-context'
-import type { PostWithMedia } from '../actions'
+import { fetchPosts, type PostWithMedia } from '../actions'
 
 const CreatePostDialog = dynamic(() =>
   import('./create-post-dialog').then((m) => ({ default: m.CreatePostDialog }))
@@ -17,6 +17,7 @@ const CreatePostDialog = dynamic(() =>
 
 interface Props {
   initialPosts: PostWithMedia[]
+  initialNextCursor: string | null
   currentUserId: string
   momentOwnerId: string
   momentId: string
@@ -33,18 +34,28 @@ interface Author {
   photoUrl: string | null
 }
 
-export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId, canPost, isEditor }: Props) {
+export function PostsFeed({ initialPosts, initialNextCursor, currentUserId, momentOwnerId, momentId, canPost, isEditor }: Props) {
   const [sort, setSort] = useState<SortOrder>('asc')
   const [filterAuthorId, setFilterAuthorId] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [createEverOpened, setCreateEverOpened] = useState(false)
+  const [posts, setPosts] = useState<PostWithMedia[]>(initialPosts)
+  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   const { registerPostMedia } = useMomentGallery()
 
+  // When the server re-renders (e.g. after router.refresh()), sync local state back
+  // to the fresh first page so newly created / deleted posts are reflected.
   useEffect(() => {
-    // Flatten all post media in chronological order (posts already sorted asc by server)
-    // and attach per-item author attribution for the gallery viewer
-    const items = initialPosts.flatMap((post) =>
+    setPosts(initialPosts)
+    setNextCursor(initialNextCursor)
+  }, [initialPosts, initialNextCursor])
+
+  useEffect(() => {
+    // Flatten all loaded post media in chronological order and attach per-item author
+    // attribution for the gallery viewer
+    const items = posts.flatMap((post) =>
       post.media.map((m) => ({
         ...m,
         authorFirstName: post.authorFirstName,
@@ -53,17 +64,29 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
       }))
     )
     registerPostMedia(items)
-  }, [initialPosts, registerPostMedia])
+  }, [posts, registerPostMedia])
 
   const openCreate = useCallback(() => {
     setCreateEverOpened(true)
     setCreateOpen(true)
   }, [])
 
-  // Collect unique authors from posts
+  const handleLoadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const res = await fetchPosts(momentId, nextCursor)
+      setPosts((prev) => [...prev, ...res.posts])
+      setNextCursor(res.nextCursor)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [momentId, nextCursor, loadingMore])
+
+  // Collect unique authors from all loaded posts
   const authors = useMemo<Author[]>(() => {
     const seen = new Map<string, Author>()
-    for (const p of initialPosts) {
+    for (const p of posts) {
       if (!seen.has(p.authorId)) {
         seen.set(p.authorId, {
           id: p.authorId,
@@ -74,14 +97,14 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
       }
     }
     return Array.from(seen.values())
-  }, [initialPosts])
+  }, [posts])
 
   const sorted = useMemo(() => {
     const filtered = filterAuthorId
-      ? initialPosts.filter((p) => p.authorId === filterAuthorId)
-      : initialPosts
+      ? posts.filter((p) => p.authorId === filterAuthorId)
+      : posts
     return sort === 'asc' ? filtered : [...filtered].reverse()
-  }, [initialPosts, sort, filterAuthorId])
+  }, [posts, sort, filterAuthorId])
 
   return (
     <div className="space-y-6">
@@ -89,8 +112,8 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
       <div className="flex items-center gap-2 flex-wrap">
         <h2 className="text-base font-semibold mr-auto">Entries</h2>
 
-        {/* Sort toggle */}
-        {initialPosts.length > 1 && (
+        {/* Sort toggle — only shown once at least 2 posts are loaded */}
+        {posts.length > 1 && (
           <Button
             variant="ghost"
             size="sm"
@@ -172,6 +195,28 @@ export function PostsFeed({ initialPosts, currentUserId, momentOwnerId, momentId
               canEdit={post.authorId === currentUserId}
             />
           ))}
+        </div>
+      )}
+
+      {/* Load more — only shown when the server indicated more pages exist */}
+      {nextCursor && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" />
+                Loading…
+              </>
+            ) : (
+              'Load more entries'
+            )}
+          </Button>
         </div>
       )}
 

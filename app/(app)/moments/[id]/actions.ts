@@ -954,14 +954,19 @@ export type PostWithMedia = {
 }
 
 export async function fetchPosts(
-  momentId: string
-): Promise<{ posts: PostWithMedia[]; currentUserId: string | null }> {
+  momentId: string,
+  cursor?: string | null,
+  limit = 20,
+): Promise<{ posts: PostWithMedia[]; nextCursor: string | null; currentUserId: string | null }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const admin = createAdminClient()
-  const { data, error } = await admin
+
+  // Build the base filter, optionally adding a cursor for subsequent pages.
+  // We fetch `limit + 1` rows; if we get that many there are more pages.
+  let query = admin
     .from('posts')
     .select(`
       id, moment_id, author_id, content, created_at, edited_at,
@@ -970,13 +975,22 @@ export async function fetchPosts(
     `)
     .eq('moment_id', momentId)
     .is('deleted_at', null)
-    .order('created_at', { ascending: true })
 
-  if (error || !data) return { posts: [], currentUserId: user.id }
+  if (cursor) query = query.gt('created_at', cursor)
+
+  const { data, error } = await query
+    .order('created_at', { ascending: true })
+    .limit(limit + 1)
+
+  if (error || !data) return { posts: [], nextCursor: null, currentUserId: user.id }
+
+  const hasMore = data.length > limit
+  const rows = hasMore ? data.slice(0, limit) : data
+  const nextCursorValue = hasMore && rows.length > 0 ? rows[rows.length - 1].created_at : null
 
   // Collect all media storage paths for batch signing
   const allStoragePaths: string[] = []
-  for (const row of data) {
+  for (const row of rows) {
     const media = row.post_media as unknown as Array<{ storage_url: string; deleted_at: string | null }>
     for (const m of media) {
       if (!m.deleted_at && m.storage_url) allStoragePaths.push(m.storage_url)
@@ -984,7 +998,7 @@ export async function fetchPosts(
   }
   const signed = await signStoragePaths(allStoragePaths)
 
-  const posts = data.map((row) => {
+  const posts = rows.map((row) => {
     const author = row.author as unknown as {
       id: string; first_name: string; last_name: string; profile_photo_url: string | null
     }
@@ -1011,7 +1025,7 @@ export async function fetchPosts(
     }
   })
 
-  return { posts, currentUserId: user.id }
+  return { posts, nextCursor: nextCursorValue, currentUserId: user.id }
 }
 
 export async function createPost(momentId: string, formData: FormData): Promise<{ error?: string }> {

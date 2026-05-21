@@ -36,7 +36,7 @@ export async function PostsSection({ momentId, momentOwnerId, myRole, myStatus }
   // Don't fetch or show real posts until the invite is accepted
   if (myStatus === 'pending') return <LockedPostsPlaceholder />
 
-  const { posts, currentUserId } = await fetchPosts(momentId)
+  const { posts, nextCursor, currentUserId } = await fetchPosts(momentId)
 
   const canPost = myStatus === 'accepted' && myRole !== 'reader'
   const isEditor = myStatus === 'accepted' && myRole === 'editor'
@@ -45,6 +45,7 @@ export async function PostsSection({ momentId, momentOwnerId, myRole, myStatus }
     <section className="mx-auto max-w-[720px] px-4 md:px-6 py-10">
       <PostsFeed
         initialPosts={posts}
+        initialNextCursor={nextCursor}
         currentUserId={currentUserId ?? ''}
         momentOwnerId={momentOwnerId}
         momentId={momentId}
