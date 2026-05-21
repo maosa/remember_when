@@ -23,7 +23,6 @@
 # misc
 .DS_Store
 *.pem
-codebase_review.md
 
 # debug
 npm-debug.log*
