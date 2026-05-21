@@ -89,7 +89,7 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
           {moment.coverPhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={getOptimizedUrl(moment.coverPhotoUrl, 800) ?? moment.coverPhotoUrl}
+              src={getOptimizedUrl(moment.coverPhotoUrl, 400) ?? moment.coverPhotoUrl}
               alt={moment.name}
               loading="lazy"
               decoding="async"

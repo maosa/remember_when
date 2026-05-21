@@ -227,9 +227,6 @@ export function MediaViewer({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* Keyframe for item fade-in on navigation */}
-      <style>{`@keyframes rwViewerFadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
-
       {/* ── Media item ─────────────────────────────────────────────────────── */}
       <div
         key={itemKey}
