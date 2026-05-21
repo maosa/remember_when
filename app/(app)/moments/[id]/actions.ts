@@ -1072,7 +1072,7 @@ export async function createPost(momentId: string, formData: FormData): Promise<
   // Upload all media files in parallel, then batch-insert all post_media rows at once
   if (validFiles.length > 0) {
     type UploadResult =
-      | { ok: true;  row: { post_id: string; media_type: string; storage_url: string } }
+      | { ok: true;  row: { post_id: string; media_type: 'photo' | 'video' | 'audio'; storage_url: string } }
       | { ok: false; message: string }
 
     const uploadResults = await Promise.all<UploadResult>(
