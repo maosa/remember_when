@@ -25,6 +25,8 @@ interface Props {
   onSaved: (updated: PostWithMedia) => void
 }
 
+const MAX_CHARS = 5000
+
 type NewPreview = {
   kind: 'new'
   file: File
@@ -193,7 +195,7 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
 
   const isBusy = isPending || isUploading
   const visibleExisting = existing.filter((m) => !m.removed)
-  const canSubmit = (content.trim().length > 0 || visibleExisting.length > 0 || newPreviews.length > 0) && !isBusy
+  const canSubmit = (content.trim().length > 0 || visibleExisting.length > 0 || newPreviews.length > 0) && !isBusy && content.length <= MAX_CHARS
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -208,17 +210,26 @@ export function EditPostDialog({ post, open, onOpenChange, onSaved }: Props) {
           onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false) }}
           onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (!isBusy) handleFiles(e.dataTransfer.files) }}
         >
-          <textarea
-            placeholder="Write something…"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={4}
-            autoFocus
-            className={cn(
-              'w-full rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 text-base md:text-sm outline-none resize-none transition-colors',
-              'placeholder:text-rw-text-muted focus-visible:border-rw-accent/60 focus-visible:ring-3 focus-visible:ring-rw-accent/20'
+          <div className="space-y-1">
+            <textarea
+              placeholder="Write something…"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={4}
+              autoFocus
+              className={cn(
+                'w-full rounded-rw-input border border-rw-border bg-rw-surface px-2.5 py-2 text-base md:text-sm outline-none resize-none transition-colors',
+                'placeholder:text-rw-text-muted focus-visible:border-rw-accent/60 focus-visible:ring-3 focus-visible:ring-rw-accent/20'
+              )}
+            />
+            {content.length > 0 && (
+              <div className="flex justify-end">
+                <span className={cn('text-xs tabular-nums', content.length > MAX_CHARS * 0.9 ? 'text-rw-danger' : 'text-rw-text-muted')}>
+                  {content.length} / {MAX_CHARS}
+                </span>
+              </div>
             )}
-          />
+          </div>
 
           {/* Media grid — existing + new previews */}
           {(visibleExisting.length > 0 || newPreviews.length > 0) && (
