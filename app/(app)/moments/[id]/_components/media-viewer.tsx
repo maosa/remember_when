@@ -411,19 +411,17 @@ export function MediaViewer({
           {typeLabel} · {currentIndex + 1} / {items.length}
         </div>
 
-        {/* Top-right: download (photo only) + close */}
+        {/* Top-right: download + close */}
         <div className="absolute top-3 right-3 flex items-center pointer-events-auto">
-          {item.mediaType === 'photo' && (
-            <a
-              href={item.storageUrl}
-              download
-              aria-label="Download photo"
-              style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.8)', borderRadius: '50%' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Download size={20} />
-            </a>
-          )}
+          <a
+            href={item.storageUrl}
+            download={item.storageUrl.split('?')[0].split('/').pop() ?? 'download'}
+            aria-label={`Download ${typeLabel.toLowerCase()}`}
+            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.8)', borderRadius: '50%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download size={20} />
+          </a>
           <button
             aria-label="Close viewer"
             style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.8)', borderRadius: '50%', border: 'none', background: 'none', cursor: 'pointer' }}
