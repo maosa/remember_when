@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { MapPin, Calendar, CheckCircle2, XCircle, ZoomIn } from 'lucide-react'
+import { MapPin, Calendar, CheckCircle2, XCircle, ZoomIn, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { acceptMomentInvite, declineMomentInvite, type MomentDetail, type PostMedia } from '../actions'
@@ -11,6 +11,11 @@ import { useMomentGallery } from './moment-gallery-context'
 
 const MediaViewer = dynamic(() =>
   import('./media-viewer').then((m) => ({ default: m.MediaViewer })),
+  { ssr: false }
+)
+
+const CreatePostDialog = dynamic(() =>
+  import('./create-post-dialog').then((m) => ({ default: m.CreatePostDialog })),
   { ssr: false }
 )
 
@@ -41,11 +46,14 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
   const [isPending, startTransition] = useTransition()
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [galleryOpen, setGalleryOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createEverOpened, setCreateEverOpened] = useState(false)
 
   const { postMedia, galleryReady } = useMomentGallery()
 
   const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = myStatus === 'pending'
+  const canPost = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
 
   // Cover photo as item 0, then all post media in chronological order.
   // If the cover photo was selected from an existing post photo, its storage path
@@ -111,6 +119,16 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
       >
         <div className="mx-auto max-w-[720px] px-4 md:px-6 h-full flex items-center gap-2">
           <h1 className="font-serif font-normal text-base truncate flex-1">{moment.name}</h1>
+          {canPost && (
+            <Button
+              size="sm"
+              className="gap-1.5 text-xs shrink-0"
+              onClick={() => { setCreateEverOpened(true); setCreateOpen(true) }}
+            >
+              <Plus className="size-3.5" />
+              Add entry
+            </Button>
+          )}
         </div>
       </div>
 
@@ -207,6 +225,15 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
           items={galleryItems}
           initialIndex={0}
           onClose={() => setGalleryOpen(false)}
+        />
+      )}
+
+      {/* ── Create post dialog (triggered from collapsed sticky bar) ── */}
+      {canPost && createEverOpened && (
+        <CreatePostDialog
+          momentId={moment.id}
+          open={createOpen}
+          onOpenChange={setCreateOpen}
         />
       )}
 
