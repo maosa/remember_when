@@ -245,6 +245,53 @@ export async function removeFriend(friendshipId: string): Promise<{ error?: stri
   return {}
 }
 
+// ─── Fetch more friends (pagination) ─────────────────────────────────────────
+
+export type FriendData = {
+  friendshipId: string
+  friend: {
+    id: string
+    first_name: string
+    last_name: string
+    username: string
+    profile_photo_url: string | null
+  }
+}
+
+export async function fetchMoreFriends(
+  offset: number,
+): Promise<{ friends?: FriendData[]; hasMore?: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const LIMIT = 50
+  const { data, error } = await supabase
+    .from('friendships')
+    .select(`
+      id,
+      requester_id,
+      recipient_id,
+      requester:users!friendships_requester_id_fkey(id, first_name, last_name, username, profile_photo_url),
+      recipient:users!friendships_recipient_id_fkey(id, first_name, last_name, username, profile_photo_url)
+    `)
+    .eq('status', 'accepted')
+    .is('deleted_at', null)
+    .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
+    .range(offset, offset + LIMIT - 1)
+
+  if (error) return { error: error.message }
+
+  type RawUser = { id: string; first_name: string; last_name: string; username: string; profile_photo_url: string | null }
+  const friends: FriendData[] = (data ?? []).map((f) => {
+    const isRequester = f.requester_id === user.id
+    const friend = (isRequester ? f.recipient : f.requester) as unknown as RawUser
+    return { friendshipId: f.id, friend }
+  })
+
+  return { friends, hasMore: (data?.length ?? 0) === LIMIT }
+}
+
 // ─── Mark notifications read ──────────────────────────────────────────────────
 
 export async function markNotificationsRead(): Promise<void> {

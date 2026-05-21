@@ -1,12 +1,13 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidateTag, unstable_cache } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotifications, type NotificationPayload } from '@/lib/notifications'
 import { signStoragePaths } from '@/lib/storage'
+import { homeMomentsTag } from '@/lib/cached-queries'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,90 +46,89 @@ export type Invitee =
 
 // ─── Fetch moments for home page ─────────────────────────────────────────────
 
+type RawMember = { user_id: string; role: 'editor' | 'reader'; status: 'pending' | 'accepted' | 'declined' }
+type RawOwner = { id: string; first_name: string; last_name: string; profile_photo_url: string | null } | null
+
+/**
+ * Inner cached fetch — runs DB queries using the admin client (no cookie
+ * dependency) so the result can be stored in the Next.js data cache keyed by
+ * userId. The cache is busted via revalidateTag(homeMomentsTag(userId)) after
+ * any mutation that changes which moments the user sees on /home.
+ */
+function fetchHomeMomentsData(userId: string) {
+  return unstable_cache(
+    async () => {
+      const admin = createAdminClient()
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+      const { data: myMemberships } = await admin
+        .from('moment_members')
+        .select('moment_id, role, status')
+        .eq('user_id', userId)
+        .neq('status', 'declined')
+
+      const memberMomentIds = (myMemberships ?? []).map((m) => m.moment_id)
+      const safeMemberMomentIds = memberMomentIds.filter((id) => UUID_RE.test(id))
+
+      let query = admin
+        .from('moments')
+        .select(`
+          id, name, date_year, date_month, date_day, location, cover_photo_url, owner_id, created_at,
+          owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
+          moment_tags(tag),
+          moment_members(user_id, role, status)
+        `)
+        .order('created_at', { ascending: false })
+
+      if (safeMemberMomentIds.length > 0) {
+        query = query.or(`owner_id.eq.${userId},id.in.(${safeMemberMomentIds.join(',')})`)
+      } else {
+        query = query.eq('owner_id', userId)
+      }
+
+      const [{ data: moments, error }, { data: archivedRows }] = await Promise.all([
+        query,
+        admin.from('moment_archive').select('moment_id').eq('user_id', userId),
+      ])
+
+      const allMemberIds = [
+        ...new Set(
+          (moments ?? []).flatMap((m) =>
+            (m.moment_members as unknown as RawMember[]).map((mm) => mm.user_id)
+          )
+        ),
+      ]
+
+      const coverPaths = (moments ?? [])
+        .map((m) => m.cover_photo_url)
+        .filter((p): p is string => Boolean(p))
+
+      const [signedCovers, memberUsersRes] = await Promise.all([
+        signStoragePaths(coverPaths),
+        allMemberIds.length > 0
+          ? admin.from('users').select('id, first_name, last_name, profile_photo_url').in('id', allMemberIds)
+          : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }[] }),
+      ])
+
+      return { moments, archivedRows, signedCovers, memberUsers: memberUsersRes.data ?? [], error }
+    },
+    [`home-moments-${userId}`],
+    { tags: [homeMomentsTag(userId)], revalidate: 3600 },
+  )()
+}
+
 export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const admin = createAdminClient()
-
-  // Find all moment IDs where user is an active member (exclude declined invites)
-  const { data: myMemberships } = await admin
-    .from('moment_members')
-    .select('moment_id, role, status')
-    .eq('user_id', user.id)
-    .neq('status', 'declined')
-
-  const memberMomentIds = (myMemberships ?? []).map((m) => m.moment_id)
-
-  // Fetch all moments user owns or is a member of.
-  // moment_archive is intentionally NOT embedded here — the join would return archive
-  // rows for ALL members of each moment. Instead we run a separate targeted query for
-  // only the current user's archived moments and join the results in memory.
-  let query = admin
-    .from('moments')
-    .select(`
-      id, name, date_year, date_month, date_day, location, cover_photo_url, owner_id, created_at,
-      owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
-      moment_tags(tag),
-      moment_members(user_id, role, status)
-    `)
-    .order('created_at', { ascending: false })
-
-  if (memberMomentIds.length > 0) {
-    // Validate IDs are UUIDs before interpolating into a raw PostgREST filter string.
-    // They come from our own DB but defence-in-depth guards against any upstream anomaly.
-    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    const safeMemberMomentIds = memberMomentIds.filter((id) => UUID_RE.test(id))
-    if (safeMemberMomentIds.length > 0) {
-      query = query.or(`owner_id.eq.${user.id},id.in.(${safeMemberMomentIds.join(',')})`)
-    } else {
-      query = query.eq('owner_id', user.id)
-    }
-  } else {
-    query = query.eq('owner_id', user.id)
-  }
-
-  // Run the moments fetch and the current user's archive list in parallel
-  const [{ data: moments, error }, { data: archivedRows }] = await Promise.all([
-    query,
-    admin.from('moment_archive').select('moment_id').eq('user_id', user.id),
-  ])
+  const { moments, archivedRows, signedCovers, memberUsers, error } =
+    await fetchHomeMomentsData(user.id)
 
   const archivedMomentIds = new Set((archivedRows ?? []).map((a) => a.moment_id))
   if (error) return { moments: [], error: error.message }
 
-  // Batch-sign all cover photo paths (moment-covers and post-media are private buckets)
-  const coverPaths = (moments ?? [])
-    .map((m) => m.cover_photo_url)
-    .filter((p): p is string => Boolean(p))
-
-  type RawMember = { user_id: string; role: 'editor' | 'reader'; status: 'pending' | 'accepted' | 'declined' }
-  type RawOwner = { id: string; first_name: string; last_name: string; profile_photo_url: string | null } | null
-
-  // Collect all unique member user IDs across all moments for a single batch fetch.
-  // This replaces the per-moment user JOIN that previously loaded full user rows N times.
-  const allMemberIds = [
-    ...new Set(
-      (moments ?? []).flatMap((m) =>
-        (m.moment_members as unknown as RawMember[]).map((mm) => mm.user_id)
-      )
-    ),
-  ]
-
-  const [signedCovers, memberUsersRes] = await Promise.all([
-    signStoragePaths(coverPaths),
-    allMemberIds.length > 0
-      ? admin
-          .from('users')
-          .select('id, first_name, last_name, profile_photo_url')
-          .in('id', allMemberIds)
-      : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }[] }),
-  ])
-
-  const memberUserMap = new Map(
-    (memberUsersRes.data ?? []).map((u) => [u.id, u])
-  )
+  const memberUserMap = new Map(memberUsers.map((u) => [u.id, u]))
 
   const result: MomentSummary[] = (moments ?? []).map((m) => {
     const isOwner = m.owner_id === user.id
@@ -136,7 +136,6 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
     const owner = (m as unknown as { owner: RawOwner }).owner
     const myMembership = rawMembers.find((mm) => mm.user_id === user.id)
     const isArchived = archivedMomentIds.has(m.id)
-
     const coverPath = m.cover_photo_url ?? null
 
     return {
@@ -365,7 +364,7 @@ export async function createMoment(data: {
   // Single batch notification send (one preferences query, one insert)
   await sendNotifications(notificationPayloads)
 
-  revalidatePath('/home')
+  revalidateTag(homeMomentsTag(user.id))
   return { momentId: moment.id }
 }
 
@@ -381,7 +380,7 @@ export async function archiveMoment(momentId: string): Promise<{ error?: string 
     .insert({ moment_id: momentId, user_id: user.id })
 
   if (error) return { error: error.message }
-  revalidatePath('/home')
+  revalidateTag(homeMomentsTag(user.id))
   return {}
 }
 
@@ -397,6 +396,6 @@ export async function unarchiveMoment(momentId: string): Promise<{ error?: strin
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
-  revalidatePath('/home')
+  revalidateTag(homeMomentsTag(user.id))
   return {}
 }

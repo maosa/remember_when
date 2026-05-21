@@ -14,7 +14,7 @@ export default async function FriendsPage() {
     { data: pendingReceived },
     { data: notifications },
   ] = await Promise.all([
-    // Accepted friends
+    // Accepted friends — first page only (50); client loads more on demand
     supabase
       .from('friendships')
       .select(`
@@ -26,7 +26,8 @@ export default async function FriendsPage() {
       `)
       .eq('status', 'accepted')
       .is('deleted_at', null)
-      .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`),
+      .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
+      .range(0, 49),
 
     // Pending requests sent by the current user
     supabase
@@ -80,6 +81,7 @@ export default async function FriendsPage() {
         <h1 className="text-2xl font-semibold">Friends</h1>
         <FriendsManager
           friends={friends}
+          hasMore={(friendships?.length ?? 0) >= 50}
           pendingSent={(pendingSent ?? []).map((r) => ({
             friendshipId: r.id,
             to: r.recipient as unknown as Friend,

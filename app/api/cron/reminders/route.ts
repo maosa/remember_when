@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -12,9 +13,16 @@ const CADENCE_DAYS: Record<string, number> = {
 // Vercel Cron — runs daily at 09:00 UTC (see vercel.json).
 // Sends in-app reminder notifications to users whose cadence interval has elapsed.
 export async function GET(req: Request) {
-  // Guard against unauthorised invocations outside of Vercel Cron.
+  // Guard against unauthorised invocations using a constant-time comparison
+  // to prevent timing-based secret enumeration attacks.
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET
+  if (!authHeader || !secret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const expected = Buffer.from(`Bearer ${secret}`)
+  const actual   = Buffer.from(authHeader)
+  if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

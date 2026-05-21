@@ -13,8 +13,10 @@ import {
   acceptFriendRequest,
   declineFriendRequest,
   removeFriend,
+  fetchMoreFriends,
   markNotificationsRead,
   type UserResult,
+  type FriendData,
 } from '../actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -27,10 +29,8 @@ type Friend = {
   profile_photo_url: string | null
 }
 
-type FriendEntry = {
-  friendshipId: string
-  friend: Friend
-}
+// Re-use the shape exported from the actions layer to stay in sync
+type FriendEntry = FriendData
 
 type PendingEntry = {
   friendshipId: string
@@ -51,6 +51,8 @@ type NotificationEntry = {
 
 interface Props {
   friends: FriendEntry[]
+  /** True when the server returned exactly 50 friends (more may exist). */
+  hasMore: boolean
   pendingSent: PendingSentEntry[]
   pendingReceived: PendingEntry[]
   notifications: NotificationEntry[]
@@ -88,9 +90,39 @@ function UserRow({ user }: { user: Friend }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function FriendsManager({ friends, pendingSent, pendingReceived, notifications }: Props) {
+export function FriendsManager({ friends, hasMore: initialHasMore, pendingSent, pendingReceived, notifications }: Props) {
   const [isPending, startTransition] = useTransition()
   const [actionError, setActionError] = useState<string | null>(null)
+
+  // ── Pagination state ───────────────────────────────────────────────────────
+  // `friends` from the server is the first page (up to 50). Additional pages
+  // are accumulated in `additionalFriends`. Locally removed entries are tracked
+  // in `removedIds` so removals reflect immediately without waiting for a server
+  // re-render to update the prop.
+  const [additionalFriends, setAdditionalFriends] = useState<FriendEntry[]>([])
+  const [currentOffset, setCurrentOffset] = useState(friends.length)
+  const [localHasMore, setLocalHasMore] = useState(initialHasMore)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
+
+  const allFriends = [...friends, ...additionalFriends].filter(
+    (f) => !removedIds.has(f.friendshipId)
+  )
+
+  async function handleLoadMore() {
+    setLoadingMore(true)
+    setActionError(null)
+    const result = await fetchMoreFriends(currentOffset)
+    setLoadingMore(false)
+    if (result.error) {
+      setActionError(result.error)
+      return
+    }
+    const newFriends = result.friends ?? []
+    setAdditionalFriends((prev) => [...prev, ...newFriends])
+    setCurrentOffset((prev) => prev + newFriends.length)
+    setLocalHasMore(result.hasMore ?? false)
+  }
 
   // Capture the count at render time via a ref so the effect doesn't need
   // `notifications` as a dependency — we only want to fire once on mount.
@@ -102,12 +134,14 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
     }
   }, []) // intentionally mount-only; ref value is captured above
 
-  function handleAction(fn: () => Promise<{ error?: string } | void>) {
+  function handleAction(fn: () => Promise<{ error?: string } | void>, onSuccess?: () => void) {
     setActionError(null)
     startTransition(async () => {
       const result = await fn()
       if (result && 'error' in result && result.error) {
         setActionError(result.error)
+      } else {
+        onSuccess?.()
       }
     })
   }
@@ -191,15 +225,15 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
       )}
 
       {/* ── Your friends ──────────────────────────────────────── */}
-      {friends.length > 0 && (
+      {allFriends.length > 0 && (
         <>
           <Separator />
           <section className="space-y-4">
             <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">
-              Your friends ({friends.length})
+              Your friends ({allFriends.length}{localHasMore ? '+' : ''})
             </h2>
             <ul className="space-y-3">
-              {friends.map(({ friendshipId, friend }) => (
+              {allFriends.map(({ friendshipId, friend }) => (
                 <li key={friendshipId} className="flex items-center justify-between gap-3">
                   <UserRow user={friend} />
                   <Button
@@ -207,18 +241,35 @@ export function FriendsManager({ friends, pendingSent, pendingReceived, notifica
                     variant="ghost"
                     className="text-rw-text-muted shrink-0"
                     disabled={isPending}
-                    onClick={() => handleAction(() => removeFriend(friendshipId))}
+                    onClick={() =>
+                      handleAction(
+                        () => removeFriend(friendshipId),
+                        () => setRemovedIds((prev) => new Set([...prev, friendshipId])),
+                      )
+                    }
                   >
                     Remove
                   </Button>
                 </li>
               ))}
             </ul>
+
+            {localHasMore && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={loadingMore}
+                onClick={handleLoadMore}
+                className="w-full"
+              >
+                {loadingMore ? 'Loading…' : 'Load more'}
+              </Button>
+            )}
           </section>
         </>
       )}
 
-      {friends.length === 0 && pendingSent.length === 0 && pendingReceived.length === 0 && notifications.length === 0 && (
+      {allFriends.length === 0 && pendingSent.length === 0 && pendingReceived.length === 0 && notifications.length === 0 && (
         <EmptyState
           icon={<UserRound />}
           title="No friends yet"

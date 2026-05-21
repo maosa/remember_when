@@ -13,6 +13,39 @@
 
 import { createAdminClient } from './supabase/admin'
 
+// ─── Image optimisation ───────────────────────────────────────────────────────
+
+/**
+ * Converts a Supabase Storage URL (signed or public) to the image-transformation
+ * render endpoint, appending `width` and `quality` parameters.
+ *
+ * Supabase Image Transformation is a Pro-plan feature. If the project is on a
+ * lower tier, the render endpoint simply returns the original image, so using
+ * this function is always safe — it degrades gracefully.
+ *
+ * Supported input formats:
+ *   - Signed:  …/storage/v1/sign/{bucket}/{path}?token=…
+ *   - Public:  …/storage/v1/object/public/{bucket}/{path}
+ *
+ * @param url     The raw storage URL (signed or public). Null/undefined are returned as-is.
+ * @param width   Target pixel width (used as the `width` transform param).
+ * @param quality JPEG/WebP quality 1–100 (default 80).
+ */
+export function getOptimizedUrl(url: string | null | undefined, width: number, quality = 80): string | undefined {
+  if (!url) return undefined
+  try {
+    const u = new URL(url)
+    u.pathname = u.pathname
+      .replace('/storage/v1/sign/', '/storage/v1/render/image/sign/')
+      .replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
+    u.searchParams.set('width', String(width))
+    u.searchParams.set('quality', String(quality))
+    return u.toString()
+  } catch {
+    return url
+  }
+}
+
 const DEFAULT_EXPIRY_SECONDS = 86_400 // 24 hours
 
 // ─── Path helpers ─────────────────────────────────────────────────────────────

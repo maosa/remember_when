@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { Crown, PenTool, Eye, Settings, Pencil } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -9,8 +10,12 @@ import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/lib/button-variants'
 import { InviteDialog } from './members-section'
 import { CoverPhotoSection } from './cover-photo-section'
-import { EditMomentModal } from '@/app/(app)/_components/edit-moment-modal'
 import { type MomentDetail } from '../actions'
+
+const EditMomentModal = dynamic(() =>
+  import('@/app/(app)/_components/edit-moment-modal').then((m) => ({ default: m.EditMomentModal })),
+  { ssr: false }
+)
 
 interface Props {
   moment: MomentDetail

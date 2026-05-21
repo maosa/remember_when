@@ -3,7 +3,6 @@
 import React, { memo, useMemo, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { Pencil, Trash2, Mic, Play } from 'lucide-react'
-import { MediaViewer } from './media-viewer'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,7 +18,13 @@ import { cn } from '@/lib/utils'
 import { deletePost, type PostWithMedia } from '../actions'
 
 const EditPostDialog = dynamic(() =>
-  import('./edit-post-dialog').then((m) => ({ default: m.EditPostDialog }))
+  import('./edit-post-dialog').then((m) => ({ default: m.EditPostDialog })),
+  { ssr: false }
+)
+
+const MediaViewer = dynamic(() =>
+  import('./media-viewer').then((m) => ({ default: m.MediaViewer })),
+  { ssr: false }
 )
 
 interface Props {

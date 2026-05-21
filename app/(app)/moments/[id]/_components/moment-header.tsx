@@ -2,12 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { MapPin, Calendar, CheckCircle2, XCircle, ZoomIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { acceptMomentInvite, declineMomentInvite, type MomentDetail, type PostMedia } from '../actions'
-import { MediaViewer } from './media-viewer'
 import { useMomentGallery } from './moment-gallery-context'
+
+const MediaViewer = dynamic(() =>
+  import('./media-viewer').then((m) => ({ default: m.MediaViewer })),
+  { ssr: false }
+)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

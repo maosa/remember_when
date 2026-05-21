@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
@@ -9,6 +9,7 @@ import { sendNotification, sendNotifications } from '@/lib/notifications'
 import { validateCoverFile, validateMediaFile, validateMediaMimeType, safeExt } from '@/lib/upload'
 import { signStoragePath, signStoragePaths } from '@/lib/storage'
 import { logAuditEvent } from '@/lib/audit'
+import { homeMomentsTag } from '@/lib/cached-queries'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -278,7 +279,7 @@ export async function declineMomentInvite(
   }
 
   revalidatePath(`/moments/${momentId}`)
-  revalidatePath('/home')
+  revalidateTag(homeMomentsTag(user.id))
   revalidatePath('/notifications')
   return {}
 }
@@ -637,7 +638,10 @@ export async function deleteMoment(momentId: string): Promise<{ error?: string }
     )
   }
 
-  revalidatePath('/home')
+  // Bust home-moments cache for the owner and every former member
+  for (const id of [user.id, ...recipientIds]) {
+    revalidateTag(homeMomentsTag(id))
+  }
   return {}
 }
 
@@ -1747,7 +1751,7 @@ export async function leaveMoment(
     related_moment_id: momentId,
   })
 
-  revalidatePath('/home')
+  revalidateTag(homeMomentsTag(user.id))
   return {}
 }
 
@@ -1816,7 +1820,8 @@ export async function transferOwnership(
   })
 
   revalidatePath(`/moments/${momentId}`)
-  revalidatePath('/home')
+  revalidateTag(homeMomentsTag(user.id))
+  revalidateTag(homeMomentsTag(newOwnerId))
   return {}
 }
 
@@ -1880,19 +1885,31 @@ export async function updateMoment(
 
   if (updateError) return { error: updateError.message }
 
-  // Replace tags: delete existing then insert new set
-  await admin.from('moment_tags').delete().eq('moment_id', momentId)
-  if (data.tags.length > 0) {
-    await admin.from('moment_tags').insert(
-      data.tags.map((tag) => ({
-        moment_id: momentId,
-        tag: tag.trim().toLowerCase(),
-        created_by: user.id,
-      }))
-    )
-  }
+  // Replace tags + fetch all member IDs in parallel (both are independent)
+  const [, { data: momentMembers }] = await Promise.all([
+    (async () => {
+      await admin.from('moment_tags').delete().eq('moment_id', momentId)
+      if (data.tags.length > 0) {
+        await admin.from('moment_tags').insert(
+          data.tags.map((tag) => ({
+            moment_id: momentId,
+            tag: tag.trim().toLowerCase(),
+            created_by: user.id,
+          }))
+        )
+      }
+    })(),
+    admin.from('moment_members').select('user_id').eq('moment_id', momentId).not('user_id', 'is', null),
+  ])
 
   revalidatePath(`/moments/${momentId}`)
-  revalidatePath('/home')
+  // Bust home-moments cache for the owner and every accepted member
+  const allMemberIds = new Set<string>([moment.owner_id, user.id])
+  for (const mm of momentMembers ?? []) {
+    if (mm.user_id) allMemberIds.add(mm.user_id)
+  }
+  for (const id of allMemberIds) {
+    revalidateTag(homeMomentsTag(id))
+  }
   return {}
 }

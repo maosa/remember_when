@@ -448,7 +448,7 @@ Only insert for users not already notified.
 
 ---
 
-### [ ] T3-02 · PERFORMANCE · Replace broad `revalidatePath` with tag-based cache invalidation
+### [x] T3-02 · PERFORMANCE · Replace broad `revalidatePath` with tag-based cache invalidation
 
 **Files:** `app/(app)/home/actions.ts`, `app/(app)/moments/[id]/actions.ts`, and other action files that call `revalidatePath`
 
@@ -482,7 +482,7 @@ Only insert for users not already notified.
 
 ---
 
-### [ ] T3-04 · PERFORMANCE · Add server-side pagination to the friends list
+### [x] T3-04 · PERFORMANCE · Add server-side pagination to the friends list
 
 **File:** `app/(app)/friends/page.tsx` and `app/(app)/friends/actions.ts`
 
@@ -647,9 +647,9 @@ Remove `heic`, `heif`, `ogg`, `aac`, `x-m4a` from the allowed list. Update any e
 | T2-11 | Memoize Grid/MomentsGrid components | 2 | Code Quality | [x] |
 | T2-12 | Extract PeopleInviteInput to own file | 2 | Code Quality | [x] |
 | T3-01 | Strengthen cron auth with request signing | 3 | Security | [ ] |
-| T3-02 | Replace revalidatePath with tag-based caching | 3 | Performance | [ ] |
+| T3-02 | Replace revalidatePath with tag-based caching | 3 | Performance | [x] |
 | T3-03 | Add image transformation for storage URLs | 3 | Performance | [ ] |
-| T3-04 | Paginate friends list server-side | 3 | Performance | [ ] |
+| T3-04 | Paginate friends list server-side | 3 | Performance | [x] |
 | T3-05 | Dynamic imports for large modal components | 3 | Performance | [ ] |
 | T3-06 | Add React cache() to layout profile fetch | 3 | Reliability | [ ] |
 | T3-07 | Add fieldset/legend to settings form | 3 | Accessibility | [ ] |

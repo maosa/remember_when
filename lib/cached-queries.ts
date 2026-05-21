@@ -10,6 +10,15 @@ export function layoutProfileTag(userId: string) {
 }
 
 /**
+ * Cache tag for a user's home-page moments list.
+ * Call revalidateTag with this after any mutation that changes which moments
+ * the user sees on /home (create, archive, unarchive, delete, leave, transfer).
+ */
+export function homeMomentsTag(userId: string) {
+  return `home-moments-${userId}`
+}
+
+/**
  * Cached fetch of the fields the app layout needs to render the nav bar.
  * Uses the admin client so there is no cookie dependency inside the cache function.
  * Revalidates when the user updates their profile or avatar.
