@@ -769,7 +769,12 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
   const ext = safeExt(file.type)
   const filePath = `${momentId}/cover.${ext}`
 
-  const { error: uploadError } = await supabase.storage
+  // assertCanEditMoment already validated authorization — use the admin client
+  // for both storage and DB so neither storage RLS nor moments-table RLS can
+  // interfere with a caller who has already passed the explicit permission check.
+  const admin = createAdminClient()
+
+  const { error: uploadError } = await admin.storage
     .from('moment-covers')
     .upload(filePath, file, { upsert: true })
 
@@ -778,9 +783,6 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
   // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
   const storagePath = `moment-covers/${filePath}`
 
-  // Use admin client so the update is not blocked by moments-table RLS that
-  // restricts writes to the owner only (assertCanEditMoment already validated).
-  const admin = createAdminClient()
   const { error: updateError } = await admin
     .from('moments')
     .update({ cover_photo_url: storagePath })
