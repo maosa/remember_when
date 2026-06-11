@@ -778,7 +778,10 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
   // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
   const storagePath = `moment-covers/${filePath}`
 
-  const { error: updateError } = await supabase
+  // Use admin client so the update is not blocked by moments-table RLS that
+  // restricts writes to the owner only (assertCanEditMoment already validated).
+  const admin = createAdminClient()
+  const { error: updateError } = await admin
     .from('moments')
     .update({ cover_photo_url: storagePath })
     .eq('id', momentId)
