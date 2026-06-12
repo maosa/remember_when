@@ -17,6 +17,7 @@ RememberWhen is a place to capture and revisit meaningful moments with the peopl
 | Framework | Next.js 16.2 (App Router) |
 | Language | TypeScript 5 |
 | UI | React 19, shadcn/ui, Tailwind CSS 4, Base UI |
+| Animations | GSAP 3 (ScrollTrigger), Three.js |
 | Database | Supabase (Postgres) |
 | Auth | Supabase Auth |
 | File storage | Supabase Storage |
@@ -34,5 +35,5 @@ Open [http://localhost:3000](http://localhost:3000) to view the app locally.
 ## Project Structure
 
 - `app/` — Next.js App Router pages and layouts
-- `components/` — Shared UI components (shadcn/ui-based)
+- `components/` — Shared UI components (shadcn/ui-based and custom)
 - `lib/` — Utilities and Supabase client setup
