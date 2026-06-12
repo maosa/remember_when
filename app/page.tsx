@@ -7,6 +7,7 @@ import { ArrowRight, ChevronDown, Plus, PenLine, Heart } from 'lucide-react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { cn } from '@/lib/utils'
+import PillLink from '@/components/ui/pill-link'
 
 const HeroCanvas = dynamic(() => import('./_components/hero-canvas'), { ssr: false })
 
@@ -134,13 +135,15 @@ function RotatingQuote() {
   }, [])
 
   return (
-    <span
-      style={{
-        opacity:    visible ? 1 : 0,
-        transition: `opacity ${QUOTE_FADE_MS}ms ease`,
-      }}
-    >
-      {HERO_QUOTES[shownIdx]}
+    <span aria-live="polite" aria-atomic="true">
+      <span
+        style={{
+          opacity:    visible ? 1 : 0,
+          transition: `opacity ${QUOTE_FADE_MS}ms ease`,
+        }}
+      >
+        {HERO_QUOTES[shownIdx]}
+      </span>
     </span>
   )
 }
@@ -192,7 +195,7 @@ function HeroHeadline() {
 
     function handleResize() {
       if (resizeTimer) clearTimeout(resizeTimer)
-      resizeTimer = setTimeout(measure, 150)
+      resizeTimer = setTimeout(measure, 300)
     }
 
     measure()
@@ -282,13 +285,13 @@ export default function LandingPage() {
       // ── Hero background subtle parallax ────────────────────────────────
       if (heroBgRef.current && heroSectionRef.current) {
         gsap.to(heroBgRef.current, {
-          y: 65,
+          y: 32,
           ease: 'none',
           scrollTrigger: {
             trigger: heroSectionRef.current,
             start: 'top top',
             end: 'bottom top',
-            scrub: 1.5,
+            scrub: 1.0,
           },
         })
       }
@@ -340,16 +343,18 @@ export default function LandingPage() {
       }
 
       // ── Scroll hint: smooth sine-wave pulse ─────────────────────────────
-      if (scrollHintRef.current) {
+      // Wait for the hero entrance CSS animation to finish (~2 s total),
+      // then only start if the user hasn't already scrolled past the hero.
+      gsap.delayedCall(2.0, () => {
+        if (!scrollHintRef.current || window.scrollY > 80) return
         gsap.to(scrollHintRef.current, {
           y: 7,
           duration: 0.75,
           ease: 'sine.inOut',
           repeat: -1,
           yoyo: true,
-          delay: 2.1,
         })
-      }
+      })
 
     })
 
@@ -380,16 +385,13 @@ export default function LandingPage() {
         <div className="ml-auto flex items-center gap-2.5">
           <Link
             href="/login"
-            className="text-[13.5px] font-medium text-rw-text-muted hover:text-rw-text-primary transition-colors px-1"
+            className="text-[13.5px] font-medium text-rw-text-muted hover:text-rw-text-primary transition-colors px-3 py-2"
           >
             Sign in
           </Link>
-          <Link
-            href="/signup"
-            className="text-[13.5px] font-semibold text-white bg-rw-accent hover:bg-rw-accent-hover rounded-rw-pill px-5 py-[9px] transition-colors"
-          >
+          <PillLink href="/signup" size="sm">
             Get started
-          </Link>
+          </PillLink>
         </div>
       </nav>
 
@@ -405,6 +407,7 @@ export default function LandingPage() {
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
+            willChange: 'transform',
             background: [
               'radial-gradient(ellipse 110% 80% at 50% -10%, rgba(200,152,64,0.14) 0%, transparent 55%)',
               'radial-gradient(ellipse 70%  60% at 5%  80%,  rgba(91,138,125,0.08) 0%, transparent 60%)',
@@ -448,14 +451,15 @@ export default function LandingPage() {
 
           {/* Hero CTA */}
           <div style={{ animation: 'landing-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) 0.60s both' }}>
-            <Link
+            <PillLink
               href="/signup"
-              className="inline-flex items-center gap-2 text-[15px] font-semibold text-white bg-rw-accent hover:bg-rw-accent-hover rounded-rw-pill px-7 py-3.5 transition-all hover:-translate-y-px active:translate-y-0"
+              size="lg"
+              className="hover:-translate-y-px active:translate-y-0 transition-all"
               style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.30)' }}
             >
               Get started for free
               <ArrowRight className="size-3.5" strokeWidth={2.5} />
-            </Link>
+            </PillLink>
           </div>
         </div>
 
@@ -486,13 +490,16 @@ export default function LandingPage() {
         <div className="max-w-[960px] mx-auto">
           {/* Section label + headline — GSAP entrance */}
           <div ref={trioHeaderRef}>
-            <p className="text-center text-[11px] font-semibold font-sans uppercase tracking-[0.10em] text-rw-accent mb-4">
+            <p
+              className="text-center text-[11px] font-semibold font-sans uppercase tracking-[0.10em] text-rw-accent mb-4"
+              style={{ willChange: 'opacity, transform' }}
+            >
               How it works
             </p>
 
             <p
               className="font-serif font-normal text-rw-text-primary text-center tracking-[-0.02em] leading-[1.35] max-w-[520px] mx-auto mb-[72px]"
-              style={{ fontSize: 'clamp(22px, 3vw, 30px)' }}
+              style={{ fontSize: 'clamp(22px, 3vw, 30px)', willChange: 'opacity, transform' }}
             >
               A memory book, built by everyone<br />
               who was part of it.
@@ -511,6 +518,7 @@ export default function LandingPage() {
                   i === 2 && 'sm:pr-0',
                   i < 2 && 'mb-12 sm:mb-0',
                 )}
+                style={{ willChange: 'opacity, transform' }}
               >
                 {/* Vertical divider (desktop only, between columns) */}
                 {i > 0 && (
@@ -565,6 +573,7 @@ export default function LandingPage() {
         <div
           ref={ctaRef}
           className="relative z-10 max-w-[560px] mx-auto"
+          style={{ willChange: 'opacity, transform' }}
         >
           <h2
             className="font-serif font-semibold text-rw-text-primary tracking-[-0.025em] leading-[1.2] mb-5"
@@ -578,13 +587,13 @@ export default function LandingPage() {
             No credit card, no catch.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
+            <PillLink
               href="/signup"
-              className="text-[14.5px] font-semibold text-white bg-rw-accent hover:bg-rw-accent-hover rounded-rw-pill px-[26px] py-3 transition-colors"
+              size="md"
               style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.25)' }}
             >
               Create your first moment
-            </Link>
+            </PillLink>
             <Link
               href="/pricing"
               className="text-[14px] font-medium text-rw-text-muted hover:text-rw-text-primary transition-colors"

@@ -105,6 +105,8 @@ export default function HeroCanvas() {
       scene.add(points)
 
       let tick = 0
+      let isVisible = true
+
       function loop() {
         if (!mounted) return
         animationId = requestAnimationFrame(loop)
@@ -126,6 +128,22 @@ export default function HeroCanvas() {
       }
       loop()
 
+      // Pause the render loop when the canvas is scrolled out of view
+      const visibilityObserver = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0]
+          if (entry.isIntersecting && !isVisible) {
+            isVisible = true
+            loop()
+          } else if (!entry.isIntersecting && isVisible) {
+            isVisible = false
+            cancelAnimationFrame(animationId)
+          }
+        },
+        { threshold: 0.01 },
+      )
+      visibilityObserver.observe(container)
+
       function onResize() {
         if (!container) return
         const W2 = container.clientWidth
@@ -137,6 +155,7 @@ export default function HeroCanvas() {
       window.addEventListener('resize', onResize, { passive: true })
 
       teardown = () => {
+        visibilityObserver.disconnect()
         window.removeEventListener('resize', onResize)
         if (container.contains(renderer.domElement)) {
           container.removeChild(renderer.domElement)
