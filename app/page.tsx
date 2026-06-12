@@ -1,17 +1,22 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { ArrowRight, ChevronDown, Plus, PenLine, Heart } from 'lucide-react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { cn } from '@/lib/utils'
+
+const HeroCanvas = dynamic(() => import('./_components/hero-canvas'), { ssr: false })
 
 // ─── Rotating hero quote ──────────────────────────────────────────────────────
 
 const HERO_QUOTES = [
-  "you laughed so hard you couldn\u2019t breathe.",
-  "you couldn\u2019t stop smiling for the rest of the day.",
+  "you laughed so hard you couldn’t breathe.",
+  "you couldn’t stop smiling for the rest of the day.",
   "everything just clicked and felt right.",
-  "you didn\u2019t want the night to end.",
+  "you didn’t want the night to end.",
   "you all sang along at the exact same moment.",
   "someone did something so stupid it became legendary.",
   "everyone was in the same place at the same time.",
@@ -19,11 +24,11 @@ const HERO_QUOTES = [
   "you looked around and thought, I love these people.",
   "you stayed way longer than you planned.",
   "nobody wanted to be the first to leave.",
-  "you said \u2018we should do this more often.\u2019",
+  "you said ‘we should do this more often.’",
   "that trip went completely off-script.",
   "you got lost and it turned into the best day.",
   "the plan fell apart and something better happened.",
-  "you all agreed it was the best decision you\u2019d ever made.",
+  "you all agreed it was the best decision you’d ever made.",
   "none of you were ready to go home.",
   "nothing special happened, but it was perfect.",
   "time slowed down for a little while.",
@@ -31,12 +36,12 @@ const HERO_QUOTES = [
   "the conversation went on for hours.",
   "it felt like no time had passed at all.",
   "you all celebrated like it was the biggest deal in the world.",
-  "someone did the thing they said they\u2019d never do.",
+  "someone did the thing they said they’d never do.",
   "you pulled it off against all odds.",
   "the hard part was finally over.",
   "you looked at each other and just knew.",
   "everything went wrong in the best possible way.",
-  "you still can\u2019t tell the story without laughing.",
+  "you still can’t tell the story without laughing.",
   "someone said something that became an inside joke forever.",
   "nobody can agree on exactly what happened, but it was brilliant.",
 ] as const
@@ -177,7 +182,7 @@ function HeroHeadline() {
       let max = 0
       for (const quote of HERO_QUOTES) {
         // Mirror the real h1 content: open-quote + text + close-quote
-        clone.textContent = `“${quote}”`
+        clone.textContent = `"${quote}"`
         max = Math.max(max, clone.offsetHeight)
       }
 
@@ -244,9 +249,14 @@ const TRIO_ITEMS = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
-  const [scrolled,    setScrolled]    = useState(false)
-  const [trioVisible, setTrioVisible] = useState<boolean[]>([false, false, false])
-  const [ctaVisible,  setCtaVisible]  = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  // ── Refs ──────────────────────────────────────────────────────────────────
+  const heroSectionRef  = useRef<HTMLElement>(null)
+  const heroBgRef       = useRef<HTMLDivElement>(null)
+  const trioHeaderRef   = useRef<HTMLDivElement>(null)
+  const trioGridRef     = useRef<HTMLDivElement>(null)
+  const scrollHintRef   = useRef<HTMLSpanElement>(null)
 
   // Individual trio refs (hook rules: no refs in arrays)
   const trioRef0 = useRef<HTMLDivElement>(null)
@@ -261,32 +271,91 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Trio columns + CTA: scroll-reveal via IntersectionObserver
+  // GSAP scroll animations
   useEffect(() => {
-    const trioRefs = [trioRef0, trioRef1, trioRef2]
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-          const idx = trioRefs.findIndex((r) => r.current === entry.target)
-          if (idx !== -1) {
-            setTrioVisible((prev) => {
-              const next = [...prev]
-              next[idx] = true
-              return next
-            })
-          }
-          if (entry.target === ctaRef.current) setCtaVisible(true)
-          observer.unobserve(entry.target)
+    gsap.registerPlugin(ScrollTrigger)
+
+    const ctx = gsap.context(() => {
+
+      // ── Hero background subtle parallax ────────────────────────────────
+      if (heroBgRef.current && heroSectionRef.current) {
+        gsap.to(heroBgRef.current, {
+          y: 65,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: heroSectionRef.current,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 1.5,
+          },
         })
-      },
-      { threshold: 0.15 }
-    )
+      }
 
-    const targets = [trioRef0, trioRef1, trioRef2, ctaRef]
-    targets.forEach((r) => { if (r.current) observer.observe(r.current) })
-    return () => observer.disconnect()
+      // ── "How it works" section header entrance ──────────────────────────
+      if (trioHeaderRef.current) {
+        gsap.from(Array.from(trioHeaderRef.current.children), {
+          opacity: 0,
+          y: 26,
+          duration: 0.9,
+          stagger: 0.18,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: trioHeaderRef.current,
+            start: 'top 83%',
+          },
+        })
+      }
+
+      // ── Trio items: staggered perspective fold-in ───────────────────────
+      const trioItems = [trioRef0.current, trioRef1.current, trioRef2.current].filter(Boolean)
+      if (trioItems.length && trioGridRef.current) {
+        gsap.from(trioItems, {
+          opacity: 0,
+          y: 44,
+          rotateX: 8,
+          transformPerspective: 900,
+          transformOrigin: 'center top',
+          duration: 0.9,
+          stagger: 0.13,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: trioGridRef.current,
+            start: 'top 80%',
+          },
+        })
+      }
+
+      // ── CTA section entrance ────────────────────────────────────────────
+      if (ctaRef.current) {
+        gsap.from(ctaRef.current, {
+          opacity: 0,
+          y: 36,
+          duration: 1.0,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: ctaRef.current.parentElement,
+            start: 'top 82%',
+          },
+        })
+      }
+
+      // ── Scroll hint: smooth sine-wave pulse ─────────────────────────────
+      if (scrollHintRef.current) {
+        gsap.to(scrollHintRef.current, {
+          y: 7,
+          duration: 0.75,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+          delay: 2.1,
+        })
+      }
+
+    })
+
+    return () => ctx.revert()
   }, [])
 
   const trioRefs = [trioRef0, trioRef1, trioRef2]
@@ -294,7 +363,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-rw-bg overflow-x-hidden">
 
-      {/* ── NAV ───────────────────────────────────────────────────── */}
+      {/* ── NAV ───────────────────────────────────────────────── */}
       <nav
         className={cn(
           'fixed top-0 inset-x-0 z-50 h-16 flex items-center px-6 sm:px-10 transition-all duration-300',
@@ -327,10 +396,14 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
-      <section className="relative min-h-svh flex items-center justify-center px-6 sm:px-10 pt-24 pb-20 overflow-hidden">
+      <section
+        ref={heroSectionRef}
+        className="relative min-h-svh flex items-center justify-center px-6 sm:px-10 pt-24 pb-20 overflow-hidden"
+      >
 
         {/* Layered warm background radials */}
         <div
+          ref={heroBgRef}
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -341,6 +414,9 @@ export default function LandingPage() {
             ].join(', '),
           }}
         />
+
+        {/* Three.js ambient particle canvas */}
+        <HeroCanvas />
 
         <div className="relative z-10 max-w-[860px] w-full text-center">
 
@@ -391,7 +467,9 @@ export default function LandingPage() {
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 text-rw-text-placeholder"
           style={{ animation: 'landing-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) 1.2s both' }}
         >
-          <ChevronDown className="size-4 animate-bounce" />
+          <span ref={scrollHintRef} className="inline-flex">
+            <ChevronDown className="size-4" strokeWidth={2} />
+          </span>
         </div>
       </section>
 
@@ -408,34 +486,33 @@ export default function LandingPage() {
         />
 
         <div className="max-w-[960px] mx-auto">
-          {/* Section label */}
-          <p className="text-center text-[11px] font-semibold font-sans uppercase tracking-[0.10em] text-rw-accent mb-4">
-            How it works
-          </p>
+          {/* Section label + headline — GSAP entrance */}
+          <div ref={trioHeaderRef}>
+            <p className="text-center text-[11px] font-semibold font-sans uppercase tracking-[0.10em] text-rw-accent mb-4">
+              How it works
+            </p>
 
-          {/* Section headline */}
-          <p
-            className="font-serif font-normal text-rw-text-primary text-center tracking-[-0.02em] leading-[1.35] max-w-[520px] mx-auto mb-[72px]"
-            style={{ fontSize: 'clamp(22px, 3vw, 30px)' }}
-          >
-            A memory book, built by everyone<br />
-            who was part of it.
-          </p>
+            <p
+              className="font-serif font-normal text-rw-text-primary text-center tracking-[-0.02em] leading-[1.35] max-w-[520px] mx-auto mb-[72px]"
+              style={{ fontSize: 'clamp(22px, 3vw, 30px)' }}
+            >
+              A memory book, built by everyone<br />
+              who was part of it.
+            </p>
+          </div>
 
-          {/* Three columns */}
-          <div className="grid grid-cols-1 sm:grid-cols-3">
+          {/* Three columns — GSAP ScrollTrigger perspective entrance */}
+          <div ref={trioGridRef} className="grid grid-cols-1 sm:grid-cols-3">
             {TRIO_ITEMS.map((col, i) => (
               <div
                 key={col.num}
                 ref={trioRefs[i]}
                 className={cn(
-                  'relative px-0 sm:px-10 transition-[opacity,transform] duration-[600ms]',
+                  'relative px-0 sm:px-10',
                   i === 0 && 'sm:pl-0',
                   i === 2 && 'sm:pr-0',
                   i < 2 && 'mb-12 sm:mb-0',
-                  trioVisible[i] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
                 )}
-                style={{ transitionDelay: `${i * 120}ms` }}
               >
                 {/* Vertical divider (desktop only, between columns) */}
                 {i > 0 && (
@@ -489,10 +566,7 @@ export default function LandingPage() {
 
         <div
           ref={ctaRef}
-          className={cn(
-            'relative z-10 max-w-[560px] mx-auto transition-[opacity,transform] duration-700',
-            ctaVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
-          )}
+          className="relative z-10 max-w-[560px] mx-auto"
         >
           <h2
             className="font-serif font-semibold text-rw-text-primary tracking-[-0.025em] leading-[1.2] mb-5"
