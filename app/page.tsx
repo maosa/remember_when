@@ -308,17 +308,15 @@ export default function LandingPage() {
         })
       }
 
-      // ── Trio items: staggered perspective fold-in ───────────────────────
+      // ── Trio items: staggered fade-up with subtle scale bloom ──────────
       const trioItems = [trioRef0.current, trioRef1.current, trioRef2.current].filter(Boolean)
       if (trioItems.length && trioGridRef.current) {
         gsap.from(trioItems, {
           opacity: 0,
-          y: 44,
-          rotateX: 8,
-          transformPerspective: 900,
-          transformOrigin: 'center top',
+          y: 36,
+          scale: 0.97,
           duration: 0.9,
-          stagger: 0.13,
+          stagger: 0.14,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: trioGridRef.current,
