@@ -6,7 +6,7 @@ Built for the people who were there — readable by future people through their 
 
 RememberWhen is a place to capture and revisit meaningful moments with the people who shared them. No likes, no follower counts, no feed. Just your memories, told in your own words, with the people who were there.
 
-🔗 **[remwhen.vercel.app](https://remwhen.vercel.app/)**
+🔗 **[rmbrwhen.vercel.app](https://rmbrwhen.vercel.app/)**
 
 ---
 
