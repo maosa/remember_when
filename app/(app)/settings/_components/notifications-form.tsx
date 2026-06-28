@@ -66,7 +66,7 @@ export function NotificationsForm({ initialPrefs }: Props) {
 
       <div className="space-y-10">
         {/* ── Friends ──────────────────────────────────────────────── */}
-        <fieldset className="border-0 p-0 m-0 space-y-4">
+        <fieldset className="border-0 p-0 space-y-4">
           <legend className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted mb-4">
             Friends
           </legend>
@@ -87,7 +87,7 @@ export function NotificationsForm({ initialPrefs }: Props) {
         </fieldset>
 
         {/* ── Moments ──────────────────────────────────────────────── */}
-        <fieldset className="border-0 p-0 m-0 space-y-4">
+        <fieldset className="border-0 p-0 space-y-4">
           <legend className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted mb-4">
             Moments
           </legend>
@@ -136,7 +136,7 @@ export function NotificationsForm({ initialPrefs }: Props) {
         </fieldset>
 
         {/* ── Reminders ────────────────────────────────────────────── */}
-        <fieldset className="border-0 p-0 m-0 space-y-4">
+        <fieldset className="border-0 p-0 space-y-4">
           <legend className="font-sans text-xs font-semibold uppercase tracking-widest text-rw-text-muted mb-4">
             Reminders
           </legend>
