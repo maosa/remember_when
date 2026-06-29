@@ -10,7 +10,14 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
 import { archiveMoment, unarchiveMoment, type MomentSummary } from '../actions'
 import { getOptimizedUrl } from '@/lib/storage'
+import { MomentTags } from './moment-tags'
 import { toast } from 'sonner'
+
+// Fixed height for every moment card so the grid stays uniform regardless of
+// content, user, or account. Sized to comfortably fit the fullest card (cover +
+// date + location + entry count + one line of tags + role/avatar footer).
+// Revisit this value if cards are enriched with more elements in the future.
+const CARD_HEIGHT = 'h-[19rem]'
 
 const EditMomentModal = dynamic(() =>
   import('@/app/(app)/_components/edit-moment-modal').then((m) => ({ default: m.EditMomentModal }))
@@ -78,19 +85,18 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
     }
   }, [moment.members, moment.ownerId, moment.ownerFirstName, moment.ownerLastName, moment.ownerPhotoUrl])
 
-  const hasBodyContent = date || moment.location || moment.tags.length > 0 || moment.myStatus === 'accepted'
-
   return (
     <div className="relative group">
       <Link
         href={`/moments/${moment.id}`}
         className={cn(
-          'block rounded-rw-card border border-rw-border-subtle bg-rw-surface shadow-rw-card transition-all hover:shadow-[0_4px_20px_rgba(44,42,37,0.13)] hover:-translate-y-px overflow-hidden',
+          CARD_HEIGHT,
+          'flex flex-col rounded-rw-card border border-rw-border-subtle bg-rw-surface shadow-rw-card transition-all hover:shadow-[0_4px_20px_rgba(44,42,37,0.13)] hover:-translate-y-px overflow-hidden',
           isPendingInvite && 'ring-2 ring-rw-accent/30'
         )}
       >
         {/* ── Cover area ─────────────────────────────────────────── */}
-        <div className="relative h-36 overflow-hidden">
+        <div className="relative h-36 shrink-0 overflow-hidden">
           {moment.coverPhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -128,8 +134,8 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
         </div>
 
         {/* ── Card body ────────────────────────────────────────────── */}
-        {hasBodyContent && (
-          <div className="px-3.5 pt-3 pb-3.5 flex flex-col gap-1.5">
+        {/* Always rendered and flex-1 so every card fills the fixed height uniformly. */}
+        <div className="flex-1 min-h-0 overflow-hidden px-3.5 pt-3 pb-3.5 flex flex-col gap-1.5">
 
             {/* Row 1: Date */}
             {date && (
@@ -155,28 +161,13 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
               </div>
             )}
 
-            {/* Row 5: Tags */}
-            {moment.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {moment.tags.slice(0, 5).map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center rounded-full bg-rw-accent-subtle text-rw-accent px-2 py-0.5 text-[10px] font-medium"
-                  >
-                    {tag}
-                  </span>
-                ))}
-                {moment.tags.length > 5 && (
-                  <span className="inline-flex items-center rounded-full bg-rw-accent-subtle text-rw-accent px-2 py-0.5 text-[10px] font-medium">
-                    +{moment.tags.length - 5}
-                  </span>
-                )}
-              </div>
-            )}
+            {/* Row 5: Tags — single line, overflow collapses into "+N more".
+                The full tags array still powers search (see moments-list filter). */}
+            {moment.tags.length > 0 && <MomentTags tags={moment.tags} />}
 
             {/* Row 6: Role badge (left) + Avatar stack (right) */}
             {moment.myStatus === 'accepted' && (
-              <div className={cn('flex items-center justify-between gap-2', (date || moment.location || moment.tags.length > 0) && 'mt-0.5 pt-1.5 border-t border-rw-border-subtle/60')}>
+              <div className={cn('flex items-center justify-between gap-2 mt-auto', (date || moment.location || moment.tags.length > 0) && 'pt-1.5 border-t border-rw-border-subtle/60')}>
                 {/* Role badge */}
                 <span className="inline-flex items-center gap-1 text-[11px] text-rw-text-muted">
                   {moment.myRole === 'owner'  && <><Crown   className="size-3" /> Owner</>}
@@ -204,8 +195,7 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
               </div>
             )}
 
-          </div>
-        )}
+        </div>
       </Link>
 
       {/* ── Action menu — hover-only, top-right of cover ─────────── */}
