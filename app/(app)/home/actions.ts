@@ -116,7 +116,10 @@ function fetchHomeMomentsData(userId: string) {
           : Promise.resolve({ data: [] as { moment_id: string }[] }),
       ])
 
-      return { moments, archivedRows, signedCovers, memberUsers: memberUsersRes.data ?? [], postRows: postCountRes.data ?? [], error }
+      // NOTE: unstable_cache serializes its result, so a Map would come back as
+      // a plain (empty) object on a cache hit. Return signed covers as a plain
+      // array of entries and rebuild the Map outside the cache (see below).
+      return { moments, archivedRows, signedCovers: [...signedCovers], memberUsers: memberUsersRes.data ?? [], postRows: postCountRes.data ?? [], error }
     },
     [`home-moments-${userId}`],
     { tags: [homeMomentsTag(userId)], revalidate: 3600 },
@@ -128,8 +131,11 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { moments, archivedRows, signedCovers, memberUsers, postRows, error } =
+  const { moments, archivedRows, signedCovers: signedCoverEntries, memberUsers, postRows, error } =
     await fetchHomeMomentsData(user.id)
+
+  // Rebuild the Map from the serialized entries returned by the cached fetch.
+  const signedCovers = new Map(signedCoverEntries)
 
   const archivedMomentIds = new Set((archivedRows ?? []).map((a) => a.moment_id))
   if (error) return { moments: [], error: error.message }
