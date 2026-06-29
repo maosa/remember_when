@@ -38,10 +38,12 @@ uses the service-role admin client, which bypasses RLS), just without the redund
 duplicates. None of the duplicates are flagrantly over-permissive (no `USING (true)`
 write policies remain — confirmed via the security advisor).
 
-## Recommended follow-up (separate, careful task)
-Drop the ~28 legacy duplicate policies from prod so prod matches the repo's clean
-set. Requires per-policy verification that the repo counterpart covers the same
-access before dropping. Not done inline (prod-mutating, deserves its own focused pass).
+## RLS policy reconciliation — DONE (20260629_rls_policy_reconcile.sql)
+Resolved the duplicate-policy finding: dropped 22 legacy policies that were exact
+duplicates of a repo policy (zero access change) and brought the 8 legacy-only
+write policies into the repo with their exact prod definitions. Prod went 56 → 34
+public policies; all 34 are now repo-declared (verified: 0 unexpected extras).
+Repo == prod for RLS.
 
 ## Migration tracking note
 The remote history table is currently empty. The repo files use 8-digit date
