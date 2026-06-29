@@ -1,5 +1,23 @@
 import { createAdminClient } from './supabase/admin'
 import type { Json } from '@/types/database.types'
+import { getCachedPrefs, setCachedPrefs, invalidateUnread } from './cache'
+
+// Columns of notification_preferences this module reads. Kept as a constant so
+// the DB select and the Redis-cached shape never drift apart.
+const PREF_COLUMNS =
+  'user_id, friend_request_received, friend_request_accepted, moment_invite, moment_invite_response, new_post, member_left, ownership_transferred, archived_moment_notifications'
+
+type PrefRow = {
+  user_id: string
+  friend_request_received: boolean
+  friend_request_accepted: boolean
+  moment_invite: boolean
+  moment_invite_response: boolean
+  new_post: boolean
+  member_left: boolean
+  ownership_transferred: boolean
+  archived_moment_notifications: boolean
+}
 
 // These must exactly match the live notification_type enum values.
 export type NotificationType =
@@ -69,13 +87,20 @@ export async function sendNotifications(payloads: NotificationPayload[]): Promis
   const admin = createAdminClient()
   const userIds = [...new Set(payloads.map((p) => p.user_id))]
 
-  // Batch-fetch all relevant preferences — explicit columns to avoid over-fetching.
-  const { data: allPrefs } = await admin
-    .from('notification_preferences')
-    .select('user_id, friend_request_received, friend_request_accepted, moment_invite, moment_invite_response, new_post, member_left, ownership_transferred, archived_moment_notifications')
-    .in('user_id', userIds)
+  // Batch-fetch relevant preferences, serving cache hits first and only reading
+  // the misses from Postgres. Prefs change rarely and are invalidated on update.
+  const prefsMap = await getCachedPrefs<PrefRow>(userIds)
+  const missingPrefIds = userIds.filter((id) => !prefsMap.has(id))
+  if (missingPrefIds.length > 0) {
+    const { data: freshPrefs } = await admin
+      .from('notification_preferences')
+      .select(PREF_COLUMNS)
+      .in('user_id', missingPrefIds)
 
-  const prefsMap = new Map((allPrefs ?? []).map((p) => [p.user_id, p]))
+    const rows = (freshPrefs ?? []) as PrefRow[]
+    for (const p of rows) prefsMap.set(p.user_id, p)
+    await setCachedPrefs(rows.map((p) => [p.user_id, p]))
+  }
 
   // Collect moment IDs to check for archived-moment suppression.
   const momentIds = [
@@ -134,6 +159,9 @@ export async function sendNotifications(payloads: NotificationPayload[]): Promis
         ...(p.metadata !== undefined && { metadata: p.metadata }),
       }))
     )
+
+    // Recipients now have a new unread notification — drop their cached count.
+    await invalidateUnread([...new Set(toInsert.map((p) => p.user_id))])
   }
 }
 

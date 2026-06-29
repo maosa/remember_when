@@ -12,6 +12,11 @@
  */
 
 import { createAdminClient } from './supabase/admin'
+import { cacheSignedUrls, getCachedSignedUrl, getCachedSignedUrls } from './cache'
+
+// Cache signed URLs for an hour less than their own validity so a cached URL
+// can never be served past its expiry.
+const SIGNED_URL_CACHE_BUFFER = 3_600
 
 // ─── Image optimisation ───────────────────────────────────────────────────────
 
@@ -76,12 +81,17 @@ export async function signStoragePath(
   const parsed = parseBucketPath(storagePath)
   if (!parsed) return null
 
+  const cached = await getCachedSignedUrl(storagePath)
+  if (cached) return cached
+
   const admin = createAdminClient()
   const { data } = await admin.storage
     .from(parsed.bucket)
     .createSignedUrl(parsed.path, expiresIn)
 
-  return data?.signedUrl ?? null
+  const url = data?.signedUrl ?? null
+  if (url) await cacheSignedUrls([[storagePath, url]], expiresIn - SIGNED_URL_CACHE_BUFFER)
+  return url
 }
 
 /**
@@ -99,9 +109,15 @@ export async function signStoragePaths(
   const unique = [...new Set(storagePaths.filter(Boolean))]
   if (unique.length === 0) return result
 
-  // Group by bucket
+  // Serve any cache hits first, then only sign the misses.
+  const cached = await getCachedSignedUrls(unique)
+  for (const [path, url] of cached) result.set(path, url)
+  const misses = unique.filter((p) => !result.has(p))
+  if (misses.length === 0) return result
+
+  // Group the misses by bucket so each bucket gets a single signing call.
   const byBucket = new Map<string, string[]>()
-  for (const fullPath of unique) {
+  for (const fullPath of misses) {
     const parsed = parseBucketPath(fullPath)
     if (!parsed) continue
     const list = byBucket.get(parsed.bucket) ?? []
@@ -110,6 +126,7 @@ export async function signStoragePaths(
   }
 
   const admin = createAdminClient()
+  const fresh: [string, string][] = []
 
   await Promise.all(
     Array.from(byBucket.entries()).map(async ([bucket, paths]) => {
@@ -123,11 +140,16 @@ export async function signStoragePaths(
       // be undefined, which would produce a key of "{bucket}/undefined".
       data.forEach((item, i) => {
         if (item.signedUrl && paths[i]) {
-          result.set(`${bucket}/${paths[i]}`, item.signedUrl)
+          const fullPath = `${bucket}/${paths[i]}`
+          result.set(fullPath, item.signedUrl)
+          fresh.push([fullPath, item.signedUrl])
         }
       })
     }),
   )
+
+  // Backfill the cache with the freshly-signed URLs.
+  await cacheSignedUrls(fresh, expiresIn - SIGNED_URL_CACHE_BUFFER)
 
   return result
 }

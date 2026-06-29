@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'crypto'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getCachedLastReminders, setLastReminders } from '@/lib/cache'
 
 const BATCH_SIZE = 500
 
@@ -43,18 +44,27 @@ export async function GET(req: Request) {
 
     const batchUserIds = prefs.map((p) => p.user_id)
 
-    // Last reminder sent to each user in this batch
-    const { data: lastReminders } = await admin
-      .from('notifications')
-      .select('user_id, created_at')
-      .eq('type', 'reminder')
-      .in('user_id', batchUserIds)
-      .order('created_at', { ascending: false })
-
+    // Last reminder sent to each user in this batch. Served from Redis when
+    // warm; any cache miss (cold/evicted, or never-sent) falls back to the
+    // notifications table, so correctness never depends on the cache.
     const lastReminderMap = new Map<string, Date>()
-    for (const r of lastReminders ?? []) {
-      if (!lastReminderMap.has(r.user_id)) {
-        lastReminderMap.set(r.user_id, new Date(r.created_at))
+
+    const cachedLast = await getCachedLastReminders(batchUserIds)
+    for (const [uid, iso] of cachedLast) lastReminderMap.set(uid, new Date(iso))
+
+    const missUserIds = batchUserIds.filter((uid) => !lastReminderMap.has(uid))
+    if (missUserIds.length > 0) {
+      const { data: lastReminders } = await admin
+        .from('notifications')
+        .select('user_id, created_at')
+        .eq('type', 'reminder')
+        .in('user_id', missUserIds)
+        .order('created_at', { ascending: false })
+
+      for (const r of lastReminders ?? []) {
+        if (!lastReminderMap.has(r.user_id)) {
+          lastReminderMap.set(r.user_id, new Date(r.created_at))
+        }
       }
     }
 
@@ -97,6 +107,9 @@ export async function GET(req: Request) {
         console.error('Cron: failed to insert reminder notifications:', insertError.message)
         return NextResponse.json({ error: 'Failed to insert notifications' }, { status: 500 })
       }
+
+      // Record the send so subsequent runs read it from Redis instead of the DB.
+      await setLastReminders(deduped, new Date().toISOString())
     }
 
     return NextResponse.json({ sent: deduped.length, skipped: toNotify.length - deduped.length })

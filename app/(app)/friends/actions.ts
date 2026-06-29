@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification } from '@/lib/notifications'
+import { invalidateUnread } from '@/lib/cache'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -185,6 +186,7 @@ export async function acceptFriendRequest(friendshipId: string): Promise<{ error
     .eq('related_user_id', friendship.requester_id)
     .eq('read', false)
 
+  await invalidateUnread(user.id)
   revalidatePath('/friends')
   revalidatePath('/', 'layout')
   return {}
@@ -218,6 +220,7 @@ export async function declineFriendRequest(friendshipId: string): Promise<{ erro
       .eq('type', 'friend_request_received')
       .eq('related_user_id', friendship.requester_id)
       .eq('read', false)
+    await invalidateUnread(user.id)
   }
 
   revalidatePath('/friends')
@@ -305,6 +308,7 @@ export async function markNotificationsRead(): Promise<void> {
     .eq('user_id', user.id)
     .eq('read', false)
 
+  await invalidateUnread(user.id)
   revalidatePath('/friends')
   revalidatePath('/', 'layout')
 }

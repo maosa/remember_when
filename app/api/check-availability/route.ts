@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimitAsync } from '@/lib/rate-limit'
 
 /**
  * GET /api/check-availability?username=xxx
@@ -15,13 +15,13 @@ import { checkRateLimit } from '@/lib/rate-limit'
 export async function GET(request: NextRequest) {
   try {
     // Per-IP rate limit: 20 checks/minute is ample for a sign-up form, but
-    // throttles automated enumeration. Note: in-memory store resets per
-    // serverless instance — back with Upstash/Redis for strict cross-instance limits.
+    // throttles automated enumeration. Backed by Upstash so the limit holds
+    // across serverless instances; falls back to in-memory if Redis is down.
     const ip =
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
       request.headers.get('x-real-ip') ||
       'unknown'
-    const { allowed } = checkRateLimit(`availability:${ip}`, {
+    const { allowed } = await checkRateLimitAsync(`availability:${ip}`, {
       limit: 20,
       windowMs: 60 * 1000,
     })

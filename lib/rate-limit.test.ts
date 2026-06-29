@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, checkRateLimitAsync } from '@/lib/rate-limit'
 
 describe('checkRateLimit', () => {
   beforeEach(() => {
@@ -38,5 +38,18 @@ describe('checkRateLimit', () => {
     expect(checkRateLimit('key-1', opts).allowed).toBe(true)
     expect(checkRateLimit('key-2', opts).allowed).toBe(true)
     expect(checkRateLimit('key-1', opts).allowed).toBe(false)
+  })
+})
+
+describe('checkRateLimitAsync (Redis-unavailable fallback)', () => {
+  // Without Upstash env vars, redis is null, so this must fall back to the
+  // in-memory limiter and still enforce the limit per instance.
+  it('falls back to in-memory limiting and enforces the limit', async () => {
+    const key = 'async-fallback-key'
+    const opts = { limit: 2, windowMs: 60_000 }
+
+    expect((await checkRateLimitAsync(key, opts)).allowed).toBe(true)
+    expect((await checkRateLimitAsync(key, opts)).allowed).toBe(true)
+    expect((await checkRateLimitAsync(key, opts)).allowed).toBe(false)
   })
 })
