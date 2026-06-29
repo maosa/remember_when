@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
@@ -48,7 +49,11 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               `img-src 'self' https://${supabaseHost} blob: data:`,
               `media-src 'self' https://${supabaseHost} blob:`,
+              // Sentry browser events are sent same-origin via the `tunnelRoute`
+              // ('/monitoring') below, so no Sentry host is needed in connect-src.
               `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}`,
+              // Sentry Session Replay records the DOM in a blob web worker.
+              "worker-src 'self' blob:",
               "font-src 'self'",
               "object-src 'none'",
               "frame-ancestors 'none'",
@@ -62,4 +67,24 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Source-map upload + release association. Slugs and token come from env so
+  // nothing secret is committed. Upload only runs when SENTRY_AUTH_TOKEN is set
+  // (i.e. CI / production builds), so local `next build` stays quiet.
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Only print Sentry build logs in CI.
+  silent: !process.env.CI,
+
+  // Upload a larger set of source maps for better stack traces.
+  widenClientFileUpload: true,
+
+  // Route browser events through this same-origin path to dodge ad-blockers and
+  // avoid widening the CSP connect-src. proxy.ts must treat it as public.
+  tunnelRoute: "/monitoring",
+
+  // Tree-shake Sentry logger statements from the client bundle.
+  disableLogger: true,
+});

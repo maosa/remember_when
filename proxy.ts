@@ -44,6 +44,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/auth') ||
+    pathname.startsWith('/monitoring') || // Sentry tunnel (next.config.ts) — must reach Sentry even when logged out
     pathname === '/pricing' ||
     pathname === '/' // landing page — publicly accessible
 
