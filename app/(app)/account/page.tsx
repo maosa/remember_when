@@ -22,11 +22,16 @@ export default async function AccountPage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('first_name, last_name, email, username, profile_photo_url')
+    .select('first_name, last_name, username, profile_photo_url')
     .eq('id', user!.id)
     .single()
 
   if (!profile) redirect('/login')
+
+  // The user's own email comes from the auth session, not public.users — the
+  // email column is not readable by the authenticated role (see
+  // 20260628_restrict_user_email_column.sql).
+  const email = user!.email ?? ''
 
   const initials = `${profile.first_name[0] ?? ''}${profile.last_name[0] ?? ''}`.toUpperCase()
 
@@ -63,7 +68,7 @@ export default async function AccountPage() {
             initialData={{
               firstName: profile.first_name,
               lastName: profile.last_name,
-              email: profile.email,
+              email,
               username: profile.username,
             }}
           />
@@ -74,7 +79,7 @@ export default async function AccountPage() {
         {/* Security */}
         <section className="space-y-4">
           <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Security</h2>
-          <ChangePasswordForm email={profile.email} />
+          <ChangePasswordForm email={email} />
         </section>
 
         <Separator />
