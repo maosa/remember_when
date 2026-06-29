@@ -5,6 +5,10 @@ import { useLayoutEffect, useRef, useState } from 'react'
 const PILL_CLASS =
   'inline-flex shrink-0 items-center rounded-full bg-rw-accent-subtle text-rw-accent px-2 py-0.5 text-[10px] font-medium whitespace-nowrap'
 
+// The overflow indicator is plain, subtle text — visually distinct from the tag
+// pills so it reads as a count rather than another tag.
+const MORE_CLASS = 'inline-flex shrink-0 items-center text-[10px] text-rw-text-muted whitespace-nowrap'
+
 /**
  * Renders a moment's tags on a single line. Shows as many tags as fit the
  * available width, then a "+N more" pill for the remainder.
@@ -80,7 +84,7 @@ export function MomentTags({ tags }: { tags: string[] }) {
           {tag}
         </span>
       ))}
-      {hiddenCount > 0 && <span className={PILL_CLASS}>+{hiddenCount} more</span>}
+      {hiddenCount > 0 && <span className={MORE_CLASS}>+{hiddenCount} more</span>}
 
       {/* Hidden measurement row — never visible, used to read intrinsic widths */}
       <div
@@ -93,7 +97,7 @@ export function MomentTags({ tags }: { tags: string[] }) {
             {tag}
           </span>
         ))}
-        <span className={PILL_CLASS}>+{tags.length} more</span>
+        <span className={MORE_CLASS}>+{tags.length} more</span>
       </div>
     </div>
   )
