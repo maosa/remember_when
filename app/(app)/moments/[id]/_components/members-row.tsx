@@ -9,7 +9,7 @@ import { getOptimizedUrl } from '@/lib/storage'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/lib/button-variants'
-import { InviteDialog } from './members-section'
+import { InviteDialog } from './invite-member-dialog'
 import { CoverPhotoSection } from './cover-photo-section'
 import { type MomentDetail } from '../actions'
 
