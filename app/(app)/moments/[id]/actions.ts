@@ -56,7 +56,7 @@ export type MomentDetail = {
 
 export async function fetchMomentDetail(
   momentId: string
-): Promise<{ moment?: MomentDetail; myRole?: 'owner' | 'editor' | 'reader'; myStatus?: 'pending' | 'accepted' | 'declined'; myUserId?: string; error?: string }> {
+): Promise<{ moment?: MomentDetail; myRole?: 'owner' | 'editor' | 'reader'; myStatus?: 'pending' | 'accepted' | 'declined'; myUserId?: string; error?: string; notFound?: boolean; forbidden?: boolean }> {
   const user = await requireUser()
 
   const admin = createAdminClient()
@@ -75,7 +75,7 @@ export async function fetchMomentDetail(
     .eq('id', momentId)
     .single()
 
-  if (error || !data) return { error: 'Moment not found.' }
+  if (error || !data) return { notFound: true, error: 'Moment not found.' }
 
   const isOwner = data.owner_id === user.id
   const rawMembers = (data.moment_members as unknown as Array<{
@@ -89,8 +89,10 @@ export async function fetchMomentDetail(
   }>)
   const myMembership = rawMembers.find((m) => m.user_id === user.id)
 
-  // Access check — declined members lose access
-  if (!isOwner && (!myMembership || myMembership.status === 'declined')) return { error: 'Not found.' }
+  // Access check — declined members and non-members lose access. Return a
+  // distinct `forbidden` signal (and NO moment data) so the page can show a
+  // no-access screen instead of a 404 without leaking any moment details.
+  if (!isOwner && (!myMembership || myMembership.status === 'declined')) return { forbidden: true, error: 'Forbidden.' }
 
   // Fetch invite link — only for owners and accepted editors
   const canManageLink =

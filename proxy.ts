@@ -60,9 +60,19 @@ export async function proxy(request: NextRequest) {
     return res
   }
 
-  // Redirect unauthenticated users away from protected routes
+  // Redirect unauthenticated users away from protected routes, preserving the
+  // originally-requested destination so they return there after signing in.
   if (!user && !isAuthRoute) {
-    return redirectTo('/login')
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.search = ''
+    // Skip the no-op default landing pages to keep the login URL clean.
+    if (pathname !== '/home' && pathname !== '/') {
+      url.searchParams.set('next', pathname + request.nextUrl.search)
+    }
+    const res = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => res.cookies.set(cookie))
+    return res
   }
 
   // Redirect authenticated users away from auth pages (not the landing page —

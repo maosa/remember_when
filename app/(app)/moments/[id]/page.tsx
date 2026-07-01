@@ -6,6 +6,7 @@ import { TagsSection } from './_components/tags-section'
 import { MembersRow } from './_components/members-row'
 import { PostsSection } from './_components/posts-section'
 import { MomentGalleryProvider } from './_components/moment-gallery-context'
+import { MomentNoAccess } from './_components/moment-no-access'
 
 function PostsSectionSkeleton() {
   return (
@@ -28,9 +29,13 @@ interface Props {
 
 export default async function MomentPage({ params }: Props) {
   const { id } = await params
-  const { moment, myRole, myStatus, error } = await fetchMomentDetail(id)
+  const { moment, myRole, myStatus, forbidden } = await fetchMomentDetail(id)
 
-  if (error || !moment || !myRole || !myStatus) notFound()
+  // Member of the moment but no access → dedicated no-access screen (leaks no data).
+  if (forbidden) return <MomentNoAccess />
+
+  // Missing moment (or any other failure) → generic 404.
+  if (!moment || !myRole || !myStatus) notFound()
 
   const canEdit = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
 

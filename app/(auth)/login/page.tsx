@@ -1,17 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { safeNextPath } from '@/lib/auth/safe-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { FormError } from '@/components/ui/form-error'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -31,7 +33,8 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/home')
+    // Return to the originally-requested page (if any), else Home.
+    router.push(safeNextPath(searchParams.get('next')))
     router.refresh()
   }
 
@@ -108,6 +111,15 @@ export default function LoginPage() {
         See pricing plans
       </Link>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  // useSearchParams (in LoginForm) must be inside a Suspense boundary.
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
 
