@@ -1,8 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, requireUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification } from '@/lib/notifications'
 import { invalidateUnread } from '@/lib/cache'
@@ -23,9 +22,8 @@ export type UserResult = {
 // ─── Search users ─────────────────────────────────────────────────────────────
 
 export async function searchUsers(query: string): Promise<{ users?: UserResult[]; error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const q = query.trim()
   if (q.length < 2) return { users: [] }
@@ -98,9 +96,8 @@ export async function searchUsers(query: string): Promise<{ users?: UserResult[]
 // ─── Send friend request ──────────────────────────────────────────────────────
 
 export async function sendFriendRequest(recipientId: string): Promise<{ error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   // Check for a pre-existing row between these two users (either direction).
   // Two simple queries are more reliable than a nested or(and()) PostgREST expression.
@@ -154,9 +151,8 @@ export async function sendFriendRequest(recipientId: string): Promise<{ error?: 
 // ─── Accept friend request ────────────────────────────────────────────────────
 
 export async function acceptFriendRequest(friendshipId: string): Promise<{ error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const { data: friendship, error: updateError } = await supabase
     .from('friendships')
@@ -195,9 +191,8 @@ export async function acceptFriendRequest(friendshipId: string): Promise<{ error
 // ─── Decline friend request ───────────────────────────────────────────────────
 
 export async function declineFriendRequest(friendshipId: string): Promise<{ error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const { data: friendship, error } = await supabase
     .from('friendships')
@@ -231,9 +226,8 @@ export async function declineFriendRequest(friendshipId: string): Promise<{ erro
 // ─── Remove friend (soft delete) ─────────────────────────────────────────────
 
 export async function removeFriend(friendshipId: string): Promise<{ error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const { error } = await supabase
     .from('friendships')

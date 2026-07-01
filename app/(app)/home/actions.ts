@@ -1,12 +1,12 @@
 'use server'
 
 import { revalidateTag, unstable_cache } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, requireUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotifications, type NotificationPayload } from '@/lib/notifications'
 import { signStoragePaths } from '@/lib/storage'
+import { isValidEmail } from '@/lib/validation'
 import { homeMomentsTag } from '@/lib/cached-queries'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -127,9 +127,7 @@ function fetchHomeMomentsData(userId: string) {
 }
 
 export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const { moments, archivedRows, signedCovers: signedCoverEntries, memberUsers, postRows, error } =
     await fetchHomeMomentsData(user.id)
@@ -196,9 +194,8 @@ export async function searchUsersToInvite(
   query: string,
   excludeIds: string[] = []
 ): Promise<{ users?: Array<{ id: string; firstName: string; lastName: string; username: string; photoUrl: string | null }>; error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const q = query.trim()
   if (q.length < 2) return { users: [] }
@@ -237,10 +234,9 @@ export async function createMoment(data: {
   location?: string
   tags: string[]
   invitees: Invitee[]
-}): Promise<{ momentId?: string; error?: string }> {
+}): Promise<{ momentId?: string; error?: string; inviteWarnings?: string[] }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const name = data.name.trim().slice(0, 200)
   if (!name) return { error: 'Moment name is required.' }
@@ -282,7 +278,17 @@ export async function createMoment(data: {
   type UserIdInvitee = Extract<Invitee, { type: 'userId' }>
   type EmailInvitee  = Extract<Invitee, { type: 'email' }>
   const userIdInvitees = data.invitees.filter((i): i is UserIdInvitee => i.type === 'userId')
-  const emailInvitees  = data.invitees.filter((i): i is EmailInvitee  => i.type === 'email')
+  const allEmailInvitees = data.invitees.filter((i): i is EmailInvitee => i.type === 'email')
+
+  // Validate email invitees server-side (the client checks too, but a server
+  // action must never trust client input). Malformed addresses are skipped and
+  // surfaced as non-blocking warnings rather than failing the whole creation.
+  const inviteWarnings: string[] = []
+  const emailInvitees: EmailInvitee[] = []
+  for (const inv of allEmailInvitees) {
+    if (isValidEmail(inv.value)) emailInvitees.push(inv)
+    else inviteWarnings.push(`Skipped invalid email address: ${inv.value}`)
+  }
 
   // Accumulate all notification payloads; send in a single batch at the end
   const notificationPayloads: NotificationPayload[] = []
@@ -366,16 +372,23 @@ export async function createMoment(data: {
         )
       )
 
-      await Promise.all(
-        pendingResults.map(({ data: pendingInvite }, k) =>
-          pendingInvite
-            ? admin.auth.admin.inviteUserByEmail(newEmailInvitees[k].value, {
-                data: { invited_by_name: inviterName },
-                redirectTo: `${origin}/auth/callback?next=/invite/${pendingInvite.token}`,
-              })
-            : Promise.resolve()
-        )
+      // Fire the invite emails in parallel and record any that fail so the
+      // creator can be told which invites didn't go out (the moment itself and
+      // the pending rows are already committed, so this is non-blocking).
+      const sendResults = await Promise.all(
+        pendingResults.map(async ({ data: pendingInvite }, k) => {
+          const email = newEmailInvitees[k].value
+          if (!pendingInvite) return { email, ok: false }
+          const { error } = await admin.auth.admin.inviteUserByEmail(email, {
+            data: { invited_by_name: inviterName },
+            redirectTo: `${origin}/auth/callback?next=/invite/${pendingInvite.token}`,
+          })
+          return { email, ok: !error }
+        })
       )
+      for (const r of sendResults) {
+        if (!r.ok) inviteWarnings.push(`Couldn't send an invite email to ${r.email}.`)
+      }
     }
   }
 
@@ -383,15 +396,14 @@ export async function createMoment(data: {
   await sendNotifications(notificationPayloads)
 
   revalidateTag(homeMomentsTag(user.id), { expire: 0 })
-  return { momentId: moment.id }
+  return { momentId: moment.id, inviteWarnings: inviteWarnings.length ? inviteWarnings : undefined }
 }
 
 // ─── Archive / unarchive ──────────────────────────────────────────────────────
 
 export async function archiveMoment(momentId: string): Promise<{ error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const { error } = await supabase
     .from('moment_archive')
@@ -403,9 +415,8 @@ export async function archiveMoment(momentId: string): Promise<{ error?: string 
 }
 
 export async function unarchiveMoment(momentId: string): Promise<{ error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const { error } = await supabase
     .from('moment_archive')

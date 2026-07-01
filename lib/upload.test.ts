@@ -3,6 +3,7 @@ import {
   safeExt,
   validateAvatarFile,
   validateMediaMimeType,
+  mediaTypeFromMime,
 } from '@/lib/upload'
 
 describe('safeExt', () => {
@@ -43,5 +44,18 @@ describe('validateMediaMimeType', () => {
 
   it('handles an empty MIME type gracefully', () => {
     expect(validateMediaMimeType('')).toMatch(/unknown/)
+  })
+})
+
+describe('mediaTypeFromMime', () => {
+  it('classifies video, audio, and image MIME types', () => {
+    expect(mediaTypeFromMime('video/mp4')).toBe('video')
+    expect(mediaTypeFromMime('audio/mpeg')).toBe('audio')
+    expect(mediaTypeFromMime('image/png')).toBe('photo')
+  })
+
+  it('defaults anything non-video/non-audio to photo', () => {
+    expect(mediaTypeFromMime('image/gif')).toBe('photo')
+    expect(mediaTypeFromMime('')).toBe('photo')
   })
 })

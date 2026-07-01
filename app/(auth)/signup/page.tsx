@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { FormError } from '@/components/ui/form-error'
 import { createClient } from '@/lib/supabase/client'
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
@@ -179,11 +180,7 @@ export default function SignupPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="pt-5 space-y-4">
             {/* Error banner */}
-            {error && (
-              <div className="rounded-[8px] border border-rw-danger/20 bg-rw-danger-subtle px-3.5 py-2.5 text-[13px] text-rw-danger">
-                {error}
-              </div>
-            )}
+            <FormError>{error}</FormError>
 
             {/* Name row */}
             <div className="grid grid-cols-2 gap-3">

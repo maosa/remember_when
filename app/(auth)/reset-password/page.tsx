@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { FormError } from '@/components/ui/form-error'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -53,11 +54,7 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit}>
           <CardContent className="pt-5 space-y-4">
-            {error && (
-              <div className="rounded-[8px] border border-rw-danger/20 bg-rw-danger-subtle px-3.5 py-2.5 text-[13px] text-rw-danger">
-                {error}
-              </div>
-            )}
+            <FormError>{error}</FormError>
             <div className="space-y-1.5">
               <Label htmlFor="password">New password</Label>
               <Input

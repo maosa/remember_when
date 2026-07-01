@@ -1,14 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, requireUser } from '@/lib/supabase/server'
 import { invalidatePrefs } from '@/lib/cache'
 
 export async function updateNotificationPreferences(formData: FormData) {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const cadence = formData.get('reminder_cadence') as 'weekly' | 'biweekly' | 'monthly' | 'never'
   const validCadences = ['weekly', 'biweekly', 'monthly', 'never']

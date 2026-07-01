@@ -55,6 +55,17 @@ export function safeExt(mimeType: string): string {
   return MIME_EXT[mimeType] ?? 'bin'
 }
 
+/**
+ * Maps a MIME type to the `media_type` stored on post_media rows.
+ * Anything that isn't a video/* or audio/* is treated as a photo (the media
+ * validators guarantee only allowed image/video/audio types reach here).
+ */
+export function mediaTypeFromMime(mimeType: string): 'photo' | 'video' | 'audio' {
+  if (mimeType.startsWith('video/')) return 'video'
+  if (mimeType.startsWith('audio/')) return 'audio'
+  return 'photo'
+}
+
 // ─── Validators ───────────────────────────────────────────────────────────────
 
 export function validateAvatarFile(file: File): string | null {

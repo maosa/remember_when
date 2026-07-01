@@ -3,18 +3,18 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, requireUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { validateAvatarFile, safeExt } from '@/lib/upload'
+import { isValidEmail } from '@/lib/validation'
 import { logAuditEvent } from '@/lib/audit'
 import { layoutProfileTag } from '@/lib/cached-queries'
 
 // ─── Profile (name + username only) ────────────────────────────────────────
 
 export async function updateProfile(formData: FormData) {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const firstName = (formData.get('firstName') as string).trim().slice(0, 50)
   const lastName  = (formData.get('lastName')  as string).trim().slice(0, 50)
@@ -53,12 +53,12 @@ export async function updateProfile(formData: FormData) {
 // ─── Email (requires re-auth, called after client verifies password) ────────
 
 export async function updateEmail(newEmail: string) {
+  await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const trimmed = newEmail.trim().toLowerCase().slice(0, 254)
   if (!trimmed) return { error: 'Email is required.' }
+  if (!isValidEmail(trimmed)) return { error: 'Please enter a valid email address.' }
 
   const origin = (await headers()).get('origin') ?? ''
   const { error } = await supabase.auth.updateUser(
@@ -75,9 +75,8 @@ export async function updateEmail(newEmail: string) {
 // ─── Password (requires re-auth, called after client verifies current pwd) ──
 
 export async function changePassword(newPassword: string) {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) return { error: error.message }
@@ -91,9 +90,8 @@ export async function changePassword(newPassword: string) {
 // ─── Avatar upload ──────────────────────────────────────────────────────────
 
 export async function updateAvatar(formData: FormData) {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const file = formData.get('avatar') as File
   if (!file || file.size === 0) return { error: 'No file provided.' }
@@ -134,9 +132,8 @@ export async function updateAvatar(formData: FormData) {
 // ─── Avatar remove ──────────────────────────────────────────────────────────
 
 export async function removeAvatar() {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   // Clear DB reference first so the UI updates even if storage delete fails
   const { error: updateError } = await supabase
@@ -162,9 +159,8 @@ export async function removeAvatar() {
 // ─── Delete account ─────────────────────────────────────────────────────────
 
 export async function deleteAccount() {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   // Audit log before deletion so user_id is still valid
   await logAuditEvent(user.id, 'account_deleted')

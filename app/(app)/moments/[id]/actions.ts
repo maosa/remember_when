@@ -1,15 +1,23 @@
 'use server'
 
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, requireUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification, sendNotifications } from '@/lib/notifications'
-import { validateCoverFile, validateMediaFile, validateMediaMimeType, safeExt } from '@/lib/upload'
+import { validateCoverFile, validateMediaFile, validateMediaMimeType, safeExt, mediaTypeFromMime } from '@/lib/upload'
+import { isValidEmail } from '@/lib/validation'
 import { signStoragePath, signStoragePaths } from '@/lib/storage'
 import { logAuditEvent } from '@/lib/audit'
 import { homeMomentsTag } from '@/lib/cached-queries'
+import {
+  assertCanViewMoment,
+  assertCanEditMoment,
+  assertCanManageLink,
+  expiryToDate,
+  validateUploadPaths,
+  type ExpiryOption,
+} from '@/lib/moments/authz'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,9 +57,7 @@ export type MomentDetail = {
 export async function fetchMomentDetail(
   momentId: string
 ): Promise<{ moment?: MomentDetail; myRole?: 'owner' | 'editor' | 'reader'; myStatus?: 'pending' | 'accepted' | 'declined'; myUserId?: string; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -156,9 +162,7 @@ export async function acceptMomentInvite(
   momentId: string,
   notificationId?: string,
 ): Promise<{ error?: string; noop?: boolean }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -232,9 +236,7 @@ export async function declineMomentInvite(
   momentId: string,
   notificationId?: string,
 ): Promise<{ error?: string; noop?: boolean }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -362,9 +364,7 @@ export async function inviteMember(
     return { error: 'Invalid role.' }
   }
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -423,6 +423,8 @@ export async function inviteMember(
   }
 
   // method === 'email'
+  if (!isValidEmail(value)) return { error: 'Please enter a valid email address.' }
+
   const { data: existingUser } = await admin
     .from('users')
     .select('id, username')
@@ -554,9 +556,7 @@ export async function updateMemberRole(
   memberId: string,
   newRole: 'editor' | 'reader'
 ): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -601,9 +601,7 @@ export async function updateMemberRole(
 // ─── Delete moment ────────────────────────────────────────────────────────────
 
 export async function deleteMoment(momentId: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -659,9 +657,7 @@ export async function deleteMoment(momentId: string): Promise<{ error?: string }
 // ─── Remove member ────────────────────────────────────────────────────────────
 
 export async function removeMember(momentId: string, memberId: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -724,9 +720,7 @@ export async function updateMomentDetails(
     location?: string | null
   }
 ): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const permCheck = await assertCanEditMoment(momentId, user.id)
   if (permCheck.error) return permCheck
@@ -751,9 +745,7 @@ export async function updateMomentDetails(
 // ─── Update cover photo ───────────────────────────────────────────────────────
 
 export async function updateCoverPhoto(momentId: string, formData: FormData): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const permCheck = await assertCanEditMoment(momentId, user.id)
   if (permCheck.error) return permCheck
@@ -794,9 +786,8 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
 }
 
 export async function deleteCoverPhoto(momentId: string): Promise<{ error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   // Explicit ownership/editor check — previously missing, relied on RLS alone.
   const permCheck = await assertCanEditMoment(momentId, user.id)
@@ -830,9 +821,7 @@ export async function deleteCoverPhoto(momentId: string): Promise<{ error?: stri
 }
 
 export async function setCoverPhotoFromPath(momentId: string, storagePath: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   // Verify caller has edit rights
   const permCheck = await assertCanEditMoment(momentId, user.id)
@@ -881,9 +870,7 @@ export async function setCoverPhotoFromPath(momentId: string, storagePath: strin
 export async function fetchMomentPhotos(
   momentId: string,
 ): Promise<{ photos: Array<{ signedUrl: string; storagePath: string }> }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -955,9 +942,7 @@ export async function fetchPosts(
   cursor?: string | null,
   limit = 20,
 ): Promise<{ posts: PostWithMedia[]; nextCursor: string | null; currentUserId: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -1032,9 +1017,8 @@ export async function fetchPosts(
 }
 
 export async function createPost(momentId: string, formData: FormData): Promise<{ error?: string }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const rawContent = (formData.get('content') as string | null)?.trim() || null
   const content = rawContent ? rawContent.slice(0, 10_000) : null
@@ -1081,11 +1065,7 @@ export async function createPost(momentId: string, formData: FormData): Promise<
           .from('post-media')
           .upload(filePath, file, { upsert: false })
         if (uploadError) return { ok: false, message: uploadError.message }
-        const mediaType = file.type.startsWith('video/')
-          ? 'video'
-          : file.type.startsWith('audio/')
-            ? 'audio'
-            : 'photo'
+        const mediaType = mediaTypeFromMime(file.type)
         return { ok: true, row: { post_id: post.id, media_type: mediaType, storage_url: `post-media/${filePath}` } }
       })
     )
@@ -1166,9 +1146,8 @@ export async function preparePostUpload(
   content: string | null,
   files: Array<{ name: string; type: string; size: number; index: number }>,
 ): Promise<{ error?: string; postId?: string; uploads?: PreparedUpload[] }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const trimmedContent = content?.trim() || null
   const clampedContent = trimmedContent ? trimmedContent.slice(0, 10_000) : null
@@ -1221,11 +1200,7 @@ export async function preparePostUpload(
     index: r.f.index,
     signedUrl: r.data!.signedUrl,
     path: r.path,
-    mediaType: r.f.type.startsWith('video/')
-      ? 'video'
-      : r.f.type.startsWith('audio/')
-        ? 'audio'
-        : 'photo',
+    mediaType: mediaTypeFromMime(r.f.type),
   }))
 
   return { postId: post.id, uploads }
@@ -1240,9 +1215,7 @@ export async function finalizePostUpload(
   momentId: string,
   media: Array<{ path: string; mediaType: 'photo' | 'video' | 'audio' }>,
 ): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -1307,9 +1280,7 @@ export async function finalizePostUpload(
 }
 
 export async function deletePost(postId: string, momentId: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -1362,9 +1333,8 @@ export async function prepareEditUpload(
   momentId: string,
   files: Array<{ name: string; type: string; size: number; index: number }>,
 ): Promise<{ error?: string; uploads?: PreparedUpload[] }> {
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const admin = createAdminClient()
 
@@ -1401,11 +1371,7 @@ export async function prepareEditUpload(
     index: r.f.index,
     signedUrl: r.data!.signedUrl,
     path: r.path,
-    mediaType: r.f.type.startsWith('video/')
-      ? 'video'
-      : r.f.type.startsWith('audio/')
-        ? 'audio'
-        : 'photo',
+    mediaType: mediaTypeFromMime(r.f.type),
   }))
 
   return { uploads }
@@ -1423,9 +1389,7 @@ export async function editPost(
   removeMediaIds: string[],
   newMediaPaths: Array<{ path: string; mediaType: 'photo' | 'video' | 'audio' }>,
 ): Promise<{ error?: string; post?: PostWithMedia }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -1555,101 +1519,10 @@ export async function editPost(
   return { post: updatedPost }
 }
 
-// ─── Auth helpers ─────────────────────────────────────────────────────────────
-
-/**
- * Validates the path and mediaType of each upload entry that the client hands
- * back to the server in the two-phase upload flow (finalizePostUpload / editPost).
- *
- * Three invariants are checked:
- *   1. mediaType is one of the three permitted literals — TypeScript types are
- *      erased at runtime so this must be an explicit runtime check.
- *   2. No `..` path-traversal sequences that could escape the expected prefix.
- *   3. The path starts with `{momentId}/{postId}/` — prevents a user from
- *      pointing a post_media row at another user's storage object by swapping in
- *      a foreign moment/post UUID.  The Storage RLS INSERT policy enforces the
- *      same constraint at upload time, but this server-side check is needed for
- *      the finalizer step where only DB writes happen (no re-upload).
- *
- * Returns an error string on the first violation, or null if all entries pass.
- */
-function validateUploadPaths(
-  entries: Array<{ path: string; mediaType: string }>,
-  momentId: string,
-  postId: string,
-): string | null {
-  const ALLOWED_TYPES = new Set(['photo', 'video', 'audio'])
-  const expectedPrefix = `${momentId}/${postId}/`
-
-  for (const { path, mediaType } of entries) {
-    if (!ALLOWED_TYPES.has(mediaType)) {
-      return `Invalid media type: "${mediaType}".`
-    }
-    if (path.includes('..')) {
-      return 'Invalid upload path.'
-    }
-    if (!path.startsWith(expectedPrefix)) {
-      return 'Invalid upload path.'
-    }
-  }
-  return null
-}
-
-// Returns {} if the user may read the moment (owner or accepted member).
-// Returns a generic 'Not found.' error in all other cases so callers cannot
-// distinguish a non-existent moment from one they are not permitted to access.
-async function assertCanViewMoment(momentId: string, userId: string): Promise<{ error?: string }> {
-  const admin = createAdminClient()
-
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .maybeSingle()
-
-  if (!moment) return { error: 'Not found.' }
-  if (moment.owner_id === userId) return {}
-
-  const { data: membership } = await admin
-    .from('moment_members')
-    .select('status')
-    .eq('moment_id', momentId)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  if (membership?.status === 'accepted') return {}
-  return { error: 'Not found.' }
-}
-
-// Returns { ownerId } on success so callers that need the moment owner's id
-// (e.g. for cache busting or notifications) can reuse it without a second query.
-async function assertCanEditMoment(momentId: string, userId: string): Promise<{ error?: string; ownerId?: string }> {
-  const admin = createAdminClient()
-  const { data: moment } = await admin
-    .from('moments')
-    .select('owner_id')
-    .eq('id', momentId)
-    .single()
-  if (!moment) return { error: 'Moment not found.' }
-  if (moment.owner_id === userId) return { ownerId: moment.owner_id }
-  const { data: membership } = await admin
-    .from('moment_members')
-    .select('role, status')
-    .eq('moment_id', momentId)
-    .eq('user_id', userId)
-    .maybeSingle()
-  if (!membership || membership.status !== 'accepted' || membership.role === 'reader') {
-    return { error: 'Permission denied.' }
-  }
-  return { ownerId: moment.owner_id }
-}
-
 // ─── Manage tags ──────────────────────────────────────────────────────────────
 
 export async function addTag(momentId: string, tag: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const t = tag.trim().toLowerCase()
   if (!t || t.length > 20) return { error: 'Tag must be 1–20 characters.' }
@@ -1669,9 +1542,7 @@ export async function addTag(momentId: string, tag: string): Promise<{ error?: s
 }
 
 export async function removeTag(momentId: string, tagId: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   // Verify caller has edit rights (admin client bypasses RLS — must check manually)
   const permCheck = await assertCanEditMoment(momentId, user.id)
@@ -1691,38 +1562,11 @@ export async function removeTag(momentId: string, tagId: string): Promise<{ erro
 
 // ─── Invite links (shareable) ─────────────────────────────────────────────────
 
-type ExpiryOption = 'week' | 'month' | '3months' | '6months' | 'year' | 'never'
-
-function expiryToDate(expiresIn: ExpiryOption): string | null {
-  if (expiresIn === 'never') return null
-  const days: Record<string, number> = { week: 7, month: 30, '3months': 90, '6months': 180, year: 365 }
-  const d = new Date()
-  d.setDate(d.getDate() + days[expiresIn])
-  return d.toISOString()
-}
-
-async function assertCanManageLink(momentId: string, userId: string): Promise<{ error?: string }> {
-  const admin = createAdminClient()
-  const { data: moment } = await admin.from('moments').select('owner_id').eq('id', momentId).single()
-  if (!moment) return { error: 'Moment not found.' }
-  if (moment.owner_id === userId) return {}
-  const { data: membership } = await admin
-    .from('moment_members')
-    .select('role, status')
-    .eq('moment_id', momentId)
-    .eq('user_id', userId)
-    .single()
-  if (!membership || membership.status !== 'accepted') return { error: 'Permission denied.' }
-  return {}
-}
-
 export async function generateInviteLink(
   momentId: string,
   expiresIn: ExpiryOption
 ): Promise<{ token?: string; expiresAt?: string | null; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const permCheck = await assertCanManageLink(momentId, user.id)
   if (permCheck.error) return permCheck
@@ -1748,9 +1592,7 @@ export async function generateInviteLink(
 }
 
 export async function revokeInviteLink(momentId: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const permCheck = await assertCanManageLink(momentId, user.id)
   if (permCheck.error) return permCheck
@@ -1771,9 +1613,7 @@ export async function leaveMoment(
   momentId: string,
   deletePosts: boolean
 ): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -1827,9 +1667,7 @@ export async function transferOwnership(
   momentId: string,
   newOwnerId: string
 ): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const admin = createAdminClient()
 
@@ -1904,9 +1742,7 @@ export async function updateMoment(
     tags: string[]
   }
 ): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireUser()
 
   const name = data.name.trim().slice(0, 200)
   if (!name) return { error: 'Moment name is required.' }

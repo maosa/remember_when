@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { uploadWithProgress } from '@/lib/upload-with-progress'
+import { mediaTypeFromMime } from '@/lib/upload'
 import { createClient } from '@/lib/supabase/client'
 import { createPost, preparePostUpload, finalizePostUpload } from '../actions'
 
@@ -65,11 +66,7 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
         setError(`${file.name} exceeds the 100 MB limit.`)
         return
       }
-      const kind = file.type.startsWith('video/')
-        ? 'video'
-        : file.type.startsWith('audio/')
-          ? 'audio'
-          : 'photo'
+      const kind = mediaTypeFromMime(file.type)
       next.push({ file, objectUrl: URL.createObjectURL(file), kind })
     }
     setPreviews((prev) => [...prev, ...next])
