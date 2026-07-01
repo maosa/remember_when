@@ -3,7 +3,7 @@
 import { memo, useMemo, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { MapPin, Calendar, MoreHorizontal, Archive, ArchiveRestore, Pencil, Crown, PenTool, Eye, MessageSquare } from 'lucide-react'
+import { MapPin, Calendar, MoreHorizontal, Archive, ArchiveRestore, Pencil, Crown, PenTool, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
@@ -15,9 +15,9 @@ import { toast } from 'sonner'
 
 // Fixed height for every moment card so the grid stays uniform regardless of
 // content, user, or account. Sized to comfortably fit the fullest card (cover +
-// date + location + entry count + one line of tags + role/avatar footer).
+// date + location + one line of tags + role/avatar footer).
 // Revisit this value if cards are enriched with more elements in the future.
-const CARD_HEIGHT = 'h-[19rem]'
+const CARD_HEIGHT = 'h-[17.5rem]'
 
 const EditMomentModal = dynamic(() =>
   import('@/app/(app)/_components/edit-moment-modal').then((m) => ({ default: m.EditMomentModal }))
@@ -153,15 +153,7 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
               </div>
             )}
 
-            {/* Row 3: Entry count */}
-            {moment.postCount > 0 && moment.myStatus === 'accepted' && (
-              <div className="flex items-center gap-1 text-[12px] text-rw-text-muted">
-                <MessageSquare className="size-3 shrink-0" />
-                {moment.postCount} {moment.postCount === 1 ? 'entry' : 'entries'}
-              </div>
-            )}
-
-            {/* Row 5: Tags — single line, overflow collapses into "+N more".
+            {/* Tags — single line, overflow collapses into "+N more".
                 The full tags array still powers search (see moments-list filter). */}
             {moment.tags.length > 0 && <MomentTags tags={moment.tags} />}
 
