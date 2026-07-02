@@ -463,20 +463,25 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Scroll hint */}
-        <div
-          aria-hidden
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 text-rw-text-placeholder"
+        {/* Scroll hint — links to the How it works section */}
+        <a
+          href="#how-it-works"
+          aria-label="Scroll to How it works"
+          onClick={(e) => {
+            e.preventDefault()
+            document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })
+          }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center text-rw-text-placeholder hover:text-rw-text-muted transition-colors p-3"
           style={{ animation: 'landing-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) 1.2s both' }}
         >
           <span ref={scrollHintRef} className="inline-flex">
             <ChevronDown className="size-4" strokeWidth={2} />
           </span>
-        </div>
+        </a>
       </section>
 
       {/* ── HOW IT WORKS ──────────────────────────────────────────── */}
-      <section className="relative bg-rw-bg px-6 sm:px-10 py-24">
+      <section id="how-it-works" className="relative bg-rw-bg px-6 sm:px-10 py-24">
 
         {/* Fade-out top rule */}
         <div
