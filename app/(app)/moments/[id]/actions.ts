@@ -912,6 +912,9 @@ type PostMediaBase = {
   id: string
   storageUrl: string
   storagePath: string
+  /** Intrinsic pixel dimensions (photos/videos). Null for legacy rows and audio. */
+  width: number | null
+  height: number | null
   authorFirstName?: string
   authorLastName?: string
   postCreatedAt?: string
@@ -961,7 +964,7 @@ export async function fetchPosts(
     .select(`
       id, moment_id, author_id, content, created_at, edited_at,
       author:users!posts_author_id_fkey(id, first_name, last_name, profile_photo_url),
-      post_media(id, media_type, storage_url, deleted_at)
+      post_media(id, media_type, storage_url, width, height, deleted_at)
     `)
     .eq('moment_id', momentId)
     .is('deleted_at', null)
@@ -993,12 +996,14 @@ export async function fetchPosts(
       id: string; first_name: string; last_name: string; profile_photo_url: string | null
     }
     const media = (row.post_media as unknown as Array<{
-      id: string; media_type: string; storage_url: string; deleted_at: string | null
+      id: string; media_type: string; storage_url: string; width: number | null; height: number | null; deleted_at: string | null
     }>).filter((m) => !m.deleted_at).map((m) => ({
       id: m.id,
       mediaType: m.media_type as 'photo' | 'video' | 'audio',
       storageUrl: signed.get(m.storage_url) ?? m.storage_url,
       storagePath: m.storage_url,
+      width: m.width,
+      height: m.height,
     } as PostMedia))
 
     return {
@@ -1208,6 +1213,17 @@ export async function preparePostUpload(
   return { postId: post.id, uploads }
 }
 
+// Dimensions come from the (untrusted) client, so clamp to a sane positive
+// integer range. They only affect the display box size — never security — so a
+// bad value simply falls back to null (lazy backfill) rather than erroring.
+const MAX_DIMENSION = 100_000
+function sanitizeDimension(value: number | null | undefined): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  const rounded = Math.round(value)
+  if (rounded <= 0 || rounded > MAX_DIMENSION) return null
+  return rounded
+}
+
 /**
  * Phase 2 — called after all client-side uploads complete.
  * Inserts post_media rows and sends new-post notifications to moment members.
@@ -1215,7 +1231,7 @@ export async function preparePostUpload(
 export async function finalizePostUpload(
   postId: string,
   momentId: string,
-  media: Array<{ path: string; mediaType: 'photo' | 'video' | 'audio' }>,
+  media: Array<{ path: string; mediaType: 'photo' | 'video' | 'audio'; width?: number | null; height?: number | null }>,
 ): Promise<{ error?: string }> {
   const user = await requireUser()
 
@@ -1244,6 +1260,10 @@ export async function finalizePostUpload(
         post_id: postId,
         media_type: m.mediaType,
         storage_url: `post-media/${m.path}`,
+        // Client-measured intrinsic dimensions (photos). Sanitised to positive
+        // integers; anything else is stored null and backfilled lazily on view.
+        width: sanitizeDimension(m.width),
+        height: sanitizeDimension(m.height),
       })),
     )
     if (mediaError) return { error: mediaError.message }
@@ -1278,6 +1298,55 @@ export async function finalizePostUpload(
   }
 
   revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
+/**
+ * Lazily backfill intrinsic dimensions for a media row that predates dimension
+ * capture. Called fire-and-forget from the client when a legacy photo first
+ * loads (its natural size is read from the decoded <img>). Idempotent: only
+ * fills nulls, and only for media in a moment the caller can view.
+ */
+export async function setPostMediaDimensions(
+  mediaId: string,
+  width: number,
+  height: number,
+): Promise<{ error?: string }> {
+  const user = await requireUser()
+
+  const w = sanitizeDimension(width)
+  const h = sanitizeDimension(height)
+  if (w === null || h === null) return { error: 'Invalid dimensions.' }
+
+  const admin = createAdminClient()
+
+  // Resolve the media row → its post → moment, and bail if dimensions are set.
+  const { data: media } = await admin
+    .from('post_media')
+    .select('id, width, height, post_id')
+    .eq('id', mediaId)
+    .single()
+  if (!media) return { error: 'Not found.' }
+  if (media.width !== null && media.height !== null) return {} // already backfilled
+
+  const { data: post } = await admin
+    .from('posts')
+    .select('moment_id')
+    .eq('id', media.post_id)
+    .single()
+  if (!post) return { error: 'Not found.' }
+
+  // Only members who can view the moment may write dimensions.
+  const access = await assertCanViewMoment(post.moment_id, user.id)
+  if (access.error) return { error: 'Not found.' }
+
+  // Guard the update on width being null so concurrent viewers don't clobber.
+  await admin
+    .from('post_media')
+    .update({ width: w, height: h })
+    .eq('id', mediaId)
+    .is('width', null)
+
   return {}
 }
 
@@ -1483,7 +1552,7 @@ export async function editPost(
     .select(`
       id, moment_id, author_id, content, created_at, edited_at,
       author:users!posts_author_id_fkey(id, first_name, last_name, profile_photo_url),
-      post_media(id, media_type, storage_url, deleted_at)
+      post_media(id, media_type, storage_url, width, height, deleted_at)
     `)
     .eq('id', postId)
     .single()
@@ -1509,12 +1578,14 @@ export async function editPost(
     createdAt: updatedRow.created_at,
     editedAt: (updatedRow as unknown as { edited_at: string | null }).edited_at ?? null,
     media: (updatedRow.post_media as unknown as Array<{
-      id: string; media_type: string; storage_url: string; deleted_at: string | null
+      id: string; media_type: string; storage_url: string; width: number | null; height: number | null; deleted_at: string | null
     }>).filter((m) => !m.deleted_at).map((m) => ({
       id: m.id,
       mediaType: m.media_type as 'photo' | 'video' | 'audio',
       storageUrl: signed.get(m.storage_url) ?? m.storage_url,
       storagePath: m.storage_url,
+      width: m.width,
+      height: m.height,
     } as PostMedia)),
   }
 

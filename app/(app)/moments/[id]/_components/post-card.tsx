@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { getOptimizedUrl } from '@/lib/storage'
-import { deletePost, type PostWithMedia } from '../actions'
+import { deletePost, setPostMediaDimensions, type PostWithMedia } from '../actions'
 
 const EditPostDialog = dynamic(() =>
   import('./edit-post-dialog').then((m) => ({ default: m.EditPostDialog })),
@@ -37,21 +37,62 @@ interface Props {
 
 type MediaItem = PostWithMedia['media'][number]
 
+const btnBase = 'overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent'
+
+// Bounds for a single photo's reserved aspect ratio. Normal phone photos
+// (9:16 ≈ 0.56 up to 16:9 ≈ 1.78) fall inside this range and are shown at their
+// exact natural ratio — no crop. Only pathological panoramas/strips get clamped.
+const PHOTO_MIN_RATIO = 0.5 // tallest portrait we'll reserve (2:1 vertical)
+const PHOTO_MAX_RATIO = 2.0 // widest landscape we'll reserve (2:1 horizontal)
+
+function clampRatio(width: number, height: number): number {
+  return Math.min(Math.max(width / height, PHOTO_MIN_RATIO), PHOTO_MAX_RATIO)
+}
+
+// A lone photo is shown at its natural aspect ratio. When dimensions are known
+// (captured at upload, or previously backfilled) we reserve the exact ratio up
+// front so there is zero layout shift and no crop. Legacy rows with no stored
+// dimensions render at natural size and self-heal: on first decode we persist
+// their intrinsic size so every later view is shift-free.
+function SinglePhoto({ photo, onOpen }: { photo: MediaItem; onOpen: (id: string) => void }) {
+  const hasDims =
+    typeof photo.width === 'number' && photo.width > 0 &&
+    typeof photo.height === 'number' && photo.height > 0
+  const backfilled = useRef(false)
+
+  function handleLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    if (hasDims || backfilled.current) return
+    const { naturalWidth, naturalHeight } = e.currentTarget
+    if (naturalWidth > 0 && naturalHeight > 0) {
+      backfilled.current = true
+      // Fire-and-forget: dimensions are cosmetic, so failures are non-fatal.
+      void setPostMediaDimensions(photo.id, naturalWidth, naturalHeight)
+    }
+  }
+
+  return (
+    <button onClick={() => onOpen(photo.id)} className={`w-full rounded-xl ${btnBase}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={getOptimizedUrl(photo.storageUrl, 800) ?? photo.storageUrl}
+        alt="" loading="lazy" decoding="async"
+        onLoad={hasDims ? undefined : handleLoad}
+        style={hasDims ? { aspectRatio: clampRatio(photo.width!, photo.height!) } : undefined}
+        className={
+          hasDims
+            ? 'w-full object-cover bg-rw-surface-raised'
+            : 'w-full max-h-[70vh] object-contain bg-rw-surface-raised'
+        }
+      />
+    </button>
+  )
+}
+
 function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: string) => void }) {
   const count = photos.length
-  const btnBase = 'overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent'
 
   if (count === 1) {
-    return (
-      <button onClick={() => onOpen(photos[0].id)} className={`w-full rounded-xl ${btnBase}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={getOptimizedUrl(photos[0].storageUrl, 800) ?? photos[0].storageUrl}
-          alt="" loading="lazy" decoding="async"
-          className="w-full aspect-video object-cover bg-rw-surface-raised"
-        />
-      </button>
-    )
+    return <SinglePhoto photo={photos[0]} onOpen={onOpen} />
   }
 
   if (count === 2) {

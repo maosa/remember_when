@@ -501,26 +501,32 @@ export type Database = {
         Row: {
           created_at: string
           deleted_at: string | null
+          height: number | null
           id: string
           media_type: Database["public"]["Enums"]["media_type"]
           post_id: string
           storage_url: string
+          width: number | null
         }
         Insert: {
           created_at?: string
           deleted_at?: string | null
+          height?: number | null
           id?: string
           media_type: Database["public"]["Enums"]["media_type"]
           post_id: string
           storage_url: string
+          width?: number | null
         }
         Update: {
           created_at?: string
           deleted_at?: string | null
+          height?: number | null
           id?: string
           media_type?: Database["public"]["Enums"]["media_type"]
           post_id?: string
           storage_url?: string
+          width?: number | null
         }
         Relationships: [
           {

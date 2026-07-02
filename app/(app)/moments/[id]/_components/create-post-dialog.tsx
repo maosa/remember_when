@@ -33,6 +33,24 @@ type PreviewFile = {
   kind: 'photo' | 'video' | 'audio'
 }
 
+// Read a photo's intrinsic pixel size so the feed can reserve its exact aspect
+// ratio (no layout shift, no forced crop). Resolves null on decode failure.
+function readImageDimensions(file: File): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      resolve({ width: img.naturalWidth, height: img.naturalHeight })
+      URL.revokeObjectURL(url)
+    }
+    img.onerror = () => {
+      resolve(null)
+      URL.revokeObjectURL(url)
+    }
+    img.src = url
+  })
+}
+
 export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -138,12 +156,23 @@ export function CreatePostDialog({ momentId, open, onOpenChange }: Props) {
         return
       }
 
+      // Measure intrinsic dimensions of photo files so the feed can reserve each
+      // photo's exact aspect ratio (no layout shift / no crop). Non-photos → null.
+      const dims = await Promise.all(
+        previews.map((p) => (p.kind === 'photo' ? readImageDimensions(p.file) : Promise.resolve(null))),
+      )
+
       // Phase 3: insert post_media rows + send notifications
       startTransition(async () => {
         const res = await finalizePostUpload(
           prep.postId!,
           momentId,
-          prep.uploads!.map((u) => ({ path: u.path, mediaType: u.mediaType })),
+          prep.uploads!.map((u) => ({
+            path: u.path,
+            mediaType: u.mediaType,
+            width: dims[u.index]?.width ?? null,
+            height: dims[u.index]?.height ?? null,
+          })),
         )
         if (res.error) { setError(res.error); return }
         router.refresh()

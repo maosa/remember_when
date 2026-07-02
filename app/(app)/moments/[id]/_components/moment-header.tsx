@@ -64,7 +64,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
       ? postMedia.filter((m) => m.storagePath !== moment.coverPhotoStoragePath)
       : postMedia
     return [
-      { id: 'moment-cover', mediaType: 'photo', storageUrl: moment.coverPhotoUrl, storagePath: moment.coverPhotoStoragePath ?? '' },
+      { id: 'moment-cover', mediaType: 'photo', storageUrl: moment.coverPhotoUrl, storagePath: moment.coverPhotoStoragePath ?? '', width: null, height: null },
       ...deduped,
     ]
   }, [moment.coverPhotoUrl, moment.coverPhotoStoragePath, postMedia])
@@ -242,7 +242,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
         <div className="mx-auto max-w-[720px] px-4 md:px-6 py-4">
           <div className="rounded-xl border border-rw-accent/20 bg-rw-accent-subtle/40 p-4 space-y-3">
             <div className="space-y-1">
-              <p className="font-medium text-sm">You've been invited to this moment</p>
+              <p className="font-medium text-sm">You&rsquo;ve been invited to this moment</p>
               <p className="text-sm text-rw-text-muted">
                 Invited by {moment.ownerFirstName} {moment.ownerLastName}
               </p>
