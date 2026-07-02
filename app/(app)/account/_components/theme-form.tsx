@@ -54,7 +54,7 @@ export function ThemeForm({ initialTheme }: Props) {
       )}
 
       <div className="space-y-2">
-        <Select value={theme} onValueChange={(v) => v && setTheme(v)}>
+        <Select modal={false} value={theme} onValueChange={(v) => v && setTheme(v)}>
           <SelectTrigger className="w-full sm:w-72">
             <SelectValue>{selected.label}</SelectValue>
           </SelectTrigger>
