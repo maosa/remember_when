@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,12 +24,27 @@ interface Props {
 }
 
 export function DeleteAccountDialog({ username, sharedMoments }: Props) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [confirmation, setConfirmation] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const isBlocked = sharedMoments.length > 0
+
+  // Navigate to a moment from the blocked list. We close the dialog *before*
+  // navigating so Base UI releases its body scroll lock (overflow:hidden, which
+  // preserves the account page's scroll position) while this page is still
+  // mounted. If we let the plain <Link> navigate with the dialog still open, the
+  // locked scroll position leaks onto the destination and the moment page lands
+  // mid-page instead of at the top. Left-click only — let modifier/middle clicks
+  // open a new tab natively.
+  function openMoment(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+    e.preventDefault()
+    setOpen(false)
+    requestAnimationFrame(() => router.push(`/moments/${id}`))
+  }
 
   function handleDelete() {
     if (confirmation !== username) {
@@ -78,6 +94,7 @@ export function DeleteAccountDialog({ username, sharedMoments }: Props) {
                     <li key={m.id}>
                       <Link
                         href={`/moments/${m.id}`}
+                        onClick={(e) => openMoment(e, m.id)}
                         className="block truncate rounded px-2 py-1.5 text-sm text-rw-accent hover:bg-rw-surface-raised/70 hover:underline"
                       >
                         {m.name}
