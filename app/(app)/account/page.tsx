@@ -9,6 +9,7 @@ import { ThemeForm } from './_components/theme-form'
 import { AvatarUpload } from './_components/avatar-upload'
 import { ChangePasswordForm } from './_components/change-password-form'
 import { DeleteAccountDialog } from './_components/delete-account-dialog'
+import { listOwnedSharedMoments } from './actions'
 
 async function signOut() {
   'use server'
@@ -28,6 +29,10 @@ export default async function AccountPage() {
     .single()
 
   if (!profile) redirect('/login')
+
+  // Moments the user owns that are shared with others — deletion is blocked
+  // until ownership of each is transferred (or the moment is deleted).
+  const sharedMoments = await listOwnedSharedMoments(user!.id)
 
   // The user's own email comes from the auth session, not public.users — the
   // email column is not readable by the authenticated role (see
@@ -141,7 +146,7 @@ export default async function AccountPage() {
               <p className="text-sm font-medium">Delete account</p>
               <p className="text-sm text-rw-text-muted">Permanently remove your personal data</p>
             </div>
-            <DeleteAccountDialog username={profile.username} />
+            <DeleteAccountDialog username={profile.username} sharedMoments={sharedMoments} />
           </div>
         </section>
 

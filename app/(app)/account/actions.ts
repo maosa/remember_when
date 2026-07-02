@@ -184,9 +184,55 @@ export async function removeAvatar() {
 
 // ─── Delete account ─────────────────────────────────────────────────────────
 
-export async function deleteAccount() {
+/**
+ * Moments the user owns that are shared with other people — i.e. have at least
+ * one accepted member (any role). Deleting the account would cascade-delete
+ * these moments and every other member's posts/media in them, so ownership must
+ * be transferred (or the moment deleted) first.
+ *
+ * Uses the admin client because moment_members RLS only exposes the caller's own
+ * rows; reading other users' accepted memberships requires bypassing RLS.
+ */
+export async function listOwnedSharedMoments(
+  userId: string,
+): Promise<{ id: string; name: string }[]> {
+  const admin = createAdminClient()
+
+  const { data: ownedMoments } = await admin
+    .from('moments')
+    .select('id, name')
+    .eq('owner_id', userId)
+
+  const owned = ownedMoments ?? []
+  if (owned.length === 0) return []
+
+  const { data: acceptedMembers } = await admin
+    .from('moment_members')
+    .select('moment_id')
+    .in('moment_id', owned.map((m) => m.id))
+    .eq('status', 'accepted')
+
+  const sharedMomentIds = new Set((acceptedMembers ?? []).map((m) => m.moment_id))
+
+  return owned
+    .filter((m) => sharedMomentIds.has(m.id))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+export async function deleteAccount(): Promise<{ error?: string } | void> {
   const user = await requireUser()
   const supabase = await createClient()
+
+  // Guard: refuse to delete while the user still owns moments shared with other
+  // people. The account page pre-checks this, but re-verify here in case the
+  // client is stale or the state changed after the page rendered.
+  const sharedMoments = await listOwnedSharedMoments(user.id)
+  if (sharedMoments.length > 0) {
+    return {
+      error:
+        'You still own moments shared with other people. Transfer ownership before deleting your account.',
+    }
+  }
 
   // Audit log before deletion so user_id is still valid
   await logAuditEvent(user.id, 'account_deleted')
