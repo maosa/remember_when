@@ -44,6 +44,41 @@
 
 ---
 
+## Platform Themes (Alternate Palettes)
+
+Users can personalise the platform by choosing a colour palette from the **Theme** section on their account page. The choice is stored per-user (`users.theme`) and applied platform-wide by setting `data-theme="<slug>"` on the `<html>` element in the root layout. Each theme is a block in `app/globals.css` that overrides the sixteen `--rw-color-*` tokens; because every component styles itself from those tokens (via Tailwind v4's `@theme inline`), a single override re-themes the whole app with no component changes. Labels, descriptions, and the preview swatches shown in the picker live in `lib/themes.ts` — keep it in sync with the CSS.
+
+**Default** is the original palette documented in [Colour Palette](#colour-palette) above (slug `default`, no `data-theme` attribute). The four alternates below map onto the same sixteen roles, so all component guidance still applies — only the resolved colours change. The neutrals in each are tinted toward the theme's hue to keep surfaces cohesive; `--color-white` stays `#FFFFFF` in every theme.
+
+| Token | Ocean Sapphire Morning `ocean-sapphire` | Amethyst Wisteria Twilight `amethyst-wisteria` | Autumn Ruby Harmony `autumn-ruby` | Royal Gemstone Dusk `royal-gemstone` |
+|---|---|---|---|---|
+| `--color-bg` | `#EEF3F8` | `#F6F1F5` | `#F8F2EC` | `#F1F0F6` |
+| `--color-surface` | `#E4EBF2` | `#EFE7ED` | `#F0E8DF` | `#E7E5EF` |
+| `--color-surface-raised` | `#D8E2EC` | `#E7DCE6` | `#E8DDD1` | `#DDDAE9` |
+| `--color-text-primary` | `#1B2A3A` | `#2C2432` | `#33251E` | `#211E2E` |
+| `--color-text-muted` | `#5F7285` | `#786A78` | `#7F6F62` | `#6A657C` |
+| `--color-text-placeholder` | `#97A6B6` | `#ABA0AB` | `#B2A597` | `#9E99AC` |
+| `--color-accent` | `#2E6CB0` | `#8A4A79` | `#A62E3B` | `#4B3F8F` |
+| `--color-accent-hover` | `#235389` | `#723C64` | `#85242F` | `#3B3173` |
+| `--color-accent-subtle` | `#D5E3F2` | `#EAD8E6` | `#F1D9D6` | `#E1DCF1` |
+| `--color-blue` | `#4F94A8` | `#9A7BB8` | `#C67B3E` | `#2E8F86` |
+| `--color-blue-subtle` | `#DCECF0` | `#E9E1F3` | `#F5E5D4` | `#D9EDEA` |
+| `--color-border` | `#C9D7E4` | `#DBCED8` | `#DECFC2` | `#D3CFE0` |
+| `--color-border-subtle` | `#DEE7F0` | `#EBE1E8` | `#ECE1D6` | `#E5E2EE` |
+| `--color-danger` | `#C0392B` | `#BE3A50` | `#B03A2E` | `#C0392B` |
+| `--color-danger-subtle` | `#FBEAE8` | `#FBE9EC` | `#F7E2DE` | `#FBEAE8` |
+
+**Theme character:**
+
+- **Ocean Sapphire Morning** — cool, airy morning blues over a misty pale ground; a sapphire accent with a soft azure-teal secondary. The blue-ish option.
+- **Amethyst Wisteria Twilight** — a soft blush ground with a plum-amethyst accent and wisteria secondary. Dusky and romantic; the pink-ish option.
+- **Autumn Ruby Harmony** — warm cream with a ruby accent and copper-amber secondary. Cosy and nostalgic.
+- **Royal Gemstone Dusk** — jewel-toned dusk: a royal indigo-amethyst accent with an emerald-teal secondary over cool pearl.
+
+Note: in the alternate palettes `--color-blue` carries the theme's *secondary* accent (teal, wisteria, copper, emerald) rather than a literal blue — the token name is retained for continuity with existing components.
+
+---
+
 ## Typography
 
 | Role | Font | Weight | Size (desktop) | Size (mobile) |
