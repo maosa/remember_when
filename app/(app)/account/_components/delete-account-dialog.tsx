@@ -55,7 +55,7 @@ export function DeleteAccountDialog({ username, sharedMoments }: Props) {
       <DialogTrigger render={<Button variant="destructive" />}>
         Delete account
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent finalFocus={isBlocked ? false : undefined}>
         {isBlocked ? (
           <>
             <DialogHeader>
