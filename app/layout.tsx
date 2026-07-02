@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Lora, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { getServerUser } from "@/lib/supabase/server";
+import { getLayoutProfile } from "@/lib/cached-queries";
+import { DEFAULT_THEME } from "@/lib/themes";
 
 const lora = Lora({
   variable: "--font-lora",
@@ -37,14 +40,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Resolve the signed-in user's colour palette and apply it platform-wide via
+  // data-theme on <html>. Server-rendered so there's no flash of the default
+  // theme. Signed-out visitors fall back to the default (no attribute).
+  const {
+    data: { user },
+  } = await getServerUser();
+  const theme = user
+    ? (await getLayoutProfile(user.id))?.theme ?? DEFAULT_THEME
+    : DEFAULT_THEME;
+
   return (
     <html
       lang="en"
+      data-theme={theme !== DEFAULT_THEME ? theme : undefined}
       className={`${lora.variable} ${dmSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

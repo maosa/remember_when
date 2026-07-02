@@ -38,7 +38,7 @@ export const getLayoutProfile = cache(
         const admin = createAdminClient()
         const { data } = await admin
           .from('users')
-          .select('first_name, last_name, profile_photo_url')
+          .select('first_name, last_name, profile_photo_url, theme')
           .eq('id', userId)
           .single()
         return data

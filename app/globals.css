@@ -47,34 +47,38 @@
 
   /* ============================================================
      SHADCN SEMANTIC TOKENS — mapped to Remember When palette
+     Referenced from the --rw-color-* tokens above so that a single
+     [data-theme] override (which only sets --rw-color-*) re-themes both
+     the rw-prefixed utilities AND the shadcn primitives. Resolved values
+     are identical to the previous literal hex for the default theme.
      ============================================================ */
-  --background: #F5F2ED;
-  --foreground: #2C2A25;
-  --card: #EDEAE4;
-  --card-foreground: #2C2A25;
-  --popover: #EDEAE4;
-  --popover-foreground: #2C2A25;
-  --primary: #5C7A6B;
-  --primary-foreground: #FFFFFF;
-  --secondary: #EDEAE4;
-  --secondary-foreground: #2C2A25;
-  --muted: #E6E2DB;
-  --muted-foreground: #7C7670;
-  --accent: #D4E0DA;
-  --accent-foreground: #5C7A6B;
-  --destructive: #C0392B;
-  --border: #D6D1CB;
-  --input: #D6D1CB;
-  --ring: #5C7A6B;
+  --background: var(--rw-color-bg);
+  --foreground: var(--rw-color-text-primary);
+  --card: var(--rw-color-surface);
+  --card-foreground: var(--rw-color-text-primary);
+  --popover: var(--rw-color-surface);
+  --popover-foreground: var(--rw-color-text-primary);
+  --primary: var(--rw-color-accent);
+  --primary-foreground: var(--rw-color-white);
+  --secondary: var(--rw-color-surface);
+  --secondary-foreground: var(--rw-color-text-primary);
+  --muted: var(--rw-color-surface-raised);
+  --muted-foreground: var(--rw-color-text-muted);
+  --accent: var(--rw-color-accent-subtle);
+  --accent-foreground: var(--rw-color-accent);
+  --destructive: var(--rw-color-danger);
+  --border: var(--rw-color-border);
+  --input: var(--rw-color-border);
+  --ring: var(--rw-color-accent);
   --radius: 0.5rem;
-  --sidebar: #EDEAE4;
-  --sidebar-foreground: #2C2A25;
-  --sidebar-primary: #5C7A6B;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #D4E0DA;
-  --sidebar-accent-foreground: #5C7A6B;
-  --sidebar-border: #D6D1CB;
-  --sidebar-ring: #5C7A6B;
+  --sidebar: var(--rw-color-surface);
+  --sidebar-foreground: var(--rw-color-text-primary);
+  --sidebar-primary: var(--rw-color-accent);
+  --sidebar-primary-foreground: var(--rw-color-white);
+  --sidebar-accent: var(--rw-color-accent-subtle);
+  --sidebar-accent-foreground: var(--rw-color-accent);
+  --sidebar-border: var(--rw-color-border);
+  --sidebar-ring: var(--rw-color-accent);
 
   /* chart tokens — kept from original shadcn default, unused by this app */
   --chart-1: oklch(0.809 0.105 251.813);
@@ -85,6 +89,90 @@
 }
 
 /* Dark mode intentionally omitted — Remember When is light-only */
+
+/* ============================================================
+   ALTERNATE THEMES
+   Each block overrides only the 16 --rw-color-* tokens. Because the
+   shadcn semantic tokens above reference these, and @theme inline maps
+   every utility to var(--rw-color-*), setting data-theme on <html>
+   re-themes the entire platform with no component changes.
+   Swatch/label copy lives in lib/themes.ts — keep the two in sync.
+   ============================================================ */
+[data-theme="ocean-sapphire"] {
+  --rw-color-bg:               #EEF3F8;
+  --rw-color-surface:          #E4EBF2;
+  --rw-color-surface-raised:   #D8E2EC;
+  --rw-color-text-primary:     #1B2A3A;
+  --rw-color-text-muted:       #5F7285;
+  --rw-color-text-placeholder: #97A6B6;
+  --rw-color-accent:           #2E6CB0;
+  --rw-color-accent-hover:     #235389;
+  --rw-color-accent-subtle:    #D5E3F2;
+  --rw-color-blue:             #4F94A8;
+  --rw-color-blue-subtle:      #DCECF0;
+  --rw-color-border:           #C9D7E4;
+  --rw-color-border-subtle:    #DEE7F0;
+  --rw-color-danger:           #C0392B;
+  --rw-color-danger-subtle:    #FBEAE8;
+  --rw-color-white:            #FFFFFF;
+}
+
+[data-theme="amethyst-wisteria"] {
+  --rw-color-bg:               #F6F1F5;
+  --rw-color-surface:          #EFE7ED;
+  --rw-color-surface-raised:   #E7DCE6;
+  --rw-color-text-primary:     #2C2432;
+  --rw-color-text-muted:       #786A78;
+  --rw-color-text-placeholder: #ABA0AB;
+  --rw-color-accent:           #8A4A79;
+  --rw-color-accent-hover:     #723C64;
+  --rw-color-accent-subtle:    #EAD8E6;
+  --rw-color-blue:             #9A7BB8;
+  --rw-color-blue-subtle:      #E9E1F3;
+  --rw-color-border:           #DBCED8;
+  --rw-color-border-subtle:    #EBE1E8;
+  --rw-color-danger:           #BE3A50;
+  --rw-color-danger-subtle:    #FBE9EC;
+  --rw-color-white:            #FFFFFF;
+}
+
+[data-theme="autumn-ruby"] {
+  --rw-color-bg:               #F8F2EC;
+  --rw-color-surface:          #F0E8DF;
+  --rw-color-surface-raised:   #E8DDD1;
+  --rw-color-text-primary:     #33251E;
+  --rw-color-text-muted:       #7F6F62;
+  --rw-color-text-placeholder: #B2A597;
+  --rw-color-accent:           #A62E3B;
+  --rw-color-accent-hover:     #85242F;
+  --rw-color-accent-subtle:    #F1D9D6;
+  --rw-color-blue:             #C67B3E;
+  --rw-color-blue-subtle:      #F5E5D4;
+  --rw-color-border:           #DECFC2;
+  --rw-color-border-subtle:    #ECE1D6;
+  --rw-color-danger:           #B03A2E;
+  --rw-color-danger-subtle:    #F7E2DE;
+  --rw-color-white:            #FFFFFF;
+}
+
+[data-theme="royal-gemstone"] {
+  --rw-color-bg:               #F1F0F6;
+  --rw-color-surface:          #E7E5EF;
+  --rw-color-surface-raised:   #DDDAE9;
+  --rw-color-text-primary:     #211E2E;
+  --rw-color-text-muted:       #6A657C;
+  --rw-color-text-placeholder: #9E99AC;
+  --rw-color-accent:           #4B3F8F;
+  --rw-color-accent-hover:     #3B3173;
+  --rw-color-accent-subtle:    #E1DCF1;
+  --rw-color-blue:             #2E8F86;
+  --rw-color-blue-subtle:      #D9EDEA;
+  --rw-color-border:           #D3CFE0;
+  --rw-color-border-subtle:    #E5E2EE;
+  --rw-color-danger:           #C0392B;
+  --rw-color-danger-subtle:    #FBEAE8;
+  --rw-color-white:            #FFFFFF;
+}
 
 /* ============================================================
    TAILWIND v4 THEME REGISTRATION

@@ -9,6 +9,7 @@ import { validateAvatarFile, safeExt } from '@/lib/upload'
 import { isValidEmail } from '@/lib/validation'
 import { logAuditEvent } from '@/lib/audit'
 import { layoutProfileTag } from '@/lib/cached-queries'
+import { isThemeSlug } from '@/lib/themes'
 
 // ─── Profile (name + username only) ────────────────────────────────────────
 
@@ -45,6 +46,31 @@ export async function updateProfile(formData: FormData) {
 
   if (error) return { error: error.message }
 
+  revalidateTag(layoutProfileTag(user.id), { expire: 0 })
+  revalidatePath('/account')
+  return { success: true }
+}
+
+// ─── Theme (platform colour palette) ───────────────────────────────────────
+
+export async function updateTheme(formData: FormData) {
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const theme = formData.get('theme')
+  if (!isThemeSlug(theme)) {
+    return { error: 'Please choose a valid theme.' }
+  }
+
+  const { error } = await supabase
+    .from('users')
+    .update({ theme })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  // Busts the layout-profile cache the root layout reads, so router.refresh()
+  // re-renders <html> with the new data-theme across the whole app.
   revalidateTag(layoutProfileTag(user.id), { expire: 0 })
   revalidatePath('/account')
   return { success: true }

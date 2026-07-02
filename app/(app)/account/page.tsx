@@ -5,6 +5,7 @@ import { createClient, getServerUser } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ProfileForm } from './_components/profile-form'
+import { ThemeForm } from './_components/theme-form'
 import { AvatarUpload } from './_components/avatar-upload'
 import { ChangePasswordForm } from './_components/change-password-form'
 import { DeleteAccountDialog } from './_components/delete-account-dialog'
@@ -22,7 +23,7 @@ export default async function AccountPage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('first_name, last_name, username, profile_photo_url')
+    .select('first_name, last_name, username, profile_photo_url, theme')
     .eq('id', user!.id)
     .single()
 
@@ -72,6 +73,14 @@ export default async function AccountPage() {
               username: profile.username,
             }}
           />
+        </section>
+
+        <Separator />
+
+        {/* Theme */}
+        <section className="space-y-4">
+          <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Theme</h2>
+          <ThemeForm initialTheme={profile.theme ?? 'default'} />
         </section>
 
         <Separator />
