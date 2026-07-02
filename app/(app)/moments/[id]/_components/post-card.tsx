@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { cn } from '@/lib/utils'
 import { getOptimizedUrl } from '@/lib/storage'
 import { deletePost, type PostWithMedia } from '../actions'
 
