@@ -138,9 +138,16 @@ export default function PricingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                {isAuthenticated ? (
-                  <p className="h-8 flex items-center text-sm text-rw-text-muted">
-                    ✓ Your current plan
+                {auth.status === 'loading' ? (
+                  // Reserve footer height until auth resolves so the CTA never
+                  // flashes before swapping to the current-plan indicator.
+                  <div className="h-9 w-full" aria-hidden />
+                ) : isAuthenticated ? (
+                  <p className="h-9 flex items-center gap-2 text-sm font-semibold text-rw-text-primary">
+                    <span className="shrink-0 flex size-5 items-center justify-center rounded-full bg-rw-accent-subtle">
+                      <Check className="size-3 text-rw-accent" />
+                    </span>
+                    Your current plan
                   </p>
                 ) : (
                   <Link href="/signup" className={cn(buttonVariants(), 'w-full justify-center')}>
