@@ -58,7 +58,12 @@ export function ThemeForm({ initialTheme }: Props) {
           <SelectTrigger className="w-full sm:w-72">
             <SelectValue>{selected.label}</SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          {/* alignItemWithTrigger={false}: Base UI locks page scroll whenever
+              (alignItemWithTriggerActive || modal) is true. With the default
+              native-select alignment that lock stays on even with modal={false},
+              so we opt into a standard anchored popover — the page scrolls while
+              the dropdown is open, and the list still scrolls on its own. */}
+          <SelectContent alignItemWithTrigger={false}>
             {THEMES.map((t) => (
               <SelectItem key={t.slug} value={t.slug}>
                 {t.label}
