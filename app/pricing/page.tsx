@@ -151,7 +151,7 @@ export default function PricingPage() {
                   </p>
                 ) : (
                   <Link href="/signup" className={cn(buttonVariants(), 'w-full justify-center')}>
-                    Get started free
+                    Get started for free
                   </Link>
                 )}
               </CardFooter>
