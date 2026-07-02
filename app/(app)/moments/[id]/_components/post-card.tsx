@@ -49,7 +49,7 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
         <img
           src={getOptimizedUrl(photos[0].storageUrl, 800) ?? photos[0].storageUrl}
           alt="" loading="lazy" decoding="async"
-          className="w-full max-h-72 object-cover bg-rw-surface-raised"
+          className="w-full aspect-video object-cover bg-rw-surface-raised"
         />
       </button>
     )
