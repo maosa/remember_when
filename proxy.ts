@@ -46,6 +46,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/auth') ||
     pathname.startsWith('/monitoring') || // Sentry tunnel (next.config.ts) — must reach Sentry even when logged out
     pathname === '/pricing' ||
+    pathname === '/terms' || // legal pages — publicly accessible (linked from signup)
+    pathname === '/privacy' ||
     pathname === '/' // landing page — publicly accessible
 
   // Helper: redirect while preserving any Supabase cookie updates

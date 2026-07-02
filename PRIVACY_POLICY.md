@@ -1,10 +1,8 @@
-> **Draft — not yet reviewed by a lawyer.** Prepared with the help of an AI assistant based on a review of the Remember When codebase and product spec. Treat this as a strong first draft, not final legal text.
-
 # Privacy Policy
 
-**Last updated: [date]**
+**Last updated: 2 July 2026**
 
-This Privacy Policy explains how Remember When ("we", "us", "our") collects, uses, and protects your personal data. Remember When is currently operated by Andreas [Last name], an individual based in the United Kingdom, pending incorporation of a formal legal entity. It applies to everyone who uses the Service, wherever in the world you're located — Remember When is built for a global user base.
+This Privacy Policy explains how Remember When ("we", "us", "our") collects, uses, and protects your personal data. Remember When is currently operated by Andreas Maos, an individual based in the United Kingdom, pending incorporation of a formal legal entity. It applies to everyone who uses the Service, wherever in the world you're located — Remember When is built for a global user base.
 
 This Policy should be read alongside our [Terms of Service](./TERMS_OF_SERVICE.md).
 
@@ -86,7 +84,7 @@ Wherever you're located, you can ask us to:
 
 If you're in the UK, you also have the right to lodge a complaint with the [Information Commissioner's Office (ICO)](https://ico.org.uk/). If you're in the EU, you can complain to your local data protection authority. If you're a California resident, you have rights under the CCPA/CPRA to know what personal information we collect and to request its deletion, as described above — we don't sell personal information, so there's no "opt out of sale" to exercise.
 
-To exercise any of these rights, contact us at [contact email]. We'll respond within the timeframe required by applicable law (generally one month under UK/EU GDPR).
+To exercise any of these rights, contact us at andreasmaos@gmail.com. We'll respond within the timeframe required by applicable law (generally one month under UK/EU GDPR).
 
 ## 8. Children's privacy
 
@@ -102,4 +100,4 @@ We'll update this Policy as the Service evolves, and notify users in-app or by e
 
 ## 11. Contact
 
-Questions, requests, or complaints about this Policy: [contact email].
+Questions, requests, or complaints about this Policy: andreasmaos@gmail.com.

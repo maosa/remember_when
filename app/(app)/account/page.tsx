@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Bell, ChevronRight, CreditCard, LogOut } from 'lucide-react'
+import { Bell, ChevronRight, CreditCard, FileText, LogOut, ShieldCheck } from 'lucide-react'
 import { createClient, getServerUser } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -130,6 +130,46 @@ export default async function AccountPage() {
               <div>
                 <p className="text-sm font-medium">Pricing & Plans</p>
                 <p className="text-xs text-rw-text-muted">View available plans and features</p>
+              </div>
+            </div>
+            <ChevronRight className="size-4 text-rw-text-muted shrink-0" />
+          </Link>
+        </section>
+
+        <Separator />
+
+        {/* Terms of Service */}
+        <section className="space-y-4">
+          <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Terms of Service</h2>
+          <Link
+            href="/terms"
+            className="flex items-center justify-between rounded-rw-card border border-rw-border-subtle bg-rw-surface px-4 py-3 hover:bg-rw-surface-raised/70 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className="size-4 text-rw-text-muted shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Terms of Service</p>
+                <p className="text-xs text-rw-text-muted">Read the terms you agreed to</p>
+              </div>
+            </div>
+            <ChevronRight className="size-4 text-rw-text-muted shrink-0" />
+          </Link>
+        </section>
+
+        <Separator />
+
+        {/* Privacy Policy */}
+        <section className="space-y-4">
+          <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Privacy Policy</h2>
+          <Link
+            href="/privacy"
+            className="flex items-center justify-between rounded-rw-card border border-rw-border-subtle bg-rw-surface px-4 py-3 hover:bg-rw-surface-raised/70 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="size-4 text-rw-text-muted shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Privacy Policy</p>
+                <p className="text-xs text-rw-text-muted">How we handle your data</p>
               </div>
             </div>
             <ChevronRight className="size-4 text-rw-text-muted shrink-0" />

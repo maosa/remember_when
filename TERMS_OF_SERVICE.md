@@ -1,10 +1,8 @@
-> **Draft — not yet reviewed by a lawyer.** This document was prepared with the help of an AI assistant based on a review of the Remember When product spec and codebase. It is a strong starting point, not a substitute for legal advice. Bracketed items like `[Last name]` need to be filled in, and we'd recommend a qualified solicitor review this before it governs real users, especially once payments or an incorporated entity are introduced.
-
 # Terms of Service
 
-**Last updated: [date]**
+**Last updated: 2 July 2026**
 
-Remember When ("**we**", "**us**", "**our**") is currently operated by Andreas [Last name] ("the **operator**"), an individual based in the United Kingdom, pending incorporation of a formal legal entity. These Terms of Service ("**Terms**") govern your access to and use of the Remember When website and application (the "**Service**"). By creating an account or otherwise using the Service, you agree to these Terms. If you don't agree, don't use the Service.
+Remember When ("**we**", "**us**", "**our**") is currently operated by Andreas Maos ("the **operator**"), an individual based in the United Kingdom, pending incorporation of a formal legal entity. These Terms of Service ("**Terms**") govern your access to and use of the Remember When website and application (the "**Service**"). By creating an account or otherwise using the Service, you agree to these Terms. If you don't agree, don't use the Service.
 
 Our [Privacy Policy](./PRIVACY_POLICY.md) explains how we collect and use your data and is incorporated into these Terms by reference.
 
@@ -63,7 +61,7 @@ We may remove content or suspend accounts that violate this section. Because mom
 
 ## 7. Reporting and moderation
 
-If someone shares a moment with you and posts something that violates these Terms, you can leave the moment and/or contact us at [contact email] to report it. Because we don't access private moment content as a matter of course (see our Privacy Policy's security section), our ability to act on a report depends on what you're able to describe or show us, or, where necessary, limited internal access to investigate the specific report.
+If someone shares a moment with you and posts something that violates these Terms, you can leave the moment and/or contact us at andreasmaos@gmail.com to report it. Because we don't access private moment content as a matter of course (see our Privacy Policy's security section), our ability to act on a report depends on what you're able to describe or show us, or, where necessary, limited internal access to investigate the specific report.
 
 ## 8. Paid plans
 
@@ -92,8 +90,4 @@ If you live somewhere that gives you consumer protection rights that can't be wa
 
 ## 13. Contact
 
-Questions about these Terms: [contact email].
-
----
-
-*This document does not currently address: a formal Acceptable Use Policy annex, DMCA/copyright takedown procedure, arbitration/small-claims carve-outs, or billing terms — these should be added before or as paid plans launch. See the accompanying note at the top of this document.*
+Questions about these Terms: andreasmaos@gmail.com.

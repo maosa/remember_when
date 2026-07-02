@@ -617,7 +617,7 @@ export default function LandingPage() {
         >
           Remember When
         </Link>
-        <nav className="flex gap-6">
+        <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
           <Link href="/pricing" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
             Pricing
           </Link>
@@ -626,6 +626,12 @@ export default function LandingPage() {
           </Link>
           <Link href="/signup" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
             Get started
+          </Link>
+          <Link href="/terms" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
+            Terms
+          </Link>
+          <Link href="/privacy" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
+            Privacy
           </Link>
         </nav>
         <p className="text-[12px] text-rw-text-placeholder">© 2026 Remember When</p>

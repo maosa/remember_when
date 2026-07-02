@@ -6,9 +6,11 @@ import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { FormError } from '@/components/ui/form-error'
 import { createClient } from '@/lib/supabase/client'
+import { TERMS_VERSION, PRIVACY_VERSION } from '@/lib/legal'
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 type EmailStatus = 'idle' | 'checking' | 'available' | 'taken'
@@ -21,6 +23,7 @@ export default function SignupPage() {
     username: '',
     password: '',
   })
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
   const [emailStatus, setEmailStatus] = useState<EmailStatus>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -120,6 +123,10 @@ export default function SignupPage() {
       setError('Please wait — checking username availability.')
       return
     }
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service to continue.')
+      return
+    }
 
     setLoading(true)
     const supabase = createClient()
@@ -132,6 +139,8 @@ export default function SignupPage() {
           first_name: formData.firstName,
           last_name: formData.lastName,
           username: formData.username.toLowerCase(),
+          terms_version: TERMS_VERSION,
+          privacy_version: PRIVACY_VERSION,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -298,6 +307,36 @@ export default function SignupPage() {
                 minLength={8}
               />
             </div>
+
+            {/* Clickwrap — agreement to Terms + acknowledgement of Privacy Policy */}
+            <label className="flex items-start gap-2.5 pt-1 cursor-pointer">
+              <Checkbox
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked)}
+                className="mt-0.5"
+              />
+              <span className="text-[13px] leading-snug text-rw-text-muted">
+                I agree to the{' '}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-rw-text-primary underline underline-offset-2 hover:text-rw-accent transition-colors"
+                >
+                  Terms of Service
+                </Link>
+                {' '}and have read the{' '}
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-rw-text-primary underline underline-offset-2 hover:text-rw-accent transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
           </CardContent>
 
           <CardFooter className="flex flex-col gap-3 pt-1">
@@ -313,7 +352,8 @@ export default function SignupPage() {
                 formData.password.length < 8 ||
                 emailStatus === 'taken' ||
                 emailStatus === 'checking' ||
-                usernameStatus !== 'available'
+                usernameStatus !== 'available' ||
+                !agreedToTerms
               }
             >
               {loading ? 'Creating account…' : 'Create account'}
