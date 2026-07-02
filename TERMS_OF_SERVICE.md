@@ -36,8 +36,9 @@ Roles can change over time (e.g., a reader promoted to editor), and role changes
 - **You own what you create.** You retain ownership of the posts, photos, videos, voice recordings, and other content you upload ("**User Content**").
 - **License to us.** By posting User Content, you grant us a limited, non-exclusive, royalty-free license to host, store, reproduce, and display that content **solely for the purpose of operating the Service** — i.e., showing it to you and to the specific people you've shared the relevant moment with. We do not use your content to train AI models, sell it, or license it to third parties, and we do not display it publicly.
 - **License to other moment members.** When you post into a shared moment, you're granting the other current members of that moment (per their role) the ability to view it, and — if they're an editor — to delete it, for as long as they remain a member and the moment exists. This is what makes shared moments work; if you're not comfortable with an editor being able to remove your post, don't post to a moment they edit.
-- **What happens if you leave a moment.** When you leave a moment (or are removed), you choose whether your existing posts stay in the moment (attributed to you) or are deleted. If you delete your account entirely, your posts remain in any shared moments you were part of, attributed to your (now-deleted) username, unless you chose to delete them first — see our Privacy Policy for full detail on account deletion.
-- **What happens if a moment is deleted.** An owner can delete an entire moment (this is only possible in specific circumstances described in-app, generally when no editor exists to transfer ownership to). This is permanent, deletes all posts and media in the moment, and notifies every member.
+- **What happens if you leave a moment.** When you leave a moment (or are removed), you choose whether your existing posts stay in the moment (attributed to you) or are deleted.
+- **What happens if you delete your account.** Deleting your account is permanent and deletes **every post you've ever authored, across every moment** — including moments owned by other people. It does not leave your posts behind, attributed to you. If you own a moment that's shared with anyone else (i.e. it has at least one other member who has accepted membership), you **cannot** delete your account until you transfer ownership of that moment to another member, or delete the moment yourself. This is required specifically so that deleting your own account can never silently destroy a moment — or the posts and media within it — that belongs to other people too. Moments you own with nobody else on them are deleted along with your account. See our Privacy Policy for full detail.
+- **What happens if a moment is deleted.** An owner can delete an entire moment (this happens automatically for solely-owned moments when the owner deletes their account, or manually in-app, generally when no editor exists to transfer ownership to). This is permanent, deletes all posts and media in the moment, and notifies every member.
 
 ## 5. Inviting others
 
@@ -70,7 +71,7 @@ Remember When is currently free to use, with a placeholder pricing page indicati
 
 ## 9. Termination
 
-- **By you:** you can delete your account at any time from Account → Danger zone. This permanently removes your personal data; posts you left in shared moments remain, attributed to you, unless you separately delete them first.
+- **By you:** you can delete your account at any time from Account → Danger zone, by typing your username to confirm. This permanently removes your personal data and every post you've authored anywhere on the Service. If you own a moment shared with others, you'll need to transfer ownership of it first — see Section 4.
 - **By us:** we may suspend or terminate your account for violating these Terms, extended inactivity, or if we discontinue the Service. Where practical, we'll give notice first.
 
 ## 10. Disclaimers and limitation of liability

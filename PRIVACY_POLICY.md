@@ -1,4 +1,4 @@
-> **Draft — not yet reviewed by a lawyer.** Prepared with the help of an AI assistant based on a review of the Remember When codebase and product spec. Treat this as a strong first draft, not final legal text — a section below (marked ⚠️) is intentionally left unresolved pending a product decision. See the accompanying note from your assistant for details.
+> **Draft — not yet reviewed by a lawyer.** Prepared with the help of an AI assistant based on a review of the Remember When codebase and product spec. Treat this as a strong first draft, not final legal text.
 
 # Privacy Policy
 
@@ -70,19 +70,17 @@ We continue to harden this over time (row-level security, storage access policie
 
 ## 6. Data retention and deletion
 
-⚠️ **This section is pending a product decision — see the note accompanying this draft.** The behaviour described in the product spec and in-app copy (deleting your account removes your personal data while posts you left in shared moments remain, attributed to you) does not currently match how the database is configured, and we don't want to publish a retention promise that isn't true. Once that's resolved, this section should state plainly and accurately what happens to (a) your own posts in moments you don't own, and (b) moments you *do* own, when you delete your account.
-
-What we can confirm today:
-- You can delete your account at any time from Account → Danger zone, which requires typing your username to confirm.
-- Deleting your account removes your profile (name, username, email, profile photo) and signs you out everywhere.
-- If you leave a moment (without deleting your account), you're asked whether to delete your posts from that moment or leave them for other members to see.
+- **Leaving a moment.** If you leave a moment (without deleting your account), you're asked whether to delete your posts from that moment or leave them for other members to see, and you decide.
+- **Deleting your account.** You can delete your account at any time from Account → Danger zone, by typing your username to confirm. Deletion is permanent and removes your profile (name, username, email, profile photo) and **every post you've authored anywhere on the Service**, including posts in moments owned by other people. Posts do not remain behind, attributed to you, once your account is deleted.
+- **Moments you own.** If you own a moment that's shared with anyone else (i.e. it has at least one other member who has accepted membership), you cannot delete your account until you either transfer ownership of that moment to another member or delete the moment yourself — you'll be shown a list of the specific moments blocking deletion. This exists so that deleting your own account can never silently destroy content belonging to other people. Moments you own that nobody else has joined are deleted automatically along with your account.
+- Deletion is enforced at the database level (not just in the app), so once it completes it cannot be reversed by us or by you — there is no recovery window.
 
 ## 7. Your rights
 
 Wherever you're located, you can ask us to:
 - **Access** a copy of your personal data
 - **Correct** inaccurate data (most of this you can already do yourself in Account settings)
-- **Delete** your data (Account → Danger zone, or by contacting us)
+- **Delete** your data (Account → Danger zone, or by contacting us — note that if you own a moment shared with others, you'll need to transfer its ownership before account deletion can proceed, per Section 6)
 - **Export** your data in a portable format
 - **Object to or restrict** certain processing, and **withdraw consent** for anything we process on that basis (e.g. reminder emails, via Settings)
 
