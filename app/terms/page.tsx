@@ -5,6 +5,10 @@ import Link from 'next/link'
 import { MarkdownDocument } from '@/components/legal/markdown-document'
 import { SitePageChrome } from '@/components/site-page-chrome'
 
+// Content is a static markdown file read at build; the auth-dependent header
+// resolves client-side, so the prerendered HTML is the same for everyone.
+export const dynamic = 'force-static'
+
 export const metadata: Metadata = {
   title: 'Terms of Service — Remember When',
   description: 'The terms that govern your use of Remember When.',
