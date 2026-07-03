@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { FormError } from '@/components/ui/form-error'
 import { createClient } from '@/lib/supabase/client'
-import { TERMS_VERSION, PRIVACY_VERSION } from '@/lib/legal'
+import { recordSignupAcceptance } from '@/lib/legal-acceptance'
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 type EmailStatus = 'idle' | 'checking' | 'available' | 'taken'
@@ -131,7 +131,7 @@ export default function SignupPage() {
     setLoading(true)
     const supabase = createClient()
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
       options: {
@@ -139,8 +139,6 @@ export default function SignupPage() {
           first_name: formData.firstName,
           last_name: formData.lastName,
           username: formData.username.toLowerCase(),
-          terms_version: TERMS_VERSION,
-          privacy_version: PRIVACY_VERSION,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -150,6 +148,18 @@ export default function SignupPage() {
       setError(error.message)
       setLoading(false)
       return
+    }
+
+    // Record acceptance of the current Terms & Privacy versions against the
+    // freshly-created account (the public.users row is created synchronously by
+    // the handle_new_auth_user trigger). Server-side admin insert; best-effort so
+    // a logging hiccup never blocks the completed signup.
+    if (data.user) {
+      try {
+        await recordSignupAcceptance(data.user.id)
+      } catch {
+        // Non-fatal — the account exists; acceptance can be reconciled later.
+      }
     }
 
     setSuccess(true)

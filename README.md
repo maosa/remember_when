@@ -29,7 +29,7 @@ The full functional spec, data model, and build history live in [`product_spec.d
 - [Terms of Service](./TERMS_OF_SERVICE.md)
 - [Privacy Policy](./PRIVACY_POLICY.md)
 
-Both are rendered as public pages at `/terms` and `/privacy` (server-rendered from the markdown files above, themed per user) and pending full legal review. Sign-up requires accepting both via a checkbox; the accepted version and timestamp are recorded per user (`terms_version` / `terms_accepted_at` / `privacy_version` / `privacy_accepted_at` columns on `public.users`) so material changes can trigger re-acceptance per Terms §11 — see `supabase/migrations/20260702_add_terms_acceptance.sql`. Existing accounts are left null until their next acceptance (not backfilled).
+Both are rendered as public pages at `/terms` and `/privacy` (server-rendered from the markdown files above, themed per user) and pending full legal review. Sign-up requires accepting both via a checkbox; acceptances are version-tracked in the `legal_acceptances` table — one row per user, document (`terms` / `privacy`), and version (the document's "Last updated" date, sourced from `lib/legal.ts`), with a `method` of `signup` or `retroactive`. Writes go through the service-role client (no user-facing insert policy, like `audit_logs`). Existing accounts were backfilled at the current version — see `supabase/migrations/20260703_legal_acceptances.sql` and `..._backfill.sql`. Re-acceptance prompting when a version changes is future work; the schema supports it (compare each user's latest accepted version to the current constant).
 
 ## Tech stack
 
