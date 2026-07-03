@@ -32,24 +32,31 @@ export default function SignupPage() {
   const usernameTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const emailTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Username availability check — via RPC (SECURITY DEFINER, no admin key needed)
+  // Clear any pending debounce timers on unmount.
   useEffect(() => {
-    const username = formData.username.trim()
+    return () => {
+      if (usernameTimer.current) clearTimeout(usernameTimer.current)
+      if (emailTimer.current) clearTimeout(emailTimer.current)
+    }
+  }, [])
+
+  // Username availability check — debounced, via RPC (SECURITY DEFINER, no admin
+  // key needed). Driven from the change handler rather than an effect so the
+  // immediate status update stays out of an effect body.
+  function scheduleUsernameCheck(raw: string) {
+    const username = raw.trim()
+    if (usernameTimer.current) clearTimeout(usernameTimer.current)
 
     if (!username) {
       setUsernameStatus('idle')
       return
     }
-
     if (!/^[a-z0-9_]{3,20}$/.test(username.toLowerCase())) {
       setUsernameStatus('invalid')
       return
     }
 
     setUsernameStatus('checking')
-
-    if (usernameTimer.current) clearTimeout(usernameTimer.current)
-
     usernameTimer.current = setTimeout(async () => {
       try {
         const supabase = createClient()
@@ -60,15 +67,13 @@ export default function SignupPage() {
         setUsernameStatus('idle')
       }
     }, 500)
+  }
 
-    return () => {
-      if (usernameTimer.current) clearTimeout(usernameTimer.current)
-    }
-  }, [formData.username])
-
-  // Email already-registered check — via RPC (SECURITY DEFINER, no admin key needed)
-  useEffect(() => {
-    const email = formData.email.trim()
+  // Email already-registered check — debounced, via RPC (SECURITY DEFINER, no
+  // admin key needed).
+  function scheduleEmailCheck(raw: string) {
+    const email = raw.trim()
+    if (emailTimer.current) clearTimeout(emailTimer.current)
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setEmailStatus('idle')
@@ -76,9 +81,6 @@ export default function SignupPage() {
     }
 
     setEmailStatus('checking')
-
-    if (emailTimer.current) clearTimeout(emailTimer.current)
-
     emailTimer.current = setTimeout(async () => {
       try {
         const supabase = createClient()
@@ -89,14 +91,13 @@ export default function SignupPage() {
         setEmailStatus('idle')
       }
     }, 600)
-
-    return () => {
-      if (emailTimer.current) clearTimeout(emailTimer.current)
-    }
-  }, [formData.email])
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (name === 'username') scheduleUsernameCheck(value)
+    else if (name === 'email') scheduleEmailCheck(value)
   }
 
   async function handleSubmit(e: React.FormEvent) {
