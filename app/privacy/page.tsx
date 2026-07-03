@@ -3,6 +3,7 @@ import path from 'node:path'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MarkdownDocument } from '@/components/legal/markdown-document'
+import { SitePageChrome } from '@/components/site-page-chrome'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — Remember When',
@@ -16,19 +17,8 @@ export default async function PrivacyPage() {
   )
 
   return (
-    <main className="min-h-screen bg-rw-bg flex flex-col">
-      <header className="border-b border-rw-border-subtle px-6 py-5">
-        <div className="max-w-[760px] mx-auto">
-          <Link
-            href="/"
-            className="font-serif text-[16px] font-semibold text-rw-text-primary tracking-tight"
-          >
-            Remember When
-          </Link>
-        </div>
-      </header>
-
-      <div className="max-w-[760px] w-full mx-auto px-6 py-12 md:py-16 flex-1">
+    <SitePageChrome>
+      <div className="max-w-[760px] w-full mx-auto px-6 py-12 md:py-16">
         <MarkdownDocument content={content} />
 
         <div className="mt-12 pt-6 border-t border-rw-border-subtle">
@@ -40,6 +30,6 @@ export default async function PrivacyPage() {
           </Link>
         </div>
       </div>
-    </main>
+    </SitePageChrome>
   )
 }

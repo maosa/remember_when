@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -8,8 +7,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/client'
-import { AppNav } from '@/components/app-nav'
+import { SitePageChrome, useSitePageAuth } from '@/components/site-page-chrome'
 import { formatPrice, type CurrencyCode } from '@/lib/pricing/currency'
 
 const FREE_FEATURES = [
@@ -28,82 +26,21 @@ const PLUS_FEATURES = [
   'Priority support',
 ]
 
-type AuthState =
-  | { status: 'loading' }
-  | { status: 'unauthenticated' }
-  | { status: 'authenticated'; user: { firstName: string; lastName: string; photoUrl: string | null }; unreadCount: number }
-
 export function PricingClient({ currency }: { currency: CurrencyCode }) {
-  const [auth, setAuth] = useState<AuthState>({ status: 'loading' })
+  return (
+    <SitePageChrome>
+      <PricingContent currency={currency} />
+    </SitePageChrome>
+  )
+}
 
-  useEffect(() => {
-    async function checkAuth() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        setAuth({ status: 'unauthenticated' })
-        return
-      }
-
-      const [profileRes, unreadRes] = await Promise.all([
-        supabase
-          .from('users')
-          .select('first_name, last_name, profile_photo_url')
-          .eq('id', user.id)
-          .single(),
-        supabase
-          .from('notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('read', false),
-      ])
-
-      setAuth({
-        status: 'authenticated',
-        user: {
-          firstName: profileRes.data?.first_name ?? '',
-          lastName: profileRes.data?.last_name ?? '',
-          photoUrl: profileRes.data?.profile_photo_url ?? null,
-        },
-        unreadCount: unreadRes.count ?? 0,
-      })
-    }
-
-    checkAuth()
-  }, [])
-
+// Rendered inside SitePageChrome so it can read auth state from context.
+function PricingContent({ currency }: { currency: CurrencyCode }) {
+  const auth = useSitePageAuth()
   const isAuthenticated = auth.status === 'authenticated'
 
   return (
-    <div className="min-h-screen bg-rw-bg flex flex-col">
-      {/* Header — authenticated: full app nav; guest: sign-in/get-started; loading: placeholder */}
-      {auth.status === 'loading' && (
-        <header className="border-b border-rw-border-subtle bg-rw-bg/95 h-14 shrink-0" />
-      )}
-      {auth.status === 'unauthenticated' && (
-        <header className="border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm shrink-0">
-          <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
-            <Link href="/" className="font-serif text-[18px] font-semibold tracking-tight">
-              Remember When
-            </Link>
-            <div className="flex items-center gap-2">
-              <Link href="/login" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
-                Sign in
-              </Link>
-              <Link href="/signup" className={buttonVariants({ size: 'sm' })}>
-                Get started
-              </Link>
-            </div>
-          </div>
-        </header>
-      )}
-      {auth.status === 'authenticated' && (
-        <AppNav user={auth.user} unreadCount={auth.unreadCount} />
-      )}
-
-      {/* Main — offset for fixed AppNav when authenticated */}
-      <main className={cn('flex-1', isAuthenticated && 'md:pt-14 pb-20 md:pb-0')}>
+    <>
         {/* Hero */}
         <section className="max-w-[1100px] mx-auto px-6 pt-16 pb-12 text-center">
           <h1 className="text-3xl font-semibold tracking-tight mb-3">Simple, honest pricing</h1>
@@ -195,7 +132,6 @@ export function PricingClient({ currency }: { currency: CurrencyCode }) {
             Early users are grandfathered in at launch-era limits.
           </p>
         </section>
-      </main>
-    </div>
+    </>
   )
 }
