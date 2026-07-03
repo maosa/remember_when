@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { FormError } from '@/components/ui/form-error'
 import { createClient } from '@/lib/supabase/client'
-import { recordSignupAcceptance } from '@/lib/legal-acceptance'
+import { recordLegalAcceptance } from '@/lib/legal-acceptance'
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 type EmailStatus = 'idle' | 'checking' | 'available' | 'taken'
@@ -157,7 +157,7 @@ export default function SignupPage() {
     // a logging hiccup never blocks the completed signup.
     if (data.user) {
       try {
-        await recordSignupAcceptance(data.user.id)
+        await recordLegalAcceptance(data.user.id, 'signup')
       } catch {
         // Non-fatal — the account exists; acceptance can be reconciled later.
       }

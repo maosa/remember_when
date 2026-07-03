@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
@@ -29,6 +31,7 @@ export default function CompleteProfilePage() {
     password: '',
   })
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -41,8 +44,16 @@ export default function CompleteProfilePage() {
     })
   }, [])
 
+  // Clear the pending debounce timer on unmount.
   useEffect(() => {
-    const username = formData.username.trim()
+    return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current) }
+  }, [])
+
+  // Username availability check — debounced, driven from the change handler so
+  // the immediate status update stays out of an effect body.
+  function scheduleUsernameCheck(raw: string) {
+    const username = raw.trim()
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
 
     if (!username) { setUsernameStatus('idle'); return }
     if (!/^[a-z0-9_]{3,20}$/.test(username.toLowerCase())) {
@@ -50,8 +61,6 @@ export default function CompleteProfilePage() {
     }
 
     setUsernameStatus('checking')
-    if (debounceTimer.current) clearTimeout(debounceTimer.current)
-
     debounceTimer.current = setTimeout(async () => {
       const supabase = createClient()
       const { data } = await supabase
@@ -61,12 +70,12 @@ export default function CompleteProfilePage() {
         .maybeSingle()
       setUsernameStatus(data ? 'taken' : 'available')
     }, 500)
-
-    return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current) }
-  }, [formData.username])
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (name === 'username') scheduleUsernameCheck(value)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -76,6 +85,7 @@ export default function CompleteProfilePage() {
     if (usernameStatus === 'taken') { setError('Username is already taken.'); return }
     if (usernameStatus === 'invalid') { setError('Username must be 3–20 characters: letters, numbers, underscores only.'); return }
     if (usernameStatus === 'checking') { setError('Please wait — checking username availability.'); return }
+    if (!agreedToTerms) { setError('Please agree to the Terms of Service to continue.'); return }
 
     setLoading(true)
 
@@ -87,6 +97,7 @@ export default function CompleteProfilePage() {
         lastName: formData.lastName.trim(),
         username: formData.username.toLowerCase().trim(),
         password: formData.password || undefined,
+        acceptedTerms: agreedToTerms,
       }),
     })
 
@@ -184,12 +195,42 @@ export default function CompleteProfilePage() {
               />
               <p className="text-xs text-rw-text-muted">At least 8 characters with one uppercase letter and one number.</p>
             </div>
+
+            {/* Clickwrap — agreement to Terms + acknowledgement of Privacy Policy */}
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <Checkbox
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked)}
+                className="mt-0.5"
+              />
+              <span className="text-[13px] leading-snug text-rw-text-muted">
+                I agree to the{' '}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-rw-text-primary underline underline-offset-2 hover:text-rw-accent transition-colors"
+                >
+                  Terms of Service
+                </Link>
+                {' '}and have read the{' '}
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-rw-text-primary underline underline-offset-2 hover:text-rw-accent transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
           </CardContent>
           <CardFooter>
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking'}
+              disabled={loading || usernameStatus === 'taken' || usernameStatus === 'checking' || !agreedToTerms}
             >
               {loading ? <><Loader2 className="size-4 animate-spin mr-2" />Saving…</> : 'Save and continue'}
             </Button>

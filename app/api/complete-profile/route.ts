@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { recordLegalAcceptance } from '@/lib/legal-acceptance'
 
 /**
  * POST /api/complete-profile
@@ -9,7 +10,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * via the Supabase implicit-flow invite link), then resolves any pending
  * moment_members.invited_email rows matching their email.
  *
- * Body: { firstName, lastName, username, password? }
+ * Invited users don't pass through the normal signup form, so acceptance of the
+ * Terms/Privacy is collected and enforced here: the request must carry
+ * acceptedTerms=true (mirroring the signup checkbox) and acceptance is recorded
+ * with method 'invite'.
+ *
+ * Body: { firstName, lastName, username, password?, acceptedTerms }
  * Response: { hasPending: boolean } | { error: string }
  */
 export async function POST(request: NextRequest) {
@@ -24,10 +30,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'User email not found.' }, { status: 400 })
   }
 
-  const { firstName, lastName, username, password } = await request.json()
+  const { firstName, lastName, username, password, acceptedTerms } = await request.json()
 
   if (!firstName || !lastName || !username) {
     return NextResponse.json({ error: 'First name, last name, and username are required.' }, { status: 400 })
+  }
+
+  // Acceptance of the Terms/Privacy is mandatory — enforced server-side so a
+  // profile can never be created without recorded agreement.
+  if (acceptedTerms !== true) {
+    return NextResponse.json({ error: 'You must agree to the Terms of Service to continue.' }, { status: 400 })
   }
 
   const admin = createAdminClient()
@@ -54,6 +66,15 @@ export async function POST(request: NextRequest) {
 
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 500 })
+  }
+
+  // Record acceptance of the current Terms & Privacy versions (method 'invite').
+  // Best-effort — the acceptedTerms gate above already guarantees agreement, so a
+  // logging hiccup must not fail an otherwise-completed profile.
+  try {
+    await recordLegalAcceptance(user.id, 'invite')
+  } catch {
+    // Non-fatal — acceptance can be reconciled later.
   }
 
   // Optionally update the auth user's password if one was provided
