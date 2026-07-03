@@ -35,18 +35,20 @@ export function AppNav({ user, unreadCount }: Props) {
   return (
     <>
       {/* ── Desktop: top bar ───────────────────────────────────── */}
-      <nav className="hidden md:flex fixed top-0 inset-x-0 z-50 h-14 border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm items-center px-6 gap-6">
+      {/* 3 equal columns so the centre links sit at the true page centre,
+          independent of the (differing) widths of the logo and right actions. */}
+      <nav className="hidden md:grid grid-cols-3 fixed top-0 inset-x-0 z-50 h-14 border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm items-center px-6">
 
         {/* Logo — Lora serif */}
         <Link
           href="/home"
-          className="font-serif text-[18px] font-semibold text-rw-text-primary shrink-0 mr-2 hover:text-rw-accent transition-colors"
+          className="font-serif text-[18px] font-semibold text-rw-text-primary justify-self-start hover:text-rw-accent transition-colors"
         >
           Remember When
         </Link>
 
         {/* Centre nav links */}
-        <div className="flex items-center gap-0.5 flex-1 justify-center">
+        <div className="flex items-center gap-0.5 justify-self-center">
           {NAV_ITEMS.slice(0, 2).map(({ href, label }) => (
             <Link
               key={href}
@@ -64,7 +66,7 @@ export function AppNav({ user, unreadCount }: Props) {
         </div>
 
         {/* Right actions — bell + avatar */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 justify-self-end">
           <Link
             href="/notifications"
             className={cn(
