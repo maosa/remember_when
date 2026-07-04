@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { THEMES, getTheme } from '@/lib/themes'
+import { THEMES, getTheme, DEFAULT_THEME } from '@/lib/themes'
 import { updateTheme } from '../actions'
 
 interface Props {
@@ -38,8 +38,12 @@ export function ThemeForm({ initialTheme }: Props) {
         setMessage({ type: 'error', text: result.error })
       } else {
         setMessage({ type: 'success', text: 'Theme applied.' })
-        // Re-runs the root layout so <html data-theme> updates in place —
-        // the whole platform re-themes while we stay on this page.
+        // Apply to <html> immediately (covers portals) — the (app) layout
+        // re-bakes its pre-paint theme script from the DB value on the next
+        // full load. router.refresh() keeps this page's server data in sync.
+        const el = document.documentElement
+        if (theme === DEFAULT_THEME) el.removeAttribute('data-theme')
+        else el.dataset.theme = theme
         router.refresh()
       }
     })

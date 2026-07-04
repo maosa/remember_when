@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Lora, DM_Sans } from "next/font/google";
 import "./globals.css";
-import { getServerUser } from "@/lib/supabase/server";
-import { getLayoutProfile } from "@/lib/cached-queries";
-import { DEFAULT_THEME } from "@/lib/themes";
 
 const lora = Lora({
   variable: "--font-lora",
@@ -40,25 +37,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+// Intentionally NOT async and reads no cookies/headers, so this layout — and
+// therefore every public page under it — can be statically prerendered. The
+// signed-in user's colour palette is applied client-side from the (app) layout
+// (its pre-paint <script>), which keeps data-theme on <html> without forcing
+// the whole app to be server-rendered on demand.
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Resolve the signed-in user's colour palette and apply it platform-wide via
-  // data-theme on <html>. Server-rendered so there's no flash of the default
-  // theme. Signed-out visitors fall back to the default (no attribute).
-  const {
-    data: { user },
-  } = await getServerUser();
-  const theme = user
-    ? (await getLayoutProfile(user.id))?.theme ?? DEFAULT_THEME
-    : DEFAULT_THEME;
-
   return (
+    // suppressHydrationWarning: the (app) layout's pre-paint script sets
+    // data-theme on <html> before hydration, which intentionally differs from
+    // this (theme-less, static) server render. Scoped to <html> only.
     <html
       lang="en"
-      data-theme={theme !== DEFAULT_THEME ? theme : undefined}
+      suppressHydrationWarning
       className={`${lora.variable} ${dmSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

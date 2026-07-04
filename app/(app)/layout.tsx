@@ -3,6 +3,7 @@ import { createClient, getServerUser } from '@/lib/supabase/server'
 import { AppNav } from '@/components/app-nav'
 import { getLayoutProfile } from '@/lib/cached-queries'
 import { getCachedUnread, setCachedUnread } from '@/lib/cache'
+import { DEFAULT_THEME, isThemeSlug } from '@/lib/themes'
 import { Toaster } from 'sonner'
 
 export default async function AppLayout({
@@ -41,8 +42,21 @@ export default async function AppLayout({
     loadUnreadCount(),
   ])
 
+  // Apply the user's palette to <html> via a pre-paint inline script. Doing it
+  // here (a dynamic, auth-gated layout) instead of the root layout lets the
+  // root — and all public pages — stay static, while still theming the whole
+  // document including portals (menus/dialogs/toasts render to <body>).
+  const rawTheme = profile?.theme
+  const theme = isThemeSlug(rawTheme) ? rawTheme : DEFAULT_THEME
+
   return (
     <div className="min-h-screen bg-rw-bg">
+      {theme !== DEFAULT_THEME && (
+        <script
+          // theme is a validated slug (isThemeSlug), safe to inline.
+          dangerouslySetInnerHTML={{ __html: `document.documentElement.dataset.theme=${JSON.stringify(theme)}` }}
+        />
+      )}
       <AppNav
         user={{
           firstName: profile?.first_name ?? '',
