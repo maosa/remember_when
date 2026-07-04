@@ -4,6 +4,7 @@ import { AppNav } from '@/components/app-nav'
 import { getLayoutProfile } from '@/lib/cached-queries'
 import { getCachedUnread, setCachedUnread } from '@/lib/cache'
 import { DEFAULT_THEME, isThemeSlug } from '@/lib/themes'
+import { ThemeSync } from './_components/theme-sync'
 import { Toaster } from 'sonner'
 
 export default async function AppLayout({
@@ -42,21 +43,17 @@ export default async function AppLayout({
     loadUnreadCount(),
   ])
 
-  // Apply the user's palette to <html> via a pre-paint inline script. Doing it
-  // here (a dynamic, auth-gated layout) instead of the root layout lets the
-  // root — and all public pages — stay static, while still theming the whole
-  // document including portals (menus/dialogs/toasts render to <body>).
+  // Apply the user's palette to <html>. Done from this dynamic, auth-gated
+  // layout (not the static root layout) so public pages stay static, while
+  // still theming the whole document including portals (menus/dialogs/toasts
+  // render to <body>). <ThemeSync> handles both the pre-paint no-flash apply on
+  // full loads and re-applying across client-side navigation / theme changes.
   const rawTheme = profile?.theme
   const theme = isThemeSlug(rawTheme) ? rawTheme : DEFAULT_THEME
 
   return (
     <div className="min-h-screen bg-rw-bg">
-      {theme !== DEFAULT_THEME && (
-        <script
-          // theme is a validated slug (isThemeSlug), safe to inline.
-          dangerouslySetInnerHTML={{ __html: `document.documentElement.dataset.theme=${JSON.stringify(theme)}` }}
-        />
-      )}
+      <ThemeSync theme={theme} />
       <AppNav
         user={{
           firstName: profile?.first_name ?? '',
