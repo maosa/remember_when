@@ -6,6 +6,10 @@ import * as Sentry from '@sentry/nextjs'
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
+  // Don't ship local development errors to Sentry — they're just noise and burn
+  // free-tier quota. Production and preview builds report normally.
+  enabled: process.env.NODE_ENV !== 'development',
+
   // 'production' | 'preview' | 'development'. VERCEL_ENV is set automatically
   // on Vercel; falls back to 'development' for local runs. Lets you filter
   // production from preview noise in the Sentry UI.

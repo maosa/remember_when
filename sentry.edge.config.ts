@@ -7,6 +7,7 @@ Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   // See sentry.server.config.ts for the rationale.
+  enabled: process.env.NODE_ENV !== 'development',
   environment: process.env.VERCEL_ENV ?? 'development',
 
   tracesSampleRate: 1,
