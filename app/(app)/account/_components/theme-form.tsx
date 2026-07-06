@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { THEMES, getTheme, DEFAULT_THEME } from '@/lib/themes'
+import { THEMES, getTheme, DEFAULT_THEME, setThemeCookie } from '@/lib/themes'
 import { updateTheme } from '../actions'
 
 interface Props {
@@ -37,12 +37,14 @@ export function ThemeForm({ initialTheme }: Props) {
         toast.error(result.error)
       } else {
         toast.success('Theme applied.')
-        // Apply to <html> immediately (covers portals) — the (app) layout
-        // re-bakes its pre-paint theme script from the DB value on the next
-        // full load. router.refresh() keeps this page's server data in sync.
+        // Apply to <html> immediately (covers portals) and mirror into the
+        // cookie so navigating straight to a public page is themed without
+        // waiting for the refresh. router.refresh() re-runs the (app) layout to
+        // keep this page's server data in sync with the DB.
         const el = document.documentElement
         if (theme === DEFAULT_THEME) el.removeAttribute('data-theme')
         else el.dataset.theme = theme
+        setThemeCookie(theme)
         router.refresh()
       }
     })

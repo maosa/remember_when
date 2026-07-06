@@ -53,6 +53,28 @@ export const THEMES: readonly Theme[] = [
 
 export const DEFAULT_THEME = 'default'
 
+/**
+ * Name of the JS-readable cookie mirroring the user's chosen theme.
+ *
+ * The DB (`users.theme`) is the source of truth; this cookie is a fast,
+ * universal rendering hint so the pre-paint script in the root layout can apply
+ * the palette on *every* page — including statically prerendered public pages —
+ * without the server reading any cookie. Keep this in sync with the inline
+ * script in `app/layout.tsx`, which hardcodes the same name (it can't import).
+ */
+export const THEME_COOKIE = 'rw_theme'
+
+/**
+ * Persist the chosen theme to the cookie (client-only). 1-year lifetime so it
+ * survives sign-out — a returning signed-out visitor keeps their last palette.
+ * We write `'default'` too, so switching back to Default overwrites a prior
+ * non-default cookie rather than leaving it stale.
+ */
+export function setThemeCookie(slug: string): void {
+  if (typeof document === 'undefined') return
+  document.cookie = `${THEME_COOKIE}=${slug}; path=/; max-age=31536000; samesite=lax`
+}
+
 export const THEME_SLUGS = THEMES.map((t) => t.slug)
 
 export function isThemeSlug(value: unknown): value is string {
