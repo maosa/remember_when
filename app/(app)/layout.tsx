@@ -66,7 +66,14 @@ export default async function AppLayout({
       <div className="md:pt-14 pb-20 md:pb-0">
         {children}
       </div>
-      <Toaster position="bottom-center" richColors />
+      {/* mobileOffset clears the fixed bottom tab bar (h-16) on mobile so
+          toasts don't overlap it; desktop has no bottom bar. */}
+      <Toaster
+        position="bottom-right"
+        richColors
+        closeButton
+        mobileOffset={{ bottom: '5rem' }}
+      />
     </div>
   )
 }

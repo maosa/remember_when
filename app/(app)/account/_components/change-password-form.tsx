@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,20 +16,22 @@ export function ChangePasswordForm({ email }: Props) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  // Inline field-validation error (mismatch / too short / wrong current password).
+  // Completion outcomes are surfaced as toasts instead.
+  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setMessage(null)
+    setError(null)
 
     if (newPassword !== confirmPassword) {
-      setMessage({ type: 'error', text: 'New passwords do not match.' })
+      setError('New passwords do not match.')
       return
     }
 
     if (newPassword.length < 8) {
-      setMessage({ type: 'error', text: 'New password must be at least 8 characters.' })
+      setError('New password must be at least 8 characters.')
       return
     }
 
@@ -41,7 +44,7 @@ export function ChangePasswordForm({ email }: Props) {
     })
 
     if (authError) {
-      setMessage({ type: 'error', text: 'Current password is incorrect.' })
+      setError('Current password is incorrect.')
       setLoading(false)
       return
     }
@@ -49,9 +52,9 @@ export function ChangePasswordForm({ email }: Props) {
     const result = await changePassword(newPassword)
 
     if (result?.error) {
-      setMessage({ type: 'error', text: result.error })
+      toast.error(result.error)
     } else {
-      setMessage({ type: 'success', text: 'Password updated.' })
+      toast.success('Password updated.')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
@@ -62,11 +65,7 @@ export function ChangePasswordForm({ email }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {message && (
-        <p className={`text-sm ${message.type === 'error' ? 'text-rw-danger' : 'text-rw-accent'}`}>
-          {message.text}
-        </p>
-      )}
+      {error && <p className="text-sm text-rw-danger">{error}</p>}
       <div className="space-y-2">
         <Label htmlFor="current-password">Current password</Label>
         <Input

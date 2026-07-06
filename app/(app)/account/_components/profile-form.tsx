@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
+import { toast } from 'sonner'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -33,7 +34,9 @@ export function ProfileForm({ initialData }: Props) {
   const [email, setEmail] = useState(initialData.email)
   const [username, setUsername] = useState(initialData.username)
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  // Inline username-validation error surfaced on submit. Completion outcomes
+  // (profile saved / server errors) are surfaced as toasts instead.
+  const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   // Email re-auth modal
@@ -90,18 +93,18 @@ export function ProfileForm({ initialData }: Props) {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setMessage(null)
+    setError(null)
 
     if (usernameStatus === 'taken') {
-      setMessage({ type: 'error', text: 'Username is already taken.' })
+      setError('Username is already taken.')
       return
     }
     if (usernameStatus === 'invalid') {
-      setMessage({ type: 'error', text: 'Username must be 3–20 characters: letters, numbers, underscores only.' })
+      setError('Username must be 3–20 characters: letters, numbers, underscores only.')
       return
     }
     if (usernameStatus === 'checking') {
-      setMessage({ type: 'error', text: 'Please wait — checking username availability.' })
+      setError('Please wait — checking username availability.')
       return
     }
 
@@ -120,9 +123,9 @@ export function ProfileForm({ initialData }: Props) {
     startTransition(async () => {
       const result = await updateProfile(formData)
       if (result?.error) {
-        setMessage({ type: 'error', text: result.error })
+        toast.error(result.error)
       } else {
-        setMessage({ type: 'success', text: 'Profile updated.' })
+        toast.success('Profile updated.')
       }
     })
   }
@@ -156,9 +159,9 @@ export function ProfileForm({ initialData }: Props) {
       setEmailModalOpen(false)
       setCurrentPassword('')
       if (result?.error) {
-        setMessage({ type: 'error', text: result.error })
+        toast.error(result.error)
       } else {
-        setMessage({ type: 'success', text: 'Profile updated. Check your new email address for a confirmation link.' })
+        toast.success('Profile updated. Check your new email address for a confirmation link.')
       }
     })
   }
@@ -166,11 +169,7 @@ export function ProfileForm({ initialData }: Props) {
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {message && (
-          <p className={`text-sm ${message.type === 'error' ? 'text-rw-danger' : 'text-rw-accent'}`}>
-            {message.text}
-          </p>
-        )}
+        {error && <p className="text-sm text-rw-danger">{error}</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="firstName">First name</Label>

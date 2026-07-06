@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -20,14 +21,12 @@ interface Props {
 export function ThemeForm({ initialTheme }: Props) {
   const router = useRouter()
   const [theme, setTheme] = useState(initialTheme)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const selected = getTheme(theme)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setMessage(null)
 
     const formData = new FormData()
     formData.append('theme', theme)
@@ -35,9 +34,9 @@ export function ThemeForm({ initialTheme }: Props) {
     startTransition(async () => {
       const result = await updateTheme(formData)
       if (result?.error) {
-        setMessage({ type: 'error', text: result.error })
+        toast.error(result.error)
       } else {
-        setMessage({ type: 'success', text: 'Theme applied.' })
+        toast.success('Theme applied.')
         // Apply to <html> immediately (covers portals) — the (app) layout
         // re-bakes its pre-paint theme script from the DB value on the next
         // full load. router.refresh() keeps this page's server data in sync.
@@ -51,12 +50,6 @@ export function ThemeForm({ initialTheme }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {message && (
-        <p className={`text-sm ${message.type === 'error' ? 'text-rw-danger' : 'text-rw-accent'}`}>
-          {message.text}
-        </p>
-      )}
-
       <div className="space-y-2">
         <Select modal={false} value={theme} onValueChange={(v) => v && setTheme(v)}>
           <SelectTrigger className="w-full sm:w-72">

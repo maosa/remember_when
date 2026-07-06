@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useTransition } from 'react'
+import { toast } from 'sonner'
 import { Camera } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -13,7 +14,6 @@ interface Props {
 
 export function AvatarUpload({ currentUrl, initials }: Props) {
   const [preview, setPreview] = useState<string | null>(currentUrl)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -22,7 +22,6 @@ export function AvatarUpload({ currentUrl, initials }: Props) {
     if (!file) return
 
     setPreview(URL.createObjectURL(file))
-    setMessage(null)
 
     const formData = new FormData()
     formData.append('avatar', file)
@@ -30,23 +29,22 @@ export function AvatarUpload({ currentUrl, initials }: Props) {
     startTransition(async () => {
       const result = await updateAvatar(formData)
       if (result?.error) {
-        setMessage({ type: 'error', text: result.error })
+        toast.error(result.error)
         setPreview(currentUrl)
       } else {
-        setMessage({ type: 'success', text: 'Photo updated.' })
+        toast.success('Photo updated.')
       }
     })
   }
 
   function handleRemove() {
-    setMessage(null)
     startTransition(async () => {
       const result = await removeAvatar()
       if (result?.error) {
-        setMessage({ type: 'error', text: result.error })
+        toast.error(result.error)
       } else {
         setPreview(null)
-        setMessage({ type: 'success', text: 'Photo removed.' })
+        toast.success('Photo removed.')
       }
     })
   }
@@ -91,11 +89,6 @@ export function AvatarUpload({ currentUrl, initials }: Props) {
             </Button>
           )}
         </div>
-        {message && (
-          <p className={`text-xs ${message.type === 'error' ? 'text-rw-danger' : 'text-rw-accent'}`}>
-            {message.text}
-          </p>
-        )}
         <p className="text-xs text-rw-text-muted">JPG, PNG or WebP · Max 5 MB</p>
       </div>
       <input

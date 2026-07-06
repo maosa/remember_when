@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -25,7 +26,6 @@ interface Props {
 
 export function NotificationsForm({ initialPrefs }: Props) {
   const [prefs, setPrefs] = useState(initialPrefs)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function toggle(key: keyof NotificationPrefs) {
@@ -34,7 +34,6 @@ export function NotificationsForm({ initialPrefs }: Props) {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setMessage(null)
     const fd = new FormData()
     if (prefs.friendRequestReceived)       fd.append('friend_request_received',       'on')
     if (prefs.friendRequestAccepted)       fd.append('friend_request_accepted',       'on')
@@ -49,21 +48,15 @@ export function NotificationsForm({ initialPrefs }: Props) {
     startTransition(async () => {
       const result = await updateNotificationPreferences(fd)
       if (result?.error) {
-        setMessage({ type: 'error', text: result.error })
+        toast.error(result.error)
       } else {
-        setMessage({ type: 'success', text: 'Preferences saved.' })
+        toast.success('Preferences saved.')
       }
     })
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {message && (
-        <p className={`text-sm ${message.type === 'error' ? 'text-rw-danger' : 'text-rw-accent'}`}>
-          {message.text}
-        </p>
-      )}
-
       <div className="space-y-10">
         {/* ── Friends ──────────────────────────────────────────────── */}
         <fieldset className="border-0 p-0 space-y-4">
