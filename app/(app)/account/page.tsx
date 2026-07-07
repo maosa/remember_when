@@ -142,7 +142,7 @@ export default async function AccountPage() {
         <section className="space-y-4">
           <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Terms of Service</h2>
           <Link
-            href="/terms"
+            href="/terms?from=account"
             className="flex items-center justify-between rounded-rw-card border border-rw-border-subtle bg-rw-surface px-4 py-3 hover:bg-rw-surface-raised/70 transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -162,7 +162,7 @@ export default async function AccountPage() {
         <section className="space-y-4">
           <h2 className="font-sans text-xs font-semibold text-rw-text-muted uppercase tracking-widest">Privacy Policy</h2>
           <Link
-            href="/privacy"
+            href="/privacy?from=account"
             className="flex items-center justify-between rounded-rw-card border border-rw-border-subtle bg-rw-surface px-4 py-3 hover:bg-rw-surface-raised/70 transition-colors"
           >
             <div className="flex items-center gap-3">
