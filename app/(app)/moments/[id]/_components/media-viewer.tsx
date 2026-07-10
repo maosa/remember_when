@@ -122,8 +122,13 @@ export function MediaViewer({
 
   // ── Navigate function (kept fresh via ref) ───────────────────────────────
   const navigate = useCallback((dir: number) => {
-    const next = currentIndex + dir
-    if (next < 0 || next >= items.length) return
+    if (items.length === 0) return
+    // Wrap around both ends so the gallery loops: Next on the last item goes to
+    // the first, Previous on the first goes to the last. Scope is whatever `items`
+    // was passed — all moment media for the cover gallery, or just this post's
+    // media for the in-post viewer.
+    const next = (currentIndex + dir + items.length) % items.length
+    if (next === currentIndex) return // single item — nothing to navigate to
     videoRef.current?.pause()
     audioRef.current?.pause()
     setCurrentIndex(next)
@@ -431,8 +436,8 @@ export function MediaViewer({
           </button>
         </div>
 
-        {/* Left nav arrow */}
-        {currentIndex > 0 && (
+        {/* Left nav arrow — always shown when there's more than one item (looping) */}
+        {items.length > 1 && (
           <button
             aria-label="Previous"
             className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-auto"
@@ -443,8 +448,8 @@ export function MediaViewer({
           </button>
         )}
 
-        {/* Right nav arrow */}
-        {currentIndex < items.length - 1 && (
+        {/* Right nav arrow — always shown when there's more than one item (looping) */}
+        {items.length > 1 && (
           <button
             aria-label="Next"
             className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-auto"
