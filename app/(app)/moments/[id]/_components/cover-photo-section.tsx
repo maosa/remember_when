@@ -36,8 +36,12 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
   function handleOpenChange(val: boolean) {
     setOpen(val)
     setError(null)
-    if (val && momentPhotos === null) {
-      setLoadingPhotos(true)
+    if (val) {
+      // Refetch every time the modal opens so photos from newly created posts
+      // show up without a page reload. Only show the loading skeleton on the
+      // first open; on later opens keep the previously loaded photos visible
+      // while the fresh list loads in the background (no skeleton flash).
+      if (momentPhotos === null) setLoadingPhotos(true)
       fetchMomentPhotos(momentId).then(({ photos }) => {
         setMomentPhotos(photos)
         setLoadingPhotos(false)
