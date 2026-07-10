@@ -19,8 +19,11 @@ import { toast } from 'sonner'
 // Revisit this value if cards are enriched with more elements in the future.
 const CARD_HEIGHT = 'h-[17.5rem]'
 
-const EditMomentModal = dynamic(() =>
-  import('@/app/(app)/_components/edit-moment-modal').then((m) => ({ default: m.EditMomentModal }))
+const EditMomentModal = dynamic(
+  () => import('@/app/(app)/_components/edit-moment-modal').then((m) => ({ default: m.EditMomentModal })),
+  // Local Suspense boundary: keep the first-open chunk fetch from bubbling up and
+  // re-mounting the card grid (which would re-load every cover photo).
+  { loading: () => null }
 )
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

@@ -20,8 +20,11 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { MomentCard } from './moment-card'
 import { type MomentSummary } from '../actions'
 
-const CreateMomentModal = dynamic(() =>
-  import('./create-moment-modal').then((m) => ({ default: m.CreateMomentModal }))
+const CreateMomentModal = dynamic(
+  () => import('./create-moment-modal').then((m) => ({ default: m.CreateMomentModal })),
+  // Give the lazy chunk its own Suspense boundary so the first-open chunk fetch
+  // doesn't bubble suspension up to the route boundary and re-mount the whole page.
+  { loading: () => null }
 )
 
 type SortMode = 'newest' | 'oldest' | 'split'
