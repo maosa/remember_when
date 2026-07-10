@@ -744,6 +744,31 @@ export async function updateMomentDetails(
   return {}
 }
 
+// ─── Home-cache invalidation helper ───────────────────────────────────────────
+//
+// The home page moment list is cached per-user under homeMomentsTag and includes
+// each moment's cover photo. Any mutation that changes a field shown on the home
+// card (cover photo, name, date, etc.) must bust that tag for the owner and every
+// member — otherwise the card keeps rendering the stale cached value.
+async function revalidateHomeForMomentMembers(
+  admin: ReturnType<typeof createAdminClient>,
+  momentId: string,
+): Promise<void> {
+  const [{ data: moment }, { data: members }] = await Promise.all([
+    admin.from('moments').select('owner_id').eq('id', momentId).single(),
+    admin.from('moment_members').select('user_id').eq('moment_id', momentId).not('user_id', 'is', null),
+  ])
+
+  const userIds = new Set<string>()
+  if (moment?.owner_id) userIds.add(moment.owner_id)
+  for (const m of members ?? []) {
+    if (m.user_id) userIds.add(m.user_id)
+  }
+  for (const id of userIds) {
+    revalidateTag(homeMomentsTag(id), { expire: 0 })
+  }
+}
+
 // ─── Update cover photo ───────────────────────────────────────────────────────
 
 export async function updateCoverPhoto(momentId: string, formData: FormData): Promise<{ error?: string }> {
@@ -784,6 +809,7 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
 
   if (updateError) return { error: updateError.message }
   revalidatePath(`/moments/${momentId}`)
+  await revalidateHomeForMomentMembers(admin, momentId)
   return {}
 }
 
@@ -819,6 +845,7 @@ export async function deleteCoverPhoto(momentId: string): Promise<{ error?: stri
   }
 
   revalidatePath(`/moments/${momentId}`)
+  await revalidateHomeForMomentMembers(admin, momentId)
   return {}
 }
 
@@ -866,6 +893,7 @@ export async function setCoverPhotoFromPath(momentId: string, storagePath: strin
 
   if (error) return { error: error.message }
   revalidatePath(`/moments/${momentId}`)
+  await revalidateHomeForMomentMembers(admin, momentId)
   return {}
 }
 
