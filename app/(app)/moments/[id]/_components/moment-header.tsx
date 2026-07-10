@@ -55,18 +55,30 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
   const isPendingInvite = myStatus === 'pending'
   const canPost = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
 
-  // Cover photo as item 0, then all post media in chronological order.
-  // If the cover photo was selected from an existing post photo, its storage path
-  // matches that item's storagePath — exclude that duplicate from the post media list.
-  const galleryItems = useMemo<PostMedia[]>(() => {
-    if (!moment.coverPhotoUrl) return postMedia
-    const deduped = moment.coverPhotoStoragePath
-      ? postMedia.filter((m) => m.storagePath !== moment.coverPhotoStoragePath)
-      : postMedia
-    return [
-      { id: 'moment-cover', mediaType: 'photo', storageUrl: moment.coverPhotoUrl, storagePath: moment.coverPhotoStoragePath ?? '', width: null, height: null },
-      ...deduped,
-    ]
+  // Build the gallery list + the index the cover click should open at.
+  // If the cover photo was selected from an existing post photo (its storage path
+  // matches that item's storagePath), open the viewer at that photo's real
+  // position in natural posted order — no synthetic item, no reordering.
+  // A cover uploaded from the device isn't part of any post, so it's prepended
+  // as an extra first item since it has no place in the sequence.
+  const { galleryItems, coverInitialIndex } = useMemo<{ galleryItems: PostMedia[]; coverInitialIndex: number }>(() => {
+    if (!moment.coverPhotoUrl) return { galleryItems: postMedia, coverInitialIndex: 0 }
+
+    const coverIndex = moment.coverPhotoStoragePath
+      ? postMedia.findIndex((m) => m.storagePath === moment.coverPhotoStoragePath)
+      : -1
+
+    // Cover is one of the moment's posted photos → open at its true position.
+    if (coverIndex >= 0) return { galleryItems: postMedia, coverInitialIndex: coverIndex }
+
+    // Device-uploaded cover (not in any post) → prepend it as the first item.
+    return {
+      galleryItems: [
+        { id: 'moment-cover', mediaType: 'photo', storageUrl: moment.coverPhotoUrl, storagePath: moment.coverPhotoStoragePath ?? '', width: null, height: null },
+        ...postMedia,
+      ],
+      coverInitialIndex: 0,
+    }
   }, [moment.coverPhotoUrl, moment.coverPhotoStoragePath, postMedia])
 
   const coverClickable = galleryReady && !isPendingInvite && !!moment.coverPhotoUrl
@@ -223,7 +235,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
       {galleryOpen && galleryItems.length > 0 && (
         <MediaViewer
           items={galleryItems}
-          initialIndex={0}
+          initialIndex={coverInitialIndex}
           onClose={() => setGalleryOpen(false)}
         />
       )}
