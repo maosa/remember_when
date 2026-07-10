@@ -19,7 +19,13 @@ export const ALLOWED_COVER_TYPES = [
   'image/jpeg',
   'image/png',
   'image/webp',
+  'image/gif',
 ] as const
+
+// ─── Size limits ──────────────────────────────────────────────────────────────
+
+/** Maximum upload size (bytes) for post media and cover photos — 100 MB. */
+export const MAX_MEDIA_BYTES = 100 * 1024 * 1024
 
 export const ALLOWED_MEDIA_TYPES = [
   // Images — widely supported, safe to process
@@ -77,7 +83,7 @@ export function validateAvatarFile(file: File): string | null {
 
 export function validateCoverFile(file: File): string | null {
   if (!(ALLOWED_COVER_TYPES as readonly string[]).includes(file.type)) {
-    return 'Cover photo must be a JPEG, PNG, or WebP image.'
+    return 'Cover photo must be a JPEG, PNG, WebP, or GIF image.'
   }
   return null
 }

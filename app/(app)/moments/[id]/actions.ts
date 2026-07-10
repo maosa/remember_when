@@ -5,7 +5,7 @@ import { headers } from 'next/headers'
 import { createClient, requireUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification, sendNotifications } from '@/lib/notifications'
-import { validateCoverFile, validateMediaFile, validateMediaMimeType, safeExt, mediaTypeFromMime } from '@/lib/upload'
+import { validateCoverFile, validateMediaFile, validateMediaMimeType, safeExt, mediaTypeFromMime, MAX_MEDIA_BYTES } from '@/lib/upload'
 import { isValidEmail } from '@/lib/validation'
 import { signStoragePath, signStoragePaths } from '@/lib/storage'
 import { logAuditEvent } from '@/lib/audit'
@@ -779,7 +779,7 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
 
   const file = formData.get('cover') as File
   if (!file || file.size === 0) return { error: 'No file provided.' }
-  if (file.size > 10 * 1024 * 1024) return { error: 'File must be under 10 MB.' }
+  if (file.size > MAX_MEDIA_BYTES) return { error: 'File must be under 100 MB.' }
 
   // Validate MIME type — derive extension from type, not filename
   const mimeError = validateCoverFile(file)
@@ -1065,7 +1065,7 @@ export async function createPost(momentId: string, formData: FormData): Promise<
   }
 
   for (const f of validFiles) {
-    if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
+    if (f.size > MAX_MEDIA_BYTES) return { error: `${f.name} exceeds the 100 MB limit.` }
     const mimeError = validateMediaFile(f)
     if (mimeError) return { error: mimeError }
   }
@@ -1192,7 +1192,7 @@ export async function preparePostUpload(
   }
 
   for (const f of files) {
-    if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
+    if (f.size > MAX_MEDIA_BYTES) return { error: `${f.name} exceeds the 100 MB limit.` }
     const mimeError = validateMediaMimeType(f.type)
     if (mimeError) return { error: mimeError }
   }
@@ -1448,7 +1448,7 @@ export async function prepareEditUpload(
   if (post.author_id !== user.id) return { error: 'Only the author can edit this post.' }
 
   for (const f of files) {
-    if (f.size > 100 * 1024 * 1024) return { error: `${f.name} exceeds the 100 MB limit.` }
+    if (f.size > MAX_MEDIA_BYTES) return { error: `${f.name} exceeds the 100 MB limit.` }
     const mimeError = validateMediaMimeType(f.type)
     if (mimeError) return { error: mimeError }
   }

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { updateCoverPhoto, setCoverPhotoFromPath, deleteCoverPhoto, fetchMomentPhotos } from '../actions'
+import { MAX_MEDIA_BYTES } from '@/lib/upload'
 import { toast } from 'sonner'
 
 interface Props {
@@ -53,6 +54,12 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
     const file = e.target.files?.[0]
     if (!file) return
     setError(null)
+    // Reject oversized files in the browser before uploading — instant feedback,
+    // no wasted upload. The server enforces the same limit as the real guard.
+    if (file.size > MAX_MEDIA_BYTES) {
+      setError('File must be under 100 MB.')
+      return
+    }
     const fd = new FormData()
     fd.append('cover', file)
     startTransition(async () => {
@@ -96,7 +103,7 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
             <div className="space-y-2">
               <p className="text-xs font-medium text-rw-text-muted uppercase tracking-wide">Upload from device</p>
               <label className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5 cursor-pointer', isPending && 'pointer-events-none opacity-50')}>
-                <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only"
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only"
                   onChange={(e) => { handleFileChange(e); e.target.value = '' }} />
                 <Upload className="size-3.5" />
                 Choose file
