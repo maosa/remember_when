@@ -42,6 +42,7 @@ export type MomentDetail = {
   location: string | null
   coverPhotoUrl: string | null        // signed URL for display
   coverPhotoStoragePath: string | null // raw "{bucket}/{path}" for identity comparison
+  coverPosition: number | null        // vertical focal % (0–100); null = center
   ownerId: string
   ownerFirstName: string
   ownerLastName: string
@@ -64,7 +65,7 @@ export async function fetchMomentDetail(
   const { data, error } = await admin
     .from('moments')
     .select(`
-      id, name, date_year, date_month, date_day, location, cover_photo_url, owner_id, created_at,
+      id, name, date_year, date_month, date_day, location, cover_photo_url, cover_position, owner_id, created_at,
       owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
       moment_tags(id, tag),
       moment_members(
@@ -131,6 +132,7 @@ export async function fetchMomentDetail(
       location: data.location ?? null,
       coverPhotoUrl: coverSignedUrl,
       coverPhotoStoragePath: coverStoragePath,
+      coverPosition: (data as { cover_position: number | null }).cover_position ?? null,
       ownerId: data.owner_id,
       ownerFirstName: owner.first_name,
       ownerLastName: owner.last_name,
@@ -808,6 +810,32 @@ export async function updateCoverPhoto(momentId: string, formData: FormData): Pr
     .eq('id', momentId)
 
   if (updateError) return { error: updateError.message }
+  revalidatePath(`/moments/${momentId}`)
+  await revalidateHomeForMomentMembers(admin, momentId)
+  return {}
+}
+
+// Persist the cover photo's vertical focal point (0–100, applied as CSS
+// object-position). Mirrors updateCoverPhoto's auth + revalidation.
+export async function updateCoverPosition(momentId: string, position: number): Promise<{ error?: string }> {
+  const user = await requireUser()
+
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return permCheck
+
+  // Never trust the client value — coerce to an integer clamped to 0–100.
+  if (typeof position !== 'number' || !Number.isFinite(position)) {
+    return { error: 'Invalid position.' }
+  }
+  const clamped = Math.min(100, Math.max(0, Math.round(position)))
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('moments')
+    .update({ cover_position: clamped })
+    .eq('id', momentId)
+
+  if (error) return { error: error.message }
   revalidatePath(`/moments/${momentId}`)
   await revalidateHomeForMomentMembers(admin, momentId)
   return {}

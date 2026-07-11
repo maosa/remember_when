@@ -315,6 +315,7 @@ export type Database = {
       moments: {
         Row: {
           cover_photo_url: string | null
+          cover_position: number | null
           created_at: string
           date_day: number | null
           date_month: number | null
@@ -326,6 +327,7 @@ export type Database = {
         }
         Insert: {
           cover_photo_url?: string | null
+          cover_position?: number | null
           created_at?: string
           date_day?: number | null
           date_month?: number | null
@@ -337,6 +339,7 @@ export type Database = {
         }
         Update: {
           cover_photo_url?: string | null
+          cover_position?: number | null
           created_at?: string
           date_day?: number | null
           date_month?: number | null

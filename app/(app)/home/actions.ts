@@ -28,6 +28,7 @@ export type MomentSummary = {
   dateDay: number | null
   location: string | null
   coverPhotoUrl: string | null
+  coverPosition: number | null
   ownerId: string
   ownerFirstName: string
   ownerLastName: string
@@ -74,7 +75,7 @@ function fetchHomeMomentsData(userId: string) {
       let query = admin
         .from('moments')
         .select(`
-          id, name, date_year, date_month, date_day, location, cover_photo_url, owner_id, created_at,
+          id, name, date_year, date_month, date_day, location, cover_photo_url, cover_position, owner_id, created_at,
           owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
           moment_tags(tag),
           moment_members(user_id, role, status)
@@ -161,6 +162,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       dateDay: m.date_day ?? null,
       location: m.location ?? null,
       coverPhotoUrl: coverPath ? (signedCovers.get(coverPath) ?? null) : null,
+      coverPosition: (m as { cover_position: number | null }).cover_position ?? null,
       ownerId: m.owner_id,
       ownerFirstName: owner?.first_name ?? '',
       ownerLastName: owner?.last_name ?? '',

@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { MapPin, Calendar, CheckCircle2, XCircle, ZoomIn, Plus } from 'lucide-react'
+import { MapPin, Calendar, CheckCircle2, XCircle, ZoomIn, Plus, MoveVertical, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { acceptMomentInvite, declineMomentInvite, type MomentDetail, type PostMedia } from '../actions'
+import { acceptMomentInvite, declineMomentInvite, updateCoverPosition, type MomentDetail, type PostMedia } from '../actions'
 import { useMomentGallery } from './moment-gallery-context'
+import { toast } from 'sonner'
 
 const MediaViewer = dynamic(() =>
   import('./media-viewer').then((m) => ({ default: m.MediaViewer })),
@@ -49,11 +50,67 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
   const [createOpen, setCreateOpen] = useState(false)
   const [createEverOpened, setCreateEverOpened] = useState(false)
 
+  // Cover vertical repositioning (focal point). `position` is the live 0–100
+  // object-position Y; `savedPosition` tracks what's persisted so we only write
+  // on exit when it actually changed.
+  const [repositioning, setRepositioning] = useState(false)
+  const [position, setPosition] = useState<number>(moment.coverPosition ?? 50)
+  const savedPositionRef = useRef<number>(moment.coverPosition ?? 50)
+  const dragRef = useRef<{ startY: number; startPos: number; height: number } | null>(null)
+
   const { postMedia, galleryReady } = useMomentGallery()
 
   const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = myStatus === 'pending'
   const canPost = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
+  // The cover opens the gallery viewer on click, EXCEPT while repositioning.
+  const canOpenGallery = galleryReady && !isPendingInvite && !!moment.coverPhotoUrl && !repositioning
+
+  function toggleReposition(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (repositioning) {
+      // Exiting — persist only if the position changed.
+      setRepositioning(false)
+      if (position !== savedPositionRef.current) {
+        const next = position
+        savedPositionRef.current = next
+        startTransition(async () => {
+          const res = await updateCoverPosition(moment.id, next)
+          if (res.error) {
+            toast.error(res.error)
+            router.refresh()
+          } else {
+            toast.success('Cover position saved')
+          }
+        })
+      }
+    } else {
+      setRepositioning(true)
+    }
+  }
+
+  function onCoverPointerDown(e: React.PointerEvent) {
+    if (!repositioning) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    dragRef.current = { startY: e.clientY, startPos: position, height: rect.height }
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* no active pointer — fine */ }
+  }
+
+  function onCoverPointerMove(e: React.PointerEvent) {
+    const drag = dragRef.current
+    if (!drag) return
+    const dy = e.clientY - drag.startY
+    // Dragging the image down reveals content above it → focal point moves up
+    // (object-position Y decreases). Map a full-height drag to the full 0–100 range.
+    const next = Math.min(100, Math.max(0, drag.startPos - (dy / drag.height) * 100))
+    setPosition(next)
+  }
+
+  function onCoverPointerUp(e: React.PointerEvent) {
+    if (!dragRef.current) return
+    dragRef.current = null
+    try { if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId) } catch { /* fine */ }
+  }
 
   // Build the gallery list + the index the cover click should open at.
   // If the cover photo was selected from an existing post photo (its storage path
@@ -80,8 +137,6 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
       coverInitialIndex: 0,
     }
   }, [moment.coverPhotoUrl, moment.coverPhotoStoragePath, postMedia])
-
-  const coverClickable = galleryReady && !isPendingInvite && !!moment.coverPhotoUrl
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -151,13 +206,18 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
           <div
             className={cn(
               'relative h-52 sm:h-72 overflow-hidden bg-rw-surface-raised group',
-              coverClickable && 'cursor-pointer'
+              canOpenGallery && 'cursor-pointer',
+              repositioning && 'cursor-ns-resize touch-none select-none'
             )}
-            onClick={coverClickable ? () => setGalleryOpen(true) : undefined}
-            role={coverClickable ? 'button' : undefined}
-            tabIndex={coverClickable ? 0 : undefined}
-            onKeyDown={coverClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setGalleryOpen(true) } } : undefined}
-            aria-label={coverClickable ? 'View moment gallery' : undefined}
+            onClick={canOpenGallery ? () => setGalleryOpen(true) : undefined}
+            role={canOpenGallery ? 'button' : undefined}
+            tabIndex={canOpenGallery ? 0 : undefined}
+            onKeyDown={canOpenGallery ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setGalleryOpen(true) } } : undefined}
+            aria-label={canOpenGallery ? 'View moment gallery' : undefined}
+            onPointerDown={repositioning ? onCoverPointerDown : undefined}
+            onPointerMove={repositioning ? onCoverPointerMove : undefined}
+            onPointerUp={repositioning ? onCoverPointerUp : undefined}
+            onPointerCancel={repositioning ? onCoverPointerUp : undefined}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -165,14 +225,44 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
               alt={moment.name}
               fetchPriority="high"
               decoding="async"
+              draggable={false}
               className={cn('size-full object-cover', isPendingInvite && 'blur-md scale-110')}
+              style={{ objectPosition: `50% ${position}%` }}
             />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(44,42,37,0.75) 0%, rgba(44,42,37,0.3) 50%, transparent 100%)' }} />
-            {coverClickable && (
+            {canOpenGallery && (
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full bg-black/40 p-2.5">
                   <ZoomIn className="size-5 text-white" />
                 </div>
+              </div>
+            )}
+            {/* Reposition control (editors only) — top-right, mirrors the ZoomIn circle */}
+            {canPost && !isPendingInvite && (
+              <button
+                type="button"
+                onClick={toggleReposition}
+                // Don't let a press on the button start a cover drag — the cover's
+                // pointer capture would otherwise swallow this button's click.
+                onPointerDown={(e) => e.stopPropagation()}
+                aria-label={repositioning ? 'Finish repositioning cover photo' : 'Reposition cover photo'}
+                aria-pressed={repositioning}
+                className={cn(
+                  'absolute top-3 right-3 z-10 rounded-full p-2.5 text-white transition-all',
+                  repositioning
+                    ? 'bg-rw-accent opacity-100 shadow-md'
+                    : 'bg-black/40 opacity-0 group-hover:opacity-100 hover:bg-black/60'
+                )}
+              >
+                {repositioning ? <Check className="size-5" /> : <MoveVertical className="size-5" />}
+              </button>
+            )}
+            {/* Hint shown while actively repositioning */}
+            {repositioning && (
+              <div className="absolute inset-x-0 top-3 flex justify-center pointer-events-none">
+                <span className="rounded-full bg-black/55 px-3 py-1 text-xs font-medium text-white">
+                  Drag the photo up or down to reposition
+                </span>
               </div>
             )}
           </div>

@@ -108,6 +108,7 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
               loading="lazy"
               decoding="async"
               className="size-full object-cover"
+              style={{ objectPosition: `50% ${moment.coverPosition ?? 50}%` }}
             />
           ) : (
             // Warm sage gradient placeholder
