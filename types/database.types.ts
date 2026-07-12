@@ -279,6 +279,7 @@ export type Database = {
           created_by: string
           id: string
           moment_id: string
+          position: number
           tag: string
         }
         Insert: {
@@ -286,6 +287,7 @@ export type Database = {
           created_by: string
           id?: string
           moment_id: string
+          position?: number
           tag: string
         }
         Update: {
@@ -293,6 +295,7 @@ export type Database = {
           created_by?: string
           id?: string
           moment_id?: string
+          position?: number
           tag?: string
         }
         Relationships: [

@@ -67,13 +67,14 @@ export async function fetchMomentDetail(
     .select(`
       id, name, date_year, date_month, date_day, location, cover_photo_url, cover_position, owner_id, created_at,
       owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
-      moment_tags(id, tag),
+      moment_tags(id, tag, position),
       moment_members(
         id, user_id, invited_email, role, status, invited_by,
         user:users!moment_members_user_id_fkey(id, first_name, last_name, profile_photo_url)
       )
     `)
     .eq('id', momentId)
+    .order('position', { referencedTable: 'moment_tags', ascending: true })
     .single()
 
   if (error || !data) return { notFound: true, error: 'Moment not found.' }
@@ -138,7 +139,8 @@ export async function fetchMomentDetail(
       ownerLastName: owner.last_name,
       ownerPhotoUrl: owner.profile_photo_url,
       createdAt: data.created_at,
-      tags: (data.moment_tags as unknown as Array<{ id: string; tag: string }>),
+      tags: (data.moment_tags as unknown as Array<{ id: string; tag: string; position: number }>)
+        .map((t) => ({ id: t.id, tag: t.tag })),
       members: rawMembers
         .filter((m) => m.user !== null || m.invited_email !== null)
         .map((m) => ({
@@ -1661,11 +1663,49 @@ export async function addTag(momentId: string, tag: string): Promise<{ error?: s
   if (permCheck.error) return permCheck
 
   const admin = createAdminClient()
+
+  // New tags are appended at the end of the row (after the highest position).
+  const { data: last } = await admin
+    .from('moment_tags')
+    .select('position')
+    .eq('moment_id', momentId)
+    .order('position', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const nextPosition = (last?.position ?? -1) + 1
+
   const { error } = await admin
     .from('moment_tags')
-    .insert({ moment_id: momentId, tag: t, created_by: user.id })
+    .insert({ moment_id: momentId, tag: t, created_by: user.id, position: nextPosition })
 
   if (error) return { error: error.message }
+  revalidatePath(`/moments/${momentId}`)
+  return {}
+}
+
+export async function reorderTags(momentId: string, orderedIds: string[]): Promise<{ error?: string }> {
+  const user = await requireUser()
+
+  // Verify caller has edit rights (admin client bypasses RLS — must check manually)
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return permCheck
+
+  const admin = createAdminClient()
+
+  // Persist the new order. Scoping each update to momentId means ids that don't
+  // belong to this moment are silently ignored (no cross-moment writes).
+  const results = await Promise.all(
+    orderedIds.map((id, index) =>
+      admin
+        .from('moment_tags')
+        .update({ position: index })
+        .eq('id', id)
+        .eq('moment_id', momentId)
+    )
+  )
+  const failed = results.find((r) => r.error)
+  if (failed?.error) return { error: failed.error.message }
+
   revalidatePath(`/moments/${momentId}`)
   return {}
 }
@@ -1904,10 +1944,11 @@ export async function updateMoment(
       await admin.from('moment_tags').delete().eq('moment_id', momentId)
       if (data.tags.length > 0) {
         await admin.from('moment_tags').insert(
-          data.tags.map((tag) => ({
+          data.tags.map((tag, index) => ({
             moment_id: momentId,
             tag: tag.trim().toLowerCase(),
             created_by: user.id,
+            position: index,
           }))
         )
       }
