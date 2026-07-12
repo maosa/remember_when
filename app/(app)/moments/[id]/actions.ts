@@ -1680,6 +1680,7 @@ export async function addTag(momentId: string, tag: string): Promise<{ error?: s
 
   if (error) return { error: error.message }
   revalidatePath(`/moments/${momentId}`)
+  await revalidateHomeForMomentMembers(admin, momentId)
   return {}
 }
 
@@ -1707,6 +1708,7 @@ export async function reorderTags(momentId: string, orderedIds: string[]): Promi
   if (failed?.error) return { error: failed.error.message }
 
   revalidatePath(`/moments/${momentId}`)
+  await revalidateHomeForMomentMembers(admin, momentId)
   return {}
 }
 
@@ -1726,6 +1728,7 @@ export async function removeTag(momentId: string, tagId: string): Promise<{ erro
 
   if (error) return { error: error.message }
   revalidatePath(`/moments/${momentId}`)
+  await revalidateHomeForMomentMembers(admin, momentId)
   return {}
 }
 

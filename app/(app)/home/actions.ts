@@ -77,10 +77,11 @@ function fetchHomeMomentsData(userId: string) {
         .select(`
           id, name, date_year, date_month, date_day, location, cover_photo_url, cover_position, owner_id, created_at,
           owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
-          moment_tags(tag),
+          moment_tags(tag, position),
           moment_members(user_id, role, status)
         `)
         .order('created_at', { ascending: false })
+        .order('position', { referencedTable: 'moment_tags', ascending: true })
 
       if (safeMemberMomentIds.length > 0) {
         query = query.or(`owner_id.eq.${userId},id.in.(${safeMemberMomentIds.join(',')})`)
