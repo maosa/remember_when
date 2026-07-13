@@ -5,7 +5,6 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { Crown, PenTool, Eye, Settings, Pencil } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { getOptimizedUrl } from '@/lib/storage'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/lib/button-variants'
@@ -219,7 +218,7 @@ function PopoverRow({
   return (
     <div className="flex items-center gap-2">
       <Avatar className="size-6 shrink-0">
-        <AvatarImage src={getOptimizedUrl(photoUrl, 96) ?? photoUrl ?? undefined} />
+        <AvatarImage src={photoUrl ?? undefined} />
         <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
       </Avatar>
       <span className="text-sm truncate flex-1">{firstName} {lastName}</span>

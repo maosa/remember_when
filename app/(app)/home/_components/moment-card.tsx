@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
 import { archiveMoment, unarchiveMoment, type MomentSummary } from '../actions'
-import { getOptimizedUrl } from '@/lib/storage'
 import { MomentTags } from './moment-tags'
 import { toast } from 'sonner'
 
@@ -103,7 +102,7 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
           {moment.coverPhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={getOptimizedUrl(moment.coverPhotoUrl, 400) ?? moment.coverPhotoUrl}
+              src={moment.coverPhotoUrl}
               alt={moment.name}
               loading="lazy"
               decoding="async"
@@ -177,7 +176,7 @@ export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Pr
                     const initials = `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase()
                     return (
                       <Avatar key={m.userId} className="size-6 border-2 border-rw-surface">
-                        <AvatarImage src={getOptimizedUrl(m.photoUrl, 96) ?? m.photoUrl ?? undefined} />
+                        <AvatarImage src={m.photoUrl ?? undefined} />
                         <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
                       </Avatar>
                     )

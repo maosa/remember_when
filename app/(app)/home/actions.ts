@@ -102,14 +102,9 @@ function fetchHomeMomentsData(userId: string) {
         ),
       ]
 
-      const coverPaths = (moments ?? [])
-        .map((m) => m.cover_photo_url)
-        .filter((p): p is string => Boolean(p))
-
       const allMomentIds = (moments ?? []).map((m) => m.id)
 
-      const [signedCovers, memberUsersRes, postCountRes] = await Promise.all([
-        signStoragePaths(coverPaths),
+      const [memberUsersRes, postCountRes] = await Promise.all([
         allMemberIds.length > 0
           ? admin.from('users').select('id, first_name, last_name, profile_photo_url').in('id', allMemberIds)
           : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }[] }),
@@ -118,10 +113,10 @@ function fetchHomeMomentsData(userId: string) {
           : Promise.resolve({ data: [] as { moment_id: string }[] }),
       ])
 
-      // NOTE: unstable_cache serializes its result, so a Map would come back as
-      // a plain (empty) object on a cache hit. Return signed covers as a plain
-      // array of entries and rebuild the Map outside the cache (see below).
-      return { moments, archivedRows, signedCovers: [...signedCovers], memberUsers: memberUsersRes.data ?? [], postRows: postCountRes.data ?? [], error }
+      // NOTE: cover photo URLs are signed OUTSIDE this cache (in fetchHomeMoments).
+      // Their tokens are short-lived (24h), so persisting them in the Next data
+      // cache would let a stale cache entry serve an already-expired signed URL.
+      return { moments, archivedRows, memberUsers: memberUsersRes.data ?? [], postRows: postCountRes.data ?? [], error }
     },
     [`home-moments-${userId}`],
     { tags: [homeMomentsTag(userId)], revalidate: 3600 },
@@ -131,14 +126,22 @@ function fetchHomeMomentsData(userId: string) {
 export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; error?: string }> {
   const user = await requireUser()
 
-  const { moments, archivedRows, signedCovers: signedCoverEntries, memberUsers, postRows, error } =
+  const { moments, archivedRows, memberUsers, postRows, error } =
     await fetchHomeMomentsData(user.id)
 
-  // Rebuild the Map from the serialized entries returned by the cached fetch.
-  const signedCovers = new Map(signedCoverEntries)
+  if (error) return { moments: [], error: error.message }
+
+  // Sign cover photo URLs here — OUTSIDE unstable_cache — so their 24h tokens are
+  // always freshly generated per request. Signing inside the cache let the Next
+  // data cache serve stale, already-expired signed URLs on the first load after a
+  // period of inactivity (400 InvalidJWT → broken cover until reload). The Redis
+  // layer in signStoragePaths still dedupes signing with its own expiry buffer.
+  const coverPaths = (moments ?? [])
+    .map((m) => m.cover_photo_url)
+    .filter((p): p is string => Boolean(p))
+  const signedCovers = await signStoragePaths(coverPaths)
 
   const archivedMomentIds = new Set((archivedRows ?? []).map((a) => a.moment_id))
-  if (error) return { moments: [], error: error.message }
 
   const memberUserMap = new Map(memberUsers.map((u) => [u.id, u]))
 

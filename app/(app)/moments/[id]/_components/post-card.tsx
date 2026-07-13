@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { getOptimizedUrl } from '@/lib/storage'
 import { deletePost, setPostMediaDimensions, type PostWithMedia } from '../actions'
 
 const EditPostDialog = dynamic(() =>
@@ -74,7 +73,7 @@ function SinglePhoto({ photo, onOpen }: { photo: MediaItem; onOpen: (id: string)
     <button onClick={() => onOpen(photo.id)} className={`w-full rounded-xl ${btnBase}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={getOptimizedUrl(photo.storageUrl, 800) ?? photo.storageUrl}
+        src={photo.storageUrl}
         alt="" loading="lazy" decoding="async"
         onLoad={hasDims ? undefined : handleLoad}
         style={hasDims ? { aspectRatio: clampRatio(photo.width!, photo.height!) } : undefined}
@@ -102,7 +101,7 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
           <button key={m.id} onClick={() => onOpen(m.id)} className={`rounded-lg ${btnBase}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={getOptimizedUrl(m.storageUrl, 640) ?? m.storageUrl}
+              src={m.storageUrl}
               alt="" loading="lazy" decoding="async"
               className="w-full aspect-square object-cover bg-rw-surface-raised"
             />
@@ -118,7 +117,7 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
         <button onClick={() => onOpen(photos[0].id)} className={`col-span-2 rounded-xl ${btnBase}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={getOptimizedUrl(photos[0].storageUrl, 800) ?? photos[0].storageUrl}
+            src={photos[0].storageUrl}
             alt="" loading="lazy" decoding="async"
             className="w-full aspect-video object-cover bg-rw-surface-raised"
           />
@@ -127,7 +126,7 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
           <button key={m.id} onClick={() => onOpen(m.id)} className={`rounded-lg ${btnBase}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={getOptimizedUrl(m.storageUrl, 640) ?? m.storageUrl}
+              src={m.storageUrl}
               alt="" loading="lazy" decoding="async"
               className="w-full aspect-square object-cover bg-rw-surface-raised"
             />
@@ -145,7 +144,7 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
         <button key={m.id} onClick={() => onOpen(m.id)} className={`relative rounded-lg ${btnBase}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={getOptimizedUrl(m.storageUrl, 640) ?? m.storageUrl}
+            src={m.storageUrl}
             alt="" loading="lazy" decoding="async"
             className="w-full aspect-square object-cover bg-rw-surface-raised"
           />
