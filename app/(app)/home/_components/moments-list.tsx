@@ -230,7 +230,7 @@ const MomentsGrid = memo(function MomentsGrid({
             <p className="font-sans text-[11px] font-semibold text-rw-text-placeholder uppercase tracking-[0.1em]">
               Created by you
             </p>
-            <Grid moments={yours} currentUserId={currentUserId} />
+            <Grid moments={yours} />
           </section>
         )}
         {shared.length > 0 && (
@@ -238,21 +238,21 @@ const MomentsGrid = memo(function MomentsGrid({
             <p className="font-sans text-[11px] font-semibold text-rw-text-placeholder uppercase tracking-[0.1em]">
               Shared with you
             </p>
-            <Grid moments={shared} currentUserId={currentUserId} />
+            <Grid moments={shared} />
           </section>
         )}
       </div>
     )
   }
 
-  return <Grid moments={moments} currentUserId={currentUserId} />
+  return <Grid moments={moments} />
 })
 
-const Grid = memo(function Grid({ moments, currentUserId }: { moments: MomentSummary[]; currentUserId: string }) {
+const Grid = memo(function Grid({ moments }: { moments: MomentSummary[] }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {moments.map((m) => (
-        <MomentCard key={m.id} moment={m} currentUserId={currentUserId} />
+        <MomentCard key={m.id} moment={m} />
       ))}
     </div>
   )

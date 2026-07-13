@@ -47,12 +47,12 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleEnter() {
-    leaveTimer.current && clearTimeout(leaveTimer.current)
+    if (leaveTimer.current) clearTimeout(leaveTimer.current)
     enterTimer.current = setTimeout(() => setPopoverOpen(true), 150)
   }
 
   function handleLeave() {
-    enterTimer.current && clearTimeout(enterTimer.current)
+    if (enterTimer.current) clearTimeout(enterTimer.current)
     leaveTimer.current = setTimeout(() => setPopoverOpen(false), 200)
   }
 

@@ -39,10 +39,9 @@ function formatDate(year: number | null, month: number | null, day: number | nul
 
 interface Props {
   moment: MomentSummary
-  currentUserId: string
 }
 
-export const MomentCard = memo(function MomentCard({ moment, currentUserId }: Props) {
+export const MomentCard = memo(function MomentCard({ moment }: Props) {
   const [isPending, startTransition] = useTransition()
   const [editOpen, setEditOpen] = useState(false)
   // Only mount the modal after first open to avoid N hidden dialog instances in the grid
