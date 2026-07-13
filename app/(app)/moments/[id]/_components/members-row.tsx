@@ -19,12 +19,11 @@ const EditMomentModal = dynamic(() =>
 
 interface Props {
   moment: MomentDetail
-  myRole: 'owner' | 'editor' | 'reader'
   myStatus: 'pending' | 'accepted' | 'declined'
   canEdit: boolean
 }
 
-export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
+export function MembersRow({ moment, myStatus, canEdit }: Props) {
 
   const acceptedNonOwner = moment.members.filter(
     (m) => m.userId && m.userId !== moment.ownerId && m.status === 'accepted'
@@ -168,7 +167,7 @@ export function MembersRow({ moment, myRole, myStatus, canEdit }: Props) {
                 canEdit={true}
                 buttonClassName="size-9 md:size-7"
               />
-              <InviteDialog momentId={moment.id} myRole={myRole} buttonClassName="size-9 md:size-7" />
+              <InviteDialog momentId={moment.id} buttonClassName="size-9 md:size-7" />
             </>
           )}
           <Link

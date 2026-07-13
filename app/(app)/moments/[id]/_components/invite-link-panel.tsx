@@ -50,6 +50,7 @@ export function InviteLinkSection({
   const [origin, setOrigin] = useState('')
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read window.location.origin after mount (unavailable during SSR) to build the invite URL
     setOrigin(window.location.origin)
   }, [])
 

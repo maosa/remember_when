@@ -78,6 +78,7 @@ function RotatingQuote() {
     const start = Math.floor(Math.random() * queue.length)
     queueRef.current = queue
     posRef.current   = start
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only random starting quote; picking during render would cause an SSR hydration mismatch
     setShownIdx(queue[start])
   }, [])
 

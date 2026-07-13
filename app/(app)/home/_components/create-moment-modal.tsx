@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label'
 import { TagInput } from '@/components/ui/tag-input'
 import { MONTHS, type DateMode } from '@/lib/date-helpers'
 import { MomentDatePicker } from '@/app/(app)/_components/moment-date-picker'
-import { createMoment, type Invitee } from '../actions'
+import { createMoment } from '../actions'
 import { PeopleInviteInput, type InviteeDisplay } from './people-invite-input'
 
 const CURRENT_YEAR = new Date().getFullYear()

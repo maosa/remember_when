@@ -140,7 +140,9 @@ export function MediaViewer({
     resetHideTimer()
   }, [currentIndex, items.length, resetHideTimer])
 
-  navigateRef.current = navigate
+  // Kept fresh via a ref so the once-registered keydown listener always calls the
+  // latest closure. Updated post-commit (read only inside event handlers).
+  useEffect(() => { navigateRef.current = navigate })
 
   // ── Close function (kept fresh via ref) ──────────────────────────────────
   const handleClose = useCallback(() => {
@@ -150,7 +152,7 @@ export function MediaViewer({
     setTimeout(onClose, prefersReducedMotion ? 0 : 200)
   }, [onClose, prefersReducedMotion])
 
-  handleCloseRef.current = handleClose
+  useEffect(() => { handleCloseRef.current = handleClose })
 
   // ── Keyboard handler (registered once) ───────────────────────────────────
   useEffect(() => {
@@ -360,7 +362,8 @@ export function MediaViewer({
                     style={{ width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#5C7A6B', color: 'white', borderRadius: '50%', border: 'none', cursor: 'pointer' }}
                     onClick={() => {
                       if (!audioRef.current) return
-                      audioPlaying ? audioRef.current.pause() : audioRef.current.play()
+                      if (audioPlaying) audioRef.current.pause()
+                      else audioRef.current.play()
                     }}
                   >
                     {audioPlaying
@@ -394,6 +397,7 @@ export function MediaViewer({
         className="absolute inset-0 pointer-events-none"
         style={{
           opacity: controlsVisible ? 1 : 0.6,
+          // eslint-disable-next-line react-hooks/refs -- touch/mouse heuristic; every touch also flips controlsVisible, so this read is always paired with a re-render
           transition: isTouchRef.current ? 'none' : 'opacity 300ms ease',
         }}
       >

@@ -35,11 +35,9 @@ interface InviteFeedback {
 
 export function InviteDialog({
   momentId,
-  myRole,
   buttonClassName,
 }: {
   momentId: string
-  myRole: 'owner' | 'editor' | 'reader'
   buttonClassName?: string
 }) {
   const [open, setOpen] = useState(false)
@@ -58,6 +56,7 @@ export function InviteDialog({
     const val = input.trim().replace(/^@/, '')
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- debounced async lookup; reset when the input is cleared
     if (!val) { setLookupStatus('idle'); setLookupDisplay(''); return }
 
     if (method === 'email' && !isValidEmail(val)) {
@@ -252,7 +251,7 @@ export function InviteDialog({
                       <p className="text-xs text-rw-danger">No account with this username. Try inviting by email instead.</p>
                     )}
                     {lookupStatus === 'unregistered' && (
-                      <p className="text-xs text-rw-text-muted">Not registered — they'll receive an invite email to join.</p>
+                      <p className="text-xs text-rw-text-muted">Not registered — they&apos;ll receive an invite email to join.</p>
                     )}
                     {lookupStatus === 'invalid_email' && (
                       <p className="text-xs text-rw-text-muted">Enter a valid email address.</p>

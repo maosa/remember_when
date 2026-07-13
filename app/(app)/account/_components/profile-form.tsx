@@ -54,6 +54,7 @@ export function ProfileForm({ initialData }: Props) {
     const trimmed = username.trim().toLowerCase()
 
     if (trimmed === initialData.username) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- debounced async validation; reset status when the input matches the current username
       setUsernameStatus('idle')
       return
     }

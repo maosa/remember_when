@@ -31,14 +31,17 @@ export function PeopleInviteInput({ invitees, onAdd, onRemove, onRoleChange }: P
 
   const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
   const excludeIds = invitees.filter((i) => i.type === 'userId').map((i) => i.value)
+  // Kept in a ref so the debounced async search reads the latest exclusions
+  // without re-running the effect. Updated post-commit (read only inside the timeout).
   const excludeIdsRef = useRef(excludeIds)
-  excludeIdsRef.current = excludeIds
+  useEffect(() => { excludeIdsRef.current = excludeIds })
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
     const q = query.trim()
     if (q.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- debounced async search; clear results when the query is too short
       setResults(null)
       return
     }

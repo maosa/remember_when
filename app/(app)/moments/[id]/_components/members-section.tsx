@@ -65,7 +65,7 @@ export function MembersSection({ moment, myRole, myStatus, myUserId }: Props) {
             Manage Members
           </h2>
           {isAccepted && (isOwner || myRole === 'editor') && (
-            <InviteDialog momentId={moment.id} myRole={myRole} />
+            <InviteDialog momentId={moment.id} />
           )}
         </div>
 

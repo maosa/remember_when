@@ -53,7 +53,7 @@ export default async function MomentPage({ params }: Props) {
         />
 
         {/* Members row + action buttons */}
-        <MembersRow moment={moment} myRole={myRole} myStatus={myStatus} canEdit={canEdit} />
+        <MembersRow moment={moment} myStatus={myStatus} canEdit={canEdit} />
 
         {/* Posts & media — streamed independently so header/tags/members appear first */}
         <Suspense fallback={<PostsSectionSkeleton />}>
