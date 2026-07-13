@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run lint && npm run typecheck && npm test",
     "test": "vitest run",
     "test:watch": "vitest",
+    "prepare": "husky",
     "gen:types": "supabase gen types typescript --project-id xkwpceckuqksycbhgvna > types/database.types.ts"
   },
   "dependencies": {
@@ -43,6 +46,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "husky": "^9.1.7",
     "shadcn": "^4.0.8",
     "supabase": "^2.108.0",
     "tailwindcss": "^4",
