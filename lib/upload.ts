@@ -27,6 +27,9 @@ export const ALLOWED_COVER_TYPES = [
 /** Maximum upload size (bytes) for post media and cover photos — 100 MB. */
 export const MAX_MEDIA_BYTES = 100 * 1024 * 1024
 
+/** Maximum upload size (bytes) for profile avatars — 10 MB. */
+export const MAX_AVATAR_BYTES = 10 * 1024 * 1024
+
 export const ALLOWED_MEDIA_TYPES = [
   // Images — widely supported, safe to process
   'image/jpeg',
@@ -75,14 +78,28 @@ export function mediaTypeFromMime(mimeType: string): 'photo' | 'video' | 'audio'
 // ─── Validators ───────────────────────────────────────────────────────────────
 
 export function validateAvatarFile(file: File): string | null {
-  if (!(ALLOWED_AVATAR_TYPES as readonly string[]).includes(file.type)) {
+  return validateAvatarMimeType(file.type)
+}
+
+/** Same check as `validateAvatarFile` but accepts a plain MIME type string.
+ *  Used by server actions that receive file metadata rather than a File object
+ *  (the two-phase direct-upload flow). */
+export function validateAvatarMimeType(mimeType: string): string | null {
+  if (!(ALLOWED_AVATAR_TYPES as readonly string[]).includes(mimeType)) {
     return 'Avatar must be a JPEG, PNG, or WebP image.'
   }
   return null
 }
 
 export function validateCoverFile(file: File): string | null {
-  if (!(ALLOWED_COVER_TYPES as readonly string[]).includes(file.type)) {
+  return validateCoverMimeType(file.type)
+}
+
+/** Same check as `validateCoverFile` but accepts a plain MIME type string.
+ *  Used by server actions that receive file metadata rather than a File object
+ *  (the two-phase direct-upload flow). */
+export function validateCoverMimeType(mimeType: string): string | null {
+  if (!(ALLOWED_COVER_TYPES as readonly string[]).includes(mimeType)) {
     return 'Cover photo must be a JPEG, PNG, WebP, or GIF image.'
   }
   return null

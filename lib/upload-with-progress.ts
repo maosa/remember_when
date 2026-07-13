@@ -9,12 +9,17 @@
  * @param signedUrl  Full signed URL returned by `createSignedUploadUrl` (token included)
  * @param file       The file to upload
  * @param onProgress Called with a 0–100 integer as bytes are transmitted
+ * @param userAccessToken  Session JWT for the Authorization header (storage RLS)
+ * @param options.upsert   Send `x-upsert: true` so an existing object at the same
+ *                         path is overwritten. Required for fixed-path uploads
+ *                         (cover photos, avatars); omit for unique post paths.
  */
 export function uploadWithProgress(
   signedUrl: string,
   file: File,
   onProgress: (pct: number) => void,
   userAccessToken?: string,
+  options?: { upsert?: boolean },
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const body = new FormData()
@@ -55,6 +60,9 @@ export function uploadWithProgress(
     // Authorization header (mirrors what storage-js does internally). The storage
     // token stays in the URL query string (?token=...) — it is NOT the auth header.
     if (userAccessToken) xhr.setRequestHeader('Authorization', `Bearer ${userAccessToken}`)
+    // Overwrite an existing object at this path (fixed-path uploads). Storage
+    // defaults to insert-only when the header is absent.
+    if (options?.upsert) xhr.setRequestHeader('x-upsert', 'true')
     xhr.send(body)
   })
 }

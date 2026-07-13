@@ -15,8 +15,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { updateCoverPhoto, setCoverPhotoFromPath, deleteCoverPhoto, fetchMomentPhotos } from '../actions'
+import { prepareCoverUpload, finalizeCoverUpload, setCoverPhotoFromPath, deleteCoverPhoto, fetchMomentPhotos } from '../actions'
 import { MAX_MEDIA_BYTES } from '@/lib/upload'
+import { uploadWithProgress } from '@/lib/upload-with-progress'
+import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
 interface Props {
@@ -111,9 +113,21 @@ export function CoverPhotoSection({ momentId, currentUrl, currentStoragePath, ca
     startTransition(async () => {
       let res: { error?: string }
       if (selection.type === 'upload') {
-        const fd = new FormData()
-        fd.append('cover', selection.file)
-        res = await updateCoverPhoto(momentId, fd)
+        // Upload the file directly to Storage (Server Actions cap bodies at 1 MB),
+        // then point the moment's cover at the uploaded object.
+        const file = selection.file
+        const prep = await prepareCoverUpload(momentId, { type: file.type, size: file.size })
+        if (prep.error || !prep.signedUrl || !prep.path) {
+          res = { error: prep.error ?? 'Upload failed.' }
+        } else {
+          try {
+            const { data: { session } } = await createClient().auth.getSession()
+            await uploadWithProgress(prep.signedUrl, file, () => {}, session?.access_token, { upsert: true })
+            res = await finalizeCoverUpload(momentId, prep.path)
+          } catch (err) {
+            res = { error: err instanceof Error ? err.message : 'Upload failed.' }
+          }
+        }
       } else {
         res = await setCoverPhotoFromPath(momentId, selection.storagePath)
       }

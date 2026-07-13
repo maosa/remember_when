@@ -5,7 +5,9 @@ import { toast } from 'sonner'
 import { Camera } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { updateAvatar, removeAvatar } from '../actions'
+import { prepareAvatarUpload, finalizeAvatarUpload, removeAvatar } from '../actions'
+import { uploadWithProgress } from '@/lib/upload-with-progress'
+import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   currentUrl: string | null
@@ -23,11 +25,23 @@ export function AvatarUpload({ currentUrl, initials }: Props) {
 
     setPreview(URL.createObjectURL(file))
 
-    const formData = new FormData()
-    formData.append('avatar', file)
-
     startTransition(async () => {
-      const result = await updateAvatar(formData)
+      // Upload the file directly to Storage (Server Actions cap bodies at 1 MB),
+      // then point the profile photo at the uploaded object.
+      const prep = await prepareAvatarUpload({ type: file.type, size: file.size })
+      let result: { error?: string }
+      if (prep.error || !prep.signedUrl || !prep.path) {
+        result = { error: prep.error ?? 'Upload failed.' }
+      } else {
+        try {
+          const { data: { session } } = await createClient().auth.getSession()
+          await uploadWithProgress(prep.signedUrl, file, () => {}, session?.access_token, { upsert: true })
+          result = await finalizeAvatarUpload(prep.path)
+        } catch (err) {
+          result = { error: err instanceof Error ? err.message : 'Upload failed.' }
+        }
+      }
+
       if (result?.error) {
         toast.error(result.error)
         setPreview(currentUrl)

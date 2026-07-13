@@ -5,7 +5,7 @@ import { headers } from 'next/headers'
 import { createClient, requireUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification, sendNotifications } from '@/lib/notifications'
-import { validateCoverFile, validateMediaFile, validateMediaMimeType, safeExt, mediaTypeFromMime, MAX_MEDIA_BYTES } from '@/lib/upload'
+import { validateCoverMimeType, validateMediaFile, validateMediaMimeType, safeExt, mediaTypeFromMime, MAX_MEDIA_BYTES, ALLOWED_COVER_TYPES } from '@/lib/upload'
 import { isValidEmail } from '@/lib/validation'
 import { signStoragePath, signStoragePaths } from '@/lib/storage'
 import { logAuditEvent } from '@/lib/audit'
@@ -776,43 +776,88 @@ async function revalidateHomeForMomentMembers(
 
 // ─── Update cover photo ───────────────────────────────────────────────────────
 
-export async function updateCoverPhoto(momentId: string, formData: FormData): Promise<{ error?: string }> {
+// ─── Cover photo upload (two-phase direct-to-storage) ─────────────────────────
+//
+// Cover files are uploaded directly to Supabase Storage by the browser rather
+// than streamed through a Server Action, whose request body is capped at 1 MB by
+// Next.js (and ~4.5 MB by Vercel). Mirrors preparePostUpload / finalizePostUpload:
+//
+//   1. prepareCoverUpload  — authorises + validates, returns a signed upload URL.
+//                            The browser uploads the file straight to Storage.
+//   2. finalizeCoverUpload — points moments.cover_photo_url at the uploaded object.
+//
+// The signed-upload URL is generated with the *user* client so the moment-covers
+// INSERT/UPDATE RLS policy (owner-or-editor, path-scoped to {momentId}/cover.*)
+// is enforced at URL-generation time — see 20260522_storage_rls_tighten.sql.
+
+/** Canonical cover extensions derived from the allowed MIME types (jpg/png/webp/gif). */
+const COVER_EXTS = new Set(ALLOWED_COVER_TYPES.map(safeExt))
+
+/**
+ * Phase 1 — authorise, validate the file metadata, and return a signed upload
+ * URL for the moment's cover slot ({momentId}/cover.{ext}).
+ */
+export async function prepareCoverUpload(
+  momentId: string,
+  file: { type: string; size: number },
+): Promise<{ error?: string; signedUrl?: string; path?: string }> {
   const user = await requireUser()
 
   const permCheck = await assertCanEditMoment(momentId, user.id)
-  if (permCheck.error) return permCheck
+  if (permCheck.error) return { error: permCheck.error }
 
-  const file = formData.get('cover') as File
   if (!file || file.size === 0) return { error: 'No file provided.' }
   if (file.size > MAX_MEDIA_BYTES) return { error: 'File must be under 100 MB.' }
 
-  // Validate MIME type — derive extension from type, not filename
-  const mimeError = validateCoverFile(file)
+  const mimeError = validateCoverMimeType(file.type)
   if (mimeError) return { error: mimeError }
 
+  // Derive the extension from the MIME type, never the filename.
   const ext = safeExt(file.type)
-  const filePath = `${momentId}/cover.${ext}`
+  const path = `${momentId}/cover.${ext}`
 
-  // assertCanEditMoment already validated authorization — use the admin client
-  // for both storage and DB so neither storage RLS nor moments-table RLS can
-  // interfere with a caller who has already passed the explicit permission check.
-  const admin = createAdminClient()
-
-  const { error: uploadError } = await admin.storage
+  // User client: RLS checks the owner-or-editor INSERT/UPDATE policy here, at
+  // URL generation. upsert:true so re-uploading a cover of the same type
+  // overwrites the existing object.
+  const supabase = await createClient()
+  const { data, error } = await supabase.storage
     .from('moment-covers')
-    .upload(filePath, file, { upsert: true })
+    .createSignedUploadUrl(path, { upsert: true })
 
-  if (uploadError) return { error: uploadError.message }
+  if (error || !data) return { error: error?.message ?? 'Failed to prepare the upload.' }
 
-  // Store the "{bucket}/{path}" reference — signed URLs are generated at read time
-  const storagePath = `moment-covers/${filePath}`
+  return { signedUrl: data.signedUrl, path }
+}
 
-  const { error: updateError } = await admin
+/**
+ * Phase 2 — called after the browser finishes uploading. Validates the path is
+ * this moment's own cover slot (so a caller can't point the cover at an
+ * arbitrary object) and updates moments.cover_photo_url.
+ */
+export async function finalizeCoverUpload(momentId: string, path: string): Promise<{ error?: string }> {
+  const user = await requireUser()
+
+  const permCheck = await assertCanEditMoment(momentId, user.id)
+  if (permCheck.error) return { error: permCheck.error }
+
+  // Path must be exactly "{momentId}/cover.{ext}" for an allowed extension. The
+  // anchored pattern (no '.' or '/' in either capture group) also rules out
+  // traversal, so a caller can't point cover_photo_url at a foreign object.
+  const match = /^([0-9a-f-]+)\/cover\.([a-z0-9]+)$/.exec(path)
+  if (!match || match[1] !== momentId || !COVER_EXTS.has(match[2])) {
+    return { error: 'Invalid upload path.' }
+  }
+
+  // Store the "{bucket}/{path}" reference — signed URLs are generated at read time.
+  // assertCanEditMoment already authorised the caller; admin write bypasses
+  // moments-table RLS that may restrict writes to the owner only.
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('moments')
-    .update({ cover_photo_url: storagePath })
+    .update({ cover_photo_url: `moment-covers/${path}` })
     .eq('id', momentId)
 
-  if (updateError) return { error: updateError.message }
+  if (error) return { error: error.message }
   revalidatePath(`/moments/${momentId}`)
   await revalidateHomeForMomentMembers(admin, momentId)
   return {}

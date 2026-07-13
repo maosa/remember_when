@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient, requireUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { validateAvatarFile, safeExt } from '@/lib/upload'
+import { validateAvatarMimeType, safeExt, MAX_AVATAR_BYTES, ALLOWED_AVATAR_TYPES } from '@/lib/upload'
 import { isValidEmail } from '@/lib/validation'
 import { logAuditEvent } from '@/lib/audit'
 import { layoutProfileTag } from '@/lib/cached-queries'
@@ -113,34 +113,69 @@ export async function changePassword(newPassword: string) {
   return { success: true }
 }
 
-// ─── Avatar upload ──────────────────────────────────────────────────────────
+// ─── Avatar upload (two-phase direct-to-storage) ──────────────────────────────
+//
+// The file is uploaded directly to Storage by the browser rather than streamed
+// through a Server Action, whose request body is capped at 1 MB by Next.js (and
+// ~4.5 MB by Vercel). Mirrors the moment cover-photo flow:
+//
+//   1. prepareAvatarUpload  — authorises + validates, returns a signed upload URL.
+//   2. finalizeAvatarUpload — points users.profile_photo_url at the uploaded object.
 
-export async function updateAvatar(formData: FormData) {
+/** Canonical avatar extensions derived from the allowed MIME types (jpg/png/webp). */
+const AVATAR_EXTS = new Set(ALLOWED_AVATAR_TYPES.map(safeExt))
+
+/**
+ * Phase 1 — authorise, validate the file metadata, and return a signed upload
+ * URL for the caller's avatar slot ({userId}/avatar.{ext}).
+ */
+export async function prepareAvatarUpload(
+  file: { type: string; size: number },
+): Promise<{ error?: string; signedUrl?: string; path?: string }> {
   const user = await requireUser()
-  const supabase = await createClient()
 
-  const file = formData.get('avatar') as File
   if (!file || file.size === 0) return { error: 'No file provided.' }
-  if (file.size > 10 * 1024 * 1024) return { error: 'File must be under 10 MB.' }
+  if (file.size > MAX_AVATAR_BYTES) return { error: 'File must be under 10 MB.' }
 
-  // Validate MIME type — derive extension from type, not filename
-  const mimeError = validateAvatarFile(file)
+  const mimeError = validateAvatarMimeType(file.type)
   if (mimeError) return { error: mimeError }
 
+  // Derive the extension from the MIME type, never the filename.
   const ext = safeExt(file.type)
   const path = `${user.id}/avatar.${ext}`
 
-  const { error: uploadError } = await supabase.storage
+  // User client: storage RLS scopes writes to the caller's own folder. upsert:true
+  // so re-uploading an avatar of the same type overwrites the existing object.
+  const supabase = await createClient()
+  const { data, error } = await supabase.storage
     .from('avatars')
-    .upload(path, file, { upsert: true })
+    .createSignedUploadUrl(path, { upsert: true })
 
-  if (uploadError) return { error: uploadError.message }
+  if (error || !data) return { error: error?.message ?? 'Failed to prepare the upload.' }
 
-  // Avatars bucket is public; store the public URL with cache-bust
-  const { data: { publicUrl } } = supabase.storage
-    .from('avatars')
-    .getPublicUrl(path)
+  return { signedUrl: data.signedUrl, path }
+}
 
+/**
+ * Phase 2 — called after the browser finishes uploading. Validates the path is
+ * the caller's own avatar slot, then points users.profile_photo_url at it.
+ */
+export async function finalizeAvatarUpload(path: string): Promise<{ error?: string }> {
+  const user = await requireUser()
+
+  // Path must be exactly "{userId}/avatar.{ext}" for an allowed extension. The
+  // anchored pattern (no '.' or '/' in either capture group) also rules out
+  // traversal, so a caller can't point profile_photo_url at a foreign object.
+  const match = /^([0-9a-f-]+)\/avatar\.([a-z0-9]+)$/.exec(path)
+  if (!match || match[1] !== user.id || !AVATAR_EXTS.has(match[2])) {
+    return { error: 'Invalid upload path.' }
+  }
+
+  const supabase = await createClient()
+
+  // Avatars bucket is public; store the public URL with a cache-bust so the new
+  // image replaces the old one immediately despite the stable path.
+  const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
   const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`
 
   const { error: updateError } = await supabase
@@ -152,7 +187,7 @@ export async function updateAvatar(formData: FormData) {
 
   revalidateTag(layoutProfileTag(user.id), { expire: 0 })
   revalidatePath('/account')
-  return { success: true }
+  return {}
 }
 
 // ─── Avatar remove ──────────────────────────────────────────────────────────
