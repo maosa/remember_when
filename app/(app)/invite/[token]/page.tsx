@@ -86,12 +86,14 @@ export default async function InviteRedemptionPage({ params }: Props) {
       { onConflict: 'moment_id,user_id' }
     )
 
-  // Notify the inviter
+  // Notify the invitee so the pending invite shows up for them to accept/decline
+  // (matches the resolve-invite / complete-profile flows and the notifications schema).
   await admin.from('notifications').insert({
-    user_id: invite.invited_by,
+    user_id: user.id,
     type: 'moment_invite',
-    from_user_id: user.id,
-    moment_id: invite.moment_id,
+    related_user_id: invite.invited_by,
+    related_moment_id: invite.moment_id,
+    invite_role: invite.role as 'editor' | 'reader',
   })
 
   // Mark invite as redeemed
