@@ -13,7 +13,6 @@ import { homeMomentsTag } from '@/lib/cached-queries'
 import {
   assertCanViewMoment,
   assertCanEditMoment,
-  assertCanManageLink,
   expiryToDate,
   validateUploadPaths,
   type ExpiryOption,
@@ -392,10 +391,12 @@ export async function inviteMember(
       .eq('user_id', user.id)
       .single()
 
-    if (!myMembership || myMembership.status !== 'accepted') {
+    // Non-owners must be accepted editors to invite; readers cannot invite at all.
+    if (!myMembership || myMembership.status !== 'accepted' || myMembership.role !== 'editor') {
       return { error: 'You do not have permission to invite members.' }
     }
-    if (myMembership.role === 'editor' && role === 'editor') {
+    // Editors may only invite readers (owners, handled above, may invite editors).
+    if (role === 'editor') {
       return { error: 'Editors can only invite readers.' }
     }
   }
@@ -1740,7 +1741,7 @@ export async function generateInviteLink(
 ): Promise<{ token?: string; expiresAt?: string | null; error?: string }> {
   const user = await requireUser()
 
-  const permCheck = await assertCanManageLink(momentId, user.id)
+  const permCheck = await assertCanEditMoment(momentId, user.id)
   if (permCheck.error) return permCheck
 
   const admin = createAdminClient()
@@ -1766,7 +1767,7 @@ export async function generateInviteLink(
 export async function revokeInviteLink(momentId: string): Promise<{ error?: string }> {
   const user = await requireUser()
 
-  const permCheck = await assertCanManageLink(momentId, user.id)
+  const permCheck = await assertCanEditMoment(momentId, user.id)
   if (permCheck.error) return permCheck
 
   const admin = createAdminClient()

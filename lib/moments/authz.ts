@@ -68,25 +68,6 @@ export async function assertCanEditMoment(
   return { ownerId: moment.owner_id }
 }
 
-/** Invite-link guard: owner or any accepted member may manage the link. */
-export async function assertCanManageLink(
-  momentId: string,
-  userId: string,
-): Promise<{ error?: string }> {
-  const admin = createAdminClient()
-  const { data: moment } = await admin.from('moments').select('owner_id').eq('id', momentId).single()
-  if (!moment) return { error: 'Moment not found.' }
-  if (moment.owner_id === userId) return {}
-  const { data: membership } = await admin
-    .from('moment_members')
-    .select('role, status')
-    .eq('moment_id', momentId)
-    .eq('user_id', userId)
-    .single()
-  if (!membership || membership.status !== 'accepted') return { error: 'Permission denied.' }
-  return {}
-}
-
 export type ExpiryOption = 'week' | 'month' | '3months' | '6months' | 'year' | 'never'
 
 /** Converts an invite-link expiry option into an ISO timestamp (or null for "never"). */
