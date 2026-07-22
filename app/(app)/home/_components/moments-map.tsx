@@ -171,10 +171,13 @@ export function MomentsMap({ moments }: { moments: MomentSummary[] }) {
         ref={svgRef}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         preserveAspectRatio="xMidYMid slice"
-        className="block h-[52vh] max-h-[720px] min-h-[320px] w-full cursor-grab select-none active:cursor-grabbing sm:h-[62vh]"
+        className="block h-[57vh] max-h-[720px] min-h-[320px] w-full cursor-grab select-none active:cursor-grabbing sm:h-[62vh]"
         style={{ touchAction: 'none', background: 'var(--rw-color-bg)' }}
         role="img"
         aria-label="World map of your moments"
+        // Clicking empty map (land/ocean) dismisses the moment panel; markers
+        // stopPropagation so tapping a dot still opens its panel.
+        onClick={() => setSelected(null)}
       >
         <g transform={`translate(${t.x},${t.y}) scale(${t.k})`}>
           {/* Land */}
@@ -185,7 +188,7 @@ export function MomentsMap({ moments }: { moments: MomentSummary[] }) {
               style={{
                 fill: 'var(--rw-color-surface-raised)',
                 stroke: 'var(--rw-color-text-placeholder)',
-                strokeWidth: 0.9 * inv,
+                strokeWidth: 0.7 * inv,
                 strokeLinejoin: 'round',
               }}
             />
@@ -206,13 +209,14 @@ export function MomentsMap({ moments }: { moments: MomentSummary[] }) {
                 key={c.key}
                 transform={`translate(${cx},${cy}) scale(${inv})`}
                 style={{ cursor: 'pointer' }}
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation()
                   setSelected({
                     title: clusterTitle(c),
                     kind: isCountry ? 'country' : 'city',
                     moments: c.moments,
                   })
-                }
+                }}
               >
                 {showLabel && (
                   <text

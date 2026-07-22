@@ -96,6 +96,21 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
     split: 'Split view',
   }
 
+  // Grid ↔ map toggle. Rendered in two spots by breakpoint (see below): the
+  // search row on desktop / in map view, and the tabs row on mobile in grid view.
+  const viewToggle = (extraClass = '') => (
+    <button
+      type="button"
+      onClick={() => setView((v) => (v === 'grid' ? 'map' : 'grid'))}
+      aria-pressed={view === 'map'}
+      className={cn(buttonVariants({ variant: 'outline' }), 'shrink-0 h-10 gap-1.5 px-2.5 sm:w-36 sm:px-3', extraClass)}
+      title={view === 'grid' ? 'Map view' : 'Grid view'}
+    >
+      {view === 'grid' ? <MapIcon className="size-4" /> : <LayoutGrid className="size-4" />}
+      <span className="hidden sm:inline">{view === 'grid' ? 'Map' : 'Grid'}</span>
+    </button>
+  )
+
   return (
     <div className="mx-auto max-w-[1100px] px-4 md:px-6 py-8 space-y-6">
 
@@ -147,17 +162,10 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
             </MenuContent>
           </Menu>
         )}
-        {/* View toggle — grid ↔ world map. Matches the other buttons' width on desktop. */}
-        <button
-          type="button"
-          onClick={() => setView((v) => (v === 'grid' ? 'map' : 'grid'))}
-          aria-pressed={view === 'map'}
-          className={cn(buttonVariants({ variant: 'outline' }), 'shrink-0 h-10 gap-1.5 px-2.5 sm:w-36 sm:px-3')}
-          title={view === 'grid' ? 'Map view' : 'Grid view'}
-        >
-          {view === 'grid' ? <MapIcon className="size-4" /> : <LayoutGrid className="size-4" />}
-          <span className="hidden sm:inline">{view === 'grid' ? 'Map' : 'Grid'}</span>
-        </button>
+        {/* Toggle lives here on desktop (both views) and on mobile in map view
+            (map view has no tabs row). On mobile in grid view it moves to the
+            tabs row instead — see below. */}
+        {viewToggle(view === 'grid' ? 'hidden sm:inline-flex' : '')}
       </div>
 
       {/* Tabs — underline style */}
@@ -176,20 +184,24 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
 
         return (
           <Tabs defaultValue="moments">
-            <TabsList>
-              <TabsTrigger value="moments">
-                Moments
-                {active.length > 0 && (
-                  <span className={badgeCls}>{active.length}</span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="archived">
-                Archived
-                {archived.length > 0 && (
-                  <span className={badgeCls}>{archived.length}</span>
-                )}
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between gap-2">
+              <TabsList>
+                <TabsTrigger value="moments">
+                  Moments
+                  {active.length > 0 && (
+                    <span className={badgeCls}>{active.length}</span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="archived">
+                  Archived
+                  {archived.length > 0 && (
+                    <span className={badgeCls}>{archived.length}</span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              {/* Mobile-only: the map toggle sits beside the tabs (matches round 1). */}
+              {viewToggle('sm:hidden')}
+            </div>
 
             {/* ── Active moments ───────────────────────────── */}
             <TabsContent value="moments" className="mt-5">
