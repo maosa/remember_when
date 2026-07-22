@@ -10,6 +10,8 @@ import { isValidEmail } from '@/lib/validation'
 import { signStoragePath, signStoragePaths } from '@/lib/storage'
 import { logAuditEvent } from '@/lib/audit'
 import { homeMomentsTag } from '@/lib/cached-queries'
+import { normalizePlaceInput } from '@/lib/places/validate'
+import type { PlaceValue } from '@/lib/places/types'
 import {
   assertCanViewMoment,
   assertCanEditMoment,
@@ -39,6 +41,10 @@ export type MomentDetail = {
   dateMonth: number | null
   dateDay: number | null
   location: string | null
+  placeKind: 'city' | 'country' | null
+  placeCountryCode: string | null
+  placeLat: number | null
+  placeLng: number | null
   coverPhotoUrl: string | null        // signed URL for display
   coverPhotoStoragePath: string | null // raw "{bucket}/{path}" for identity comparison
   coverPosition: number | null        // vertical focal % (0–100); null = center
@@ -64,7 +70,7 @@ export async function fetchMomentDetail(
   const { data, error } = await admin
     .from('moments')
     .select(`
-      id, name, date_year, date_month, date_day, location, cover_photo_url, cover_position, owner_id, created_at,
+      id, name, date_year, date_month, date_day, location, place_kind, place_country_code, place_lat, place_lng, cover_photo_url, cover_position, owner_id, created_at,
       owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
       moment_tags(id, tag, position),
       moment_members(
@@ -130,6 +136,10 @@ export async function fetchMomentDetail(
       dateMonth: data.date_month ?? null,
       dateDay: data.date_day ?? null,
       location: data.location ?? null,
+      placeKind: (data as { place_kind: 'city' | 'country' | null }).place_kind ?? null,
+      placeCountryCode: (data as { place_country_code: string | null }).place_country_code ?? null,
+      placeLat: (data as { place_lat: number | null }).place_lat ?? null,
+      placeLng: (data as { place_lng: number | null }).place_lng ?? null,
       coverPhotoUrl: coverSignedUrl,
       coverPhotoStoragePath: coverStoragePath,
       coverPosition: (data as { cover_position: number | null }).cover_position ?? null,
@@ -1957,6 +1967,7 @@ export async function updateMoment(
     dateMonth: number | null
     dateDay: number | null
     location: string | null
+    place?: PlaceValue | null
     tags: string[]
   }
 ): Promise<{ error?: string }> {
@@ -1964,7 +1975,10 @@ export async function updateMoment(
 
   const name = data.name.trim().slice(0, 200)
   if (!name) return { error: 'Moment name is required.' }
-  const location = data.location?.trim().slice(0, 200) ?? null
+  // A structured place drives both the display label and the map coordinates;
+  // fall back to any free-text location (untouched legacy) with no coordinates.
+  const place = normalizePlaceInput(data.place)
+  const location = place ? place.label : (data.location?.trim().slice(0, 200) || null)
 
   // Verify the caller is owner or an accepted editor
   const permCheck = await assertCanEditMoment(momentId, user.id)
@@ -1982,6 +1996,10 @@ export async function updateMoment(
       date_month: data.dateMonth,
       date_day: data.dateDay,
       location: location || null,
+      place_kind: place?.kind ?? null,
+      place_country_code: place?.countryCode ?? null,
+      place_lat: place?.lat ?? null,
+      place_lng: place?.lng ?? null,
     })
     .eq('id', momentId)
 

@@ -15,8 +15,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MONTHS, inferDateMode, type DateMode } from '@/lib/date-helpers'
 import { TagInput } from '@/components/ui/tag-input'
+import { LocationCombobox } from '@/components/ui/location-combobox'
 import { MomentDatePicker } from '@/app/(app)/_components/moment-date-picker'
 import { updateMoment } from '@/app/(app)/moments/[id]/actions'
+import type { PlaceValue } from '@/lib/places/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,7 +29,32 @@ export interface MomentEditValues {
   dateMonth: number | null
   dateDay: number | null
   location: string | null
+  placeKind: 'city' | 'country' | null
+  placeCountryCode: string | null
+  placeLat: number | null
+  placeLng: number | null
   tags: string[]
+}
+
+/** Reconstruct the structured PlaceValue from a moment's stored columns, or null
+ *  when the moment has no structured place (never set, or legacy free-text). */
+function initialPlace(moment: MomentEditValues): PlaceValue | null {
+  if (
+    moment.placeKind &&
+    moment.placeCountryCode &&
+    moment.placeLat != null &&
+    moment.placeLng != null &&
+    moment.location
+  ) {
+    return {
+      kind: moment.placeKind,
+      label: moment.location,
+      countryCode: moment.placeCountryCode,
+      lat: moment.placeLat,
+      lng: moment.placeLng,
+    }
+  }
+  return null
 }
 
 interface Props {
@@ -50,7 +77,10 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
   const [dateYear, setDateYear] = useState(moment.dateYear ? String(moment.dateYear) : '')
   const [dateMonth, setDateMonth] = useState(moment.dateMonth ? MONTHS[moment.dateMonth - 1] ?? '' : '')
   const [dateDay, setDateDay] = useState(moment.dateDay ? String(moment.dateDay) : '')
-  const [location, setLocation] = useState(moment.location ?? '')
+  const [place, setPlace] = useState<PlaceValue | null>(() => initialPlace(moment))
+  // Whether the user changed the location this session. When false, the original
+  // location (structured or legacy free-text) is preserved untouched on save.
+  const [placeTouched, setPlaceTouched] = useState(false)
   const [tags, setTags] = useState<string[]>(moment.tags)
 
   function handleOpenChange(val: boolean) {
@@ -61,7 +91,8 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
       setDateYear(moment.dateYear ? String(moment.dateYear) : '')
       setDateMonth(moment.dateMonth ? MONTHS[moment.dateMonth - 1] ?? '' : '')
       setDateDay(moment.dateDay ? String(moment.dateDay) : '')
-      setLocation(moment.location ?? '')
+      setPlace(initialPlace(moment))
+      setPlaceTouched(false)
       setTags(moment.tags)
       setError(null)
     }
@@ -78,7 +109,10 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
           ? MONTHS.indexOf(dateMonth) + 1
           : null,
         dateDay: dateMode === 'full' && dateDay ? parseInt(dateDay) : null,
-        location: location.trim() || null,
+        // Untouched → preserve the original location (structured or legacy text).
+        // Touched → the current selection (a place, or null when cleared).
+        location: placeTouched ? (place ? place.label : null) : moment.location,
+        place: placeTouched ? place : initialPlace(moment),
         tags,
       })
 
@@ -136,11 +170,12 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               Location{' '}
               <span className="text-rw-text-muted text-xs font-normal">(optional)</span>
             </Label>
-            <Input
+            <LocationCombobox
               id="edit-moment-location"
+              value={place}
+              onChange={(v) => { setPlace(v); setPlaceTouched(true) }}
+              fallbackLabel={initialPlace(moment) ? null : moment.location}
               placeholder="e.g. Barcelona, Spain"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
             />
           </div>
 

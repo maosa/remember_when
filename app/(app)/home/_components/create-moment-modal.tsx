@@ -15,10 +15,12 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TagInput } from '@/components/ui/tag-input'
+import { LocationCombobox } from '@/components/ui/location-combobox'
 import { MONTHS, type DateMode } from '@/lib/date-helpers'
 import { MomentDatePicker } from '@/app/(app)/_components/moment-date-picker'
 import { createMoment } from '../actions'
 import { PeopleInviteInput, type InviteeDisplay } from './people-invite-input'
+import type { PlaceValue } from '@/lib/places/types'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -39,7 +41,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
   const [dateYear, setDateYear] = useState(String(CURRENT_YEAR))
   const [dateMonth, setDateMonth] = useState('')
   const [dateDay, setDateDay] = useState('')
-  const [location, setLocation] = useState('')
+  const [place, setPlace] = useState<PlaceValue | null>(null)
   const [tags, setTags] = useState<string[]>([])
   const [invitees, setInvitees] = useState<InviteeDisplay[]>([])
 
@@ -49,7 +51,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
     setDateYear(String(CURRENT_YEAR))
     setDateMonth('')
     setDateDay('')
-    setLocation('')
+    setPlace(null)
     setTags([])
     setInvitees([])
     setError(null)
@@ -83,7 +85,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
           ? MONTHS.indexOf(dateMonth) + 1
           : null,
         dateDay: dateMode === 'full' && dateDay ? parseInt(dateDay) : null,
-        location,
+        place,
         tags,
         invitees: invitees.map(({ type, value, role }) => ({ type, value, role })),
       })
@@ -148,11 +150,11 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
           {/* Location */}
           <div className="space-y-1.5">
             <Label htmlFor="moment-location">Location <span className="text-rw-text-muted text-xs font-normal">(optional)</span></Label>
-            <Input
+            <LocationCombobox
               id="moment-location"
+              value={place}
+              onChange={setPlace}
               placeholder="e.g. Barcelona, Spain"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
             />
           </div>
 

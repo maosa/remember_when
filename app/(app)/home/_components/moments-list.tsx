@@ -2,7 +2,7 @@
 
 import { useState, useMemo, memo } from 'react'
 import dynamic from 'next/dynamic'
-import { ArrowUpDown, BookOpen, Plus } from 'lucide-react'
+import { ArrowUpDown, BookOpen, Plus, Map as MapIcon, LayoutGrid } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Menu,
@@ -25,6 +25,12 @@ const CreateMomentModal = dynamic(
   // Give the lazy chunk its own Suspense boundary so the first-open chunk fetch
   // doesn't bubble suspension up to the route boundary and re-mount the whole page.
   { loading: () => null }
+)
+
+// The map bundles d3 + a world TopoJSON (~100KB); load it only when opened.
+const MomentsMap = dynamic(
+  () => import('./moments-map').then((m) => ({ default: m.MomentsMap })),
+  { loading: () => <div className="py-16 text-center text-sm text-rw-text-muted">Loading map…</div> }
 )
 
 type SortMode = 'newest' | 'oldest' | 'split'
@@ -71,6 +77,7 @@ function filterMoments(moments: MomentSummary[], query: string): MomentSummary[]
 export function MomentsList({ moments, currentUserId, firstName }: Props) {
   const [sort, setSort] = useState<SortMode>('newest')
   const [search, setSearch] = useState('')
+  const [view, setView] = useState<'grid' | 'map'>('grid')
   const [createOpen, setCreateOpen] = useState(false)
   const [createEverOpened, setCreateEverOpened] = useState(false)
 
@@ -149,42 +156,68 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         const badgeCls = `ml-1.5 inline-flex items-center justify-center rounded-full tabular-nums leading-none text-[11px] font-medium bg-rw-surface-raised text-rw-text-muted group-data-[active]:bg-rw-accent/15 group-data-[active]:text-rw-accent ${badgeSize}`
         return (
           <Tabs defaultValue="moments">
-            <TabsList>
-              <TabsTrigger value="moments">
-                Moments
-                {active.length > 0 && (
-                  <span className={badgeCls}>{active.length}</span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="archived">
-                Archived
-                {archived.length > 0 && (
-                  <span className={badgeCls}>{archived.length}</span>
-                )}
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between gap-2">
+              <TabsList>
+                <TabsTrigger value="moments">
+                  Moments
+                  {active.length > 0 && (
+                    <span className={badgeCls}>{active.length}</span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="archived">
+                  Archived
+                  {archived.length > 0 && (
+                    <span className={badgeCls}>{archived.length}</span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
 
-            {/* ── Active moments ───────────────────────────── */}
-            <TabsContent value="moments" className="mt-5">
-              <MomentsGrid
-                moments={sortedActive}
-                currentUserId={currentUserId}
-                sort={sort}
-                emptyTitle="No moments yet"
-                emptyDescription="Create your first moment and start capturing memories together."
-              />
-            </TabsContent>
+              {/* View toggle — grid ↔ world map (map plots active moments) */}
+              <button
+                type="button"
+                onClick={() => setView((v) => (v === 'grid' ? 'map' : 'grid'))}
+                aria-pressed={view === 'map'}
+                className={cn(
+                  buttonVariants({ variant: 'outline' }),
+                  'h-9 shrink-0 gap-1.5 px-2.5 sm:px-3'
+                )}
+                title={view === 'grid' ? 'Map view' : 'Grid view'}
+              >
+                {view === 'grid' ? <MapIcon className="size-4" /> : <LayoutGrid className="size-4" />}
+                <span className="hidden sm:inline">{view === 'grid' ? 'Map' : 'Grid'}</span>
+              </button>
+            </div>
 
-            {/* ── Archived moments ─────────────────────────── */}
-            <TabsContent value="archived" className="mt-5">
-              <MomentsGrid
-                moments={sortedArchived}
-                currentUserId={currentUserId}
-                sort={sort}
-                emptyTitle="Nothing archived"
-                emptyDescription="Moments you archive will appear here."
-              />
-            </TabsContent>
+            {view === 'map' ? (
+              /* Map view — shows every non-archived moment with a location */
+              <div className="mt-5">
+                <MomentsMap moments={active} />
+              </div>
+            ) : (
+              <>
+                {/* ── Active moments ───────────────────────────── */}
+                <TabsContent value="moments" className="mt-5">
+                  <MomentsGrid
+                    moments={sortedActive}
+                    currentUserId={currentUserId}
+                    sort={sort}
+                    emptyTitle="No moments yet"
+                    emptyDescription="Create your first moment and start capturing memories together."
+                  />
+                </TabsContent>
+
+                {/* ── Archived moments ─────────────────────────── */}
+                <TabsContent value="archived" className="mt-5">
+                  <MomentsGrid
+                    moments={sortedArchived}
+                    currentUserId={currentUserId}
+                    sort={sort}
+                    emptyTitle="Nothing archived"
+                    emptyDescription="Moments you archive will appear here."
+                  />
+                </TabsContent>
+              </>
+            )}
           </Tabs>
         )
       })()}

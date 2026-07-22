@@ -240,6 +240,10 @@ export const MomentCard = memo(function MomentCard({ moment }: Props) {
             dateMonth: moment.dateMonth,
             dateDay: moment.dateDay,
             location: moment.location,
+            placeKind: moment.placeKind,
+            placeCountryCode: moment.placeCountryCode,
+            placeLat: moment.placeLat,
+            placeLng: moment.placeLng,
             tags: moment.tags,
           }}
           open={editOpen}

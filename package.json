@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "husky",
-    "gen:types": "supabase gen types typescript --project-id xkwpceckuqksycbhgvna > types/database.types.ts"
+    "gen:types": "supabase gen types typescript --project-id xkwpceckuqksycbhgvna > types/database.types.ts",
+    "gen:places": "node scripts/generate-places.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -27,6 +28,9 @@
     "@upstash/redis": "^1.38.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "d3-geo": "^3.1.1",
+    "d3-selection": "^3.0.0",
+    "d3-zoom": "^3.0.0",
     "gsap": "^3.15.0",
     "lucide-react": "^0.577.0",
     "next": "16.2.9",
@@ -37,13 +41,19 @@
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.5.0",
     "three": "^0.184.0",
+    "topojson-client": "^3.1.0",
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/d3-geo": "^3.1.0",
+    "@types/d3-selection": "^3.0.11",
+    "@types/d3-zoom": "^3.0.8",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/topojson-client": "^3.1.5",
+    "all-the-cities": "^3.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "husky": "^9.1.7",
@@ -51,7 +61,9 @@
     "supabase": "^2.108.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "world-atlas": "^2.0.2",
+    "world-countries": "^5.1.0"
   },
   "allowScripts": {
     "@sentry/cli@2.58.6": true

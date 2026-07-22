@@ -327,6 +327,10 @@ export type Database = {
           location: string | null
           name: string
           owner_id: string
+          place_country_code: string | null
+          place_kind: string | null
+          place_lat: number | null
+          place_lng: number | null
         }
         Insert: {
           cover_photo_url?: string | null
@@ -339,6 +343,10 @@ export type Database = {
           location?: string | null
           name: string
           owner_id: string
+          place_country_code?: string | null
+          place_kind?: string | null
+          place_lat?: number | null
+          place_lng?: number | null
         }
         Update: {
           cover_photo_url?: string | null
@@ -351,6 +359,10 @@ export type Database = {
           location?: string | null
           name?: string
           owner_id?: string
+          place_country_code?: string | null
+          place_kind?: string | null
+          place_lat?: number | null
+          place_lng?: number | null
         }
         Relationships: [
           {

@@ -190,6 +190,10 @@ export function MembersRow({ moment, myStatus, canEdit }: Props) {
           dateMonth: moment.dateMonth,
           dateDay: moment.dateDay,
           location: moment.location,
+          placeKind: moment.placeKind,
+          placeCountryCode: moment.placeCountryCode,
+          placeLat: moment.placeLat,
+          placeLng: moment.placeLng,
           tags: moment.tags.map((t) => t.tag),
         }}
         open={editOpen}

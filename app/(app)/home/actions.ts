@@ -8,6 +8,8 @@ import { sendNotifications, type NotificationPayload } from '@/lib/notifications
 import { signStoragePaths } from '@/lib/storage'
 import { isValidEmail } from '@/lib/validation'
 import { homeMomentsTag } from '@/lib/cached-queries'
+import { normalizePlaceInput } from '@/lib/places/validate'
+import type { PlaceValue } from '@/lib/places/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +29,10 @@ export type MomentSummary = {
   dateMonth: number | null
   dateDay: number | null
   location: string | null
+  placeKind: 'city' | 'country' | null
+  placeCountryCode: string | null
+  placeLat: number | null
+  placeLng: number | null
   coverPhotoUrl: string | null
   coverPosition: number | null
   ownerId: string
@@ -75,7 +81,7 @@ function fetchHomeMomentsData(userId: string) {
       let query = admin
         .from('moments')
         .select(`
-          id, name, date_year, date_month, date_day, location, cover_photo_url, cover_position, owner_id, created_at,
+          id, name, date_year, date_month, date_day, location, place_kind, place_country_code, place_lat, place_lng, cover_photo_url, cover_position, owner_id, created_at,
           owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
           moment_tags(tag, position),
           moment_members(user_id, role, status)
@@ -165,6 +171,10 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       dateMonth: m.date_month ?? null,
       dateDay: m.date_day ?? null,
       location: m.location ?? null,
+      placeKind: (m as { place_kind: 'city' | 'country' | null }).place_kind ?? null,
+      placeCountryCode: (m as { place_country_code: string | null }).place_country_code ?? null,
+      placeLat: (m as { place_lat: number | null }).place_lat ?? null,
+      placeLng: (m as { place_lng: number | null }).place_lng ?? null,
       coverPhotoUrl: coverPath ? (signedCovers.get(coverPath) ?? null) : null,
       coverPosition: (m as { cover_position: number | null }).cover_position ?? null,
       ownerId: m.owner_id,
@@ -238,6 +248,7 @@ export async function createMoment(data: {
   dateMonth?: number | null
   dateDay?: number | null
   location?: string
+  place?: PlaceValue | null
   tags: string[]
   invitees: Invitee[]
 }): Promise<{ momentId?: string; error?: string; inviteWarnings?: string[] }> {
@@ -246,7 +257,10 @@ export async function createMoment(data: {
 
   const name = data.name.trim().slice(0, 200)
   if (!name) return { error: 'Moment name is required.' }
-  const location = data.location?.trim().slice(0, 200) || null
+  // A structured place drives both the display label and the map coordinates;
+  // fall back to any free-text location (legacy callers) with no coordinates.
+  const place = normalizePlaceInput(data.place)
+  const location = place ? place.label : data.location?.trim().slice(0, 200) || null
 
   // Create the moment (user client so RLS owner_id check applies)
   const { data: moment, error: momentError } = await supabase
@@ -257,6 +271,10 @@ export async function createMoment(data: {
       date_month: data.dateMonth ?? null,
       date_day: data.dateDay ?? null,
       location,
+      place_kind: place?.kind ?? null,
+      place_country_code: place?.countryCode ?? null,
+      place_lat: place?.lat ?? null,
+      place_lng: place?.lng ?? null,
       owner_id: user.id,
     })
     .select('id')
