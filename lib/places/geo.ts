@@ -8,6 +8,21 @@ export type MapMoment = {
   lat: number | null
   lng: number | null
   coverPhotoUrl: string | null
+  dateYear: number | null
+  dateMonth: number | null
+  dateDay: number | null
+  createdAt: string
+}
+
+/** Effective date of a moment: its tagged date, else when it was created. */
+function momentDate(m: MapMoment): number {
+  if (m.dateYear) return +new Date(m.dateYear, (m.dateMonth ?? 1) - 1, m.dateDay ?? 1)
+  return +new Date(m.createdAt)
+}
+
+/** Sort moments newest → oldest by effective date (in place-safe copy). */
+export function sortNewestFirst(moments: MapMoment[]): MapMoment[] {
+  return [...moments].sort((a, b) => momentDate(b) - momentDate(a))
 }
 
 export type Cluster = {

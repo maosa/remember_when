@@ -10,7 +10,7 @@
 //   lib/places/countries.json  one row per country: { cc, name, capLat, capLng }
 //                              (capital coordinates; country-only moments are
 //                              plotted here).
-//   lib/places/world-110m.json world map TopoJSON (copied from world-atlas).
+//   lib/places/world.json      world map TopoJSON (50m, copied from world-atlas).
 import { createRequire } from 'node:module'
 import { writeFileSync, copyFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -79,11 +79,12 @@ function round(n) {
 
 writeFileSync(join(outDir, 'cities.json'), JSON.stringify(cityRows))
 writeFileSync(join(outDir, 'countries.json'), JSON.stringify(countryRows))
+// 50m detail (vs 110m) so borders stay crisp when the map is zoomed in.
 copyFileSync(
-  require.resolve('world-atlas/countries-110m.json'),
-  join(outDir, 'world-110m.json')
+  require.resolve('world-atlas/countries-50m.json'),
+  join(outDir, 'world.json')
 )
 
 console.log(
-  `Wrote ${cityRows.length} cities, ${countryRows.length} countries, and world-110m.json to lib/places/`
+  `Wrote ${cityRows.length} cities, ${countryRows.length} countries, and world.json to lib/places/`
 )

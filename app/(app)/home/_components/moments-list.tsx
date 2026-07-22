@@ -117,33 +117,47 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         <CreateMomentModal open={createOpen} onOpenChange={setCreateOpen} />
       )}
 
-      {/* Search + sort row */}
+      {/* Search + controls row. In map view the sort menu is hidden (it doesn't
+          apply); search still filters the map's dots. The view toggle is always here. */}
       <div className="flex items-center gap-2">
         <Input
           type="search"
-          placeholder="Search moments…"
+          placeholder={view === 'map' ? 'Search the map…' : 'Search moments…'}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1"
         />
-        <Menu>
-          <MenuTrigger
-            render={
-              <button type="button" className={cn(buttonVariants({ variant: 'outline' }), 'shrink-0 w-36 h-10')} />
-            }
-          >
-            <ArrowUpDown className="size-3.5" />
-            <span>{sortLabel[sort]}</span>
-          </MenuTrigger>
-          <MenuContent align="end">
-            <MenuRadioGroup value={sort} onValueChange={(v) => setSort(v as SortMode)}>
-              <MenuRadioItem value="newest">Newest first</MenuRadioItem>
-              <MenuRadioItem value="oldest">Oldest first</MenuRadioItem>
-              <MenuSeparator />
-              <MenuRadioItem value="split">Split view</MenuRadioItem>
-            </MenuRadioGroup>
-          </MenuContent>
-        </Menu>
+        {view === 'grid' && (
+          <Menu>
+            <MenuTrigger
+              render={
+                <button type="button" className={cn(buttonVariants({ variant: 'outline' }), 'shrink-0 w-36 h-10')} />
+              }
+            >
+              <ArrowUpDown className="size-3.5" />
+              <span>{sortLabel[sort]}</span>
+            </MenuTrigger>
+            <MenuContent align="end">
+              <MenuRadioGroup value={sort} onValueChange={(v) => setSort(v as SortMode)}>
+                <MenuRadioItem value="newest">Newest first</MenuRadioItem>
+                <MenuRadioItem value="oldest">Oldest first</MenuRadioItem>
+                <MenuSeparator />
+                <MenuRadioItem value="split">Split view</MenuRadioItem>
+              </MenuRadioGroup>
+            </MenuContent>
+          </Menu>
+        )}
+        {/* View toggle — grid ↔ world map. Matches the other buttons' width on desktop. */}
+        <button
+          type="button"
+          onClick={() => setView((v) => (v === 'grid' ? 'map' : 'grid'))}
+          aria-pressed={view === 'map'}
+          className={cn(buttonVariants({ variant: 'outline' }), 'shrink-0 h-10 gap-1.5 px-2.5 sm:w-36 sm:px-3')}
+          title={view === 'grid' ? 'Map view' : 'Grid view'}
+        >
+          {view === 'grid' ? <MapIcon className="size-4" /> : <LayoutGrid className="size-4" />}
+          <span className="hidden sm:inline">{view === 'grid' ? 'Map' : 'Grid'}</span>
+        </button>
       </div>
 
       {/* Tabs — underline style */}
@@ -154,70 +168,50 @@ export function MomentsList({ moments, currentUserId, firstName }: Props) {
         const digits = String(maxCount).length
         const badgeSize = digits >= 3 ? 'h-[18px] w-[26px]' : digits === 2 ? 'h-[18px] w-[22px]' : 'h-[18px] w-[18px]'
         const badgeCls = `ml-1.5 inline-flex items-center justify-center rounded-full tabular-nums leading-none text-[11px] font-medium bg-rw-surface-raised text-rw-text-muted group-data-[active]:bg-rw-accent/15 group-data-[active]:text-rw-accent ${badgeSize}`
+        // Map view — non-archived moments only; sort + tabs don't apply, so
+        // they're hidden. Search filters which dots appear.
+        if (view === 'map') {
+          return <MomentsMap moments={filteredActive} />
+        }
+
         return (
           <Tabs defaultValue="moments">
-            <div className="flex items-center justify-between gap-2">
-              <TabsList>
-                <TabsTrigger value="moments">
-                  Moments
-                  {active.length > 0 && (
-                    <span className={badgeCls}>{active.length}</span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="archived">
-                  Archived
-                  {archived.length > 0 && (
-                    <span className={badgeCls}>{archived.length}</span>
-                  )}
-                </TabsTrigger>
-              </TabsList>
-
-              {/* View toggle — grid ↔ world map (map plots active moments) */}
-              <button
-                type="button"
-                onClick={() => setView((v) => (v === 'grid' ? 'map' : 'grid'))}
-                aria-pressed={view === 'map'}
-                className={cn(
-                  buttonVariants({ variant: 'outline' }),
-                  'h-9 shrink-0 gap-1.5 px-2.5 sm:px-3'
+            <TabsList>
+              <TabsTrigger value="moments">
+                Moments
+                {active.length > 0 && (
+                  <span className={badgeCls}>{active.length}</span>
                 )}
-                title={view === 'grid' ? 'Map view' : 'Grid view'}
-              >
-                {view === 'grid' ? <MapIcon className="size-4" /> : <LayoutGrid className="size-4" />}
-                <span className="hidden sm:inline">{view === 'grid' ? 'Map' : 'Grid'}</span>
-              </button>
-            </div>
+              </TabsTrigger>
+              <TabsTrigger value="archived">
+                Archived
+                {archived.length > 0 && (
+                  <span className={badgeCls}>{archived.length}</span>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-            {view === 'map' ? (
-              /* Map view — shows every non-archived moment with a location */
-              <div className="mt-5">
-                <MomentsMap moments={active} />
-              </div>
-            ) : (
-              <>
-                {/* ── Active moments ───────────────────────────── */}
-                <TabsContent value="moments" className="mt-5">
-                  <MomentsGrid
-                    moments={sortedActive}
-                    currentUserId={currentUserId}
-                    sort={sort}
-                    emptyTitle="No moments yet"
-                    emptyDescription="Create your first moment and start capturing memories together."
-                  />
-                </TabsContent>
+            {/* ── Active moments ───────────────────────────── */}
+            <TabsContent value="moments" className="mt-5">
+              <MomentsGrid
+                moments={sortedActive}
+                currentUserId={currentUserId}
+                sort={sort}
+                emptyTitle="No moments yet"
+                emptyDescription="Create your first moment and start capturing memories together."
+              />
+            </TabsContent>
 
-                {/* ── Archived moments ─────────────────────────── */}
-                <TabsContent value="archived" className="mt-5">
-                  <MomentsGrid
-                    moments={sortedArchived}
-                    currentUserId={currentUserId}
-                    sort={sort}
-                    emptyTitle="Nothing archived"
-                    emptyDescription="Moments you archive will appear here."
-                  />
-                </TabsContent>
-              </>
-            )}
+            {/* ── Archived moments ─────────────────────────── */}
+            <TabsContent value="archived" className="mt-5">
+              <MomentsGrid
+                moments={sortedArchived}
+                currentUserId={currentUserId}
+                sort={sort}
+                emptyTitle="Nothing archived"
+                emptyDescription="Moments you archive will appear here."
+              />
+            </TabsContent>
           </Tabs>
         )
       })()}
