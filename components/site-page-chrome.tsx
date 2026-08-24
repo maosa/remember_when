@@ -30,16 +30,24 @@ export function useSitePageAuth() {
   return useContext(SitePageAuthContext)
 }
 
-export function SitePageChrome({ children }: { children: React.ReactNode }) {
+/**
+ * Client-side auth probe for public pages. Resolves the current user, then their
+ * profile + unread count, into a `SitePageAuthState`. Shared by SitePageChrome
+ * and the landing page so both derive auth the same way without server cookies
+ * (keeping those pages statically prerendered).
+ */
+export function useSiteAuth(): SitePageAuthState {
   const [auth, setAuth] = useState<SitePageAuthState>({ status: 'loading' })
 
   useEffect(() => {
+    let active = true
+
     async function checkAuth() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        setAuth({ status: 'unauthenticated' })
+        if (active) setAuth({ status: 'unauthenticated' })
         return
       }
 
@@ -56,6 +64,7 @@ export function SitePageChrome({ children }: { children: React.ReactNode }) {
           .eq('read', false),
       ])
 
+      if (!active) return
       setAuth({
         status: 'authenticated',
         user: {
@@ -68,8 +77,14 @@ export function SitePageChrome({ children }: { children: React.ReactNode }) {
     }
 
     checkAuth()
+    return () => { active = false }
   }, [])
 
+  return auth
+}
+
+export function SitePageChrome({ children }: { children: React.ReactNode }) {
+  const auth = useSiteAuth()
   const isAuthenticated = auth.status === 'authenticated'
 
   return (
@@ -81,7 +96,7 @@ export function SitePageChrome({ children }: { children: React.ReactNode }) {
         )}
         {auth.status === 'unauthenticated' && (
           <header className="border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm shrink-0">
-            <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
+            <div className="px-6 sm:px-10 h-14 flex items-center justify-between">
               <Link href="/" className="font-serif text-[18px] font-semibold tracking-tight">
                 Remember When
               </Link>

@@ -8,6 +8,8 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { cn } from '@/lib/utils'
 import PillLink from '@/components/ui/pill-link'
+import { useSiteAuth } from '@/components/site-page-chrome'
+import { AppNavLinks, AppNavActions, AppTabBar } from '@/components/app-nav'
 
 const HeroCanvas = dynamic(() => import('./_components/hero-canvas'), { ssr: false })
 
@@ -255,6 +257,12 @@ const TRIO_ITEMS = [
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
 
+  // Auth-aware chrome: signed-in visitors get the full app nav + "go to your
+  // home" CTAs instead of the marketing sign-up CTAs. Resolved client-side so
+  // this page stays statically prerendered (no server cookies).
+  const auth = useSiteAuth()
+  const isAuthed = auth.status === 'authenticated'
+
   // ── Refs ──────────────────────────────────────────────────────────────────
   const heroSectionRef  = useRef<HTMLElement>(null)
   const heroBgRef       = useRef<HTMLDivElement>(null)
@@ -365,9 +373,13 @@ export default function LandingPage() {
   const trioRefs = [trioRef0, trioRef1, trioRef2]
 
   return (
-    <div className="min-h-screen bg-rw-bg overflow-x-hidden">
+    <div className={cn('min-h-screen bg-rw-bg overflow-x-hidden', isAuthed && 'pb-20 md:pb-0')}>
 
       {/* ── NAV ───────────────────────────────────────────────── */}
+      {/* Fixed, transparent-until-scrolled shell that blends with the hero and
+          fades to a solid header on scroll. Its right-hand contents swap by auth
+          state: signed-in → full app nav (Home/Friends + bell + avatar);
+          signed-out → Sign in / Get started; loading → logo only (no flash). */}
       <nav
         className={cn(
           'fixed top-0 inset-x-0 z-50 h-16 flex items-center px-6 sm:px-10 transition-all duration-300',
@@ -383,18 +395,34 @@ export default function LandingPage() {
           Remember When
         </Link>
 
-        <div className="ml-auto flex items-center gap-2.5">
-          <Link
-            href="/login"
-            className="text-[13.5px] font-medium text-rw-text-muted hover:text-rw-text-primary transition-colors px-3 py-2"
-          >
-            Sign in
-          </Link>
-          <PillLink href="/signup" size="sm">
-            Get started
-          </PillLink>
-        </div>
+        {auth.status === 'authenticated' && (
+          // Desktop: full app nav inline in the transparent shell. Mobile uses
+          // the bottom tab bar (rendered below), so hide this cluster there.
+          <div className="ml-auto hidden md:flex items-center gap-1.5">
+            <AppNavLinks />
+            <AppNavActions user={auth.user} unreadCount={auth.unreadCount} />
+          </div>
+        )}
+
+        {auth.status === 'unauthenticated' && (
+          <div className="ml-auto flex items-center gap-2.5">
+            <Link
+              href="/login"
+              className="text-[13.5px] font-medium text-rw-text-muted hover:text-rw-text-primary transition-colors px-3 py-2"
+            >
+              Sign in
+            </Link>
+            <PillLink href="/signup" size="sm">
+              Get started
+            </PillLink>
+          </div>
+        )}
       </nav>
+
+      {/* Mobile bottom tab bar for signed-in visitors — full app navigation. */}
+      {auth.status === 'authenticated' && (
+        <AppTabBar user={auth.user} unreadCount={auth.unreadCount} />
+      )}
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
       <section
@@ -450,15 +478,16 @@ export default function LandingPage() {
             {' '}come together to make sure it&rsquo;s never forgotten.
           </p>
 
-          {/* Hero CTA */}
+          {/* Hero CTA — signed-in visitors get a route back into the app;
+              everyone else gets the sign-up CTA. */}
           <div style={{ animation: 'landing-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) 0.60s both' }}>
             <PillLink
-              href="/signup"
+              href={isAuthed ? '/home' : '/signup'}
               size="lg"
               className="hover:-translate-y-px active:translate-y-0 transition-all"
               style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.30)' }}
             >
-              Get started for free
+              {isAuthed ? 'Go to your home' : 'Get started for free'}
               <ArrowRight className="size-3.5" strokeWidth={2.5} />
             </PillLink>
           </div>
@@ -593,19 +622,31 @@ export default function LandingPage() {
             No credit card, no catch.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <PillLink
-              href="/signup"
-              size="md"
-              style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.25)' }}
-            >
-              Create your first moment
-            </PillLink>
-            <Link
-              href="/pricing"
-              className="text-[14px] font-medium text-rw-text-muted hover:text-rw-text-primary transition-colors"
-            >
-              See pricing →
-            </Link>
+            {isAuthed ? (
+              <PillLink
+                href="/home"
+                size="md"
+                style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.25)' }}
+              >
+                Go to your home
+              </PillLink>
+            ) : (
+              <>
+                <PillLink
+                  href="/signup"
+                  size="md"
+                  style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.25)' }}
+                >
+                  Create your first moment
+                </PillLink>
+                <Link
+                  href="/pricing"
+                  className="text-[14px] font-medium text-rw-text-muted hover:text-rw-text-primary transition-colors"
+                >
+                  See pricing →
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -622,12 +663,16 @@ export default function LandingPage() {
           <Link href="/pricing" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
             Pricing
           </Link>
-          <Link href="/login" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
-            Sign in
-          </Link>
-          <Link href="/signup" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
-            Get started
-          </Link>
+          {!isAuthed && (
+            <>
+              <Link href="/login" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
+                Sign in
+              </Link>
+              <Link href="/signup" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
+                Get started
+              </Link>
+            </>
+          )}
           <Link href="/terms" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
             Terms
           </Link>
