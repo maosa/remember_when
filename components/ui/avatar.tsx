@@ -46,7 +46,11 @@ function AvatarFallback({
       data-slot="avatar-fallback"
       className={cn(
         // Default — sage-teal tint (primary avatar colour per design system)
-        "flex size-full items-center justify-center rounded-full",
+        // [line-height:1] pins line-height so initials stay vertically centered.
+        // It's written as an arbitrary property (not `leading-none`) because a
+        // caller's arbitrary font size like `text-[9px]` carries an implicit
+        // line-height in tailwind-merge and would strip a `leading-*` class.
+        "flex size-full items-center justify-center rounded-full [line-height:1]",
         "bg-rw-accent-subtle text-rw-accent text-sm font-semibold",
         "group-data-[size=sm]/avatar:text-[9px]",
         "group-data-[size=lg]/avatar:text-base",
