@@ -473,17 +473,20 @@ export default function LandingPage() {
           </p>
 
           {/* Hero CTA — signed-in visitors get a route back into the app;
-              everyone else gets the sign-up CTA. */}
+              everyone else gets the sign-up CTA. Held until auth resolves so a
+              signed-in visitor never flashes the sign-up CTA. */}
           <div style={{ animation: 'landing-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) 0.60s both' }}>
-            <PillLink
-              href={isAuthed ? '/home' : '/signup'}
-              size="lg"
-              className="hover:-translate-y-px active:translate-y-0 transition-all"
-              style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.30)' }}
-            >
-              {isAuthed ? 'Go to your home' : 'Get started for free'}
-              <ArrowRight className="size-3.5" strokeWidth={2.5} />
-            </PillLink>
+            {auth.status !== 'loading' && (
+              <PillLink
+                href={isAuthed ? '/home' : '/signup'}
+                size="lg"
+                className="hover:-translate-y-px active:translate-y-0 transition-all"
+                style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.30)' }}
+              >
+                {isAuthed ? 'Go to home page' : 'Get started for free'}
+                <ArrowRight className="size-3.5" strokeWidth={2.5} />
+              </PillLink>
+            )}
           </div>
         </div>
 
@@ -616,15 +619,18 @@ export default function LandingPage() {
             No credit card, no catch.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            {isAuthed ? (
+            {/* Held until auth resolves (loading → neither), so a signed-in
+                visitor never flashes the sign-up CTA. */}
+            {auth.status === 'authenticated' && (
               <PillLink
                 href="/home"
                 size="md"
                 style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.25)' }}
               >
-                Go to your home
+                Go to home page
               </PillLink>
-            ) : (
+            )}
+            {auth.status === 'unauthenticated' && (
               <>
                 <PillLink
                   href="/signup"
@@ -657,7 +663,7 @@ export default function LandingPage() {
           <Link href="/pricing" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
             Pricing
           </Link>
-          {!isAuthed && (
+          {auth.status === 'unauthenticated' && (
             <>
               <Link href="/login" className="text-[12.5px] text-rw-text-placeholder hover:text-rw-text-muted transition-colors">
                 Sign in

@@ -36,6 +36,13 @@ export function useSitePageAuth() {
  * profile + unread count, into a `SitePageAuthState`. Shared by SitePageChrome
  * and the landing page so both derive auth the same way without server cookies
  * (keeping those pages statically prerendered).
+ *
+ * Uses getSession() rather than getUser(): getSession reads the persisted
+ * session locally with no network round-trip, so the state resolves in ~a frame
+ * instead of the seconds getUser's server validation can take — which is what
+ * made a signed-in visitor briefly see the signed-out landing page. This is only
+ * cosmetic gating (which nav/CTAs to show); protected routes are still enforced
+ * server-side, so a momentarily-stale session here is harmless.
  */
 export function useSiteAuth(): SitePageAuthState {
   const [auth, setAuth] = useState<SitePageAuthState>({ status: 'loading' })
@@ -45,7 +52,8 @@ export function useSiteAuth(): SitePageAuthState {
 
     async function checkAuth() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
 
       if (!user) {
         if (active) setAuth({ status: 'unauthenticated' })
