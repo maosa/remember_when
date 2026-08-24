@@ -77,6 +77,18 @@ Users can personalise the platform by choosing a colour palette from the **Theme
 
 Note: in the alternate palettes `--color-blue` carries the theme's *secondary* accent (teal, wisteria, copper, emerald) rather than a literal blue — the token name is retained for continuity with existing components.
 
+### Extended decorative accents (landing page)
+
+Beyond the sixteen core tokens, each theme defines three **decorative** tokens used **only on the marketing landing page** (`app/page.tsx`, `app/_components/hero-canvas.tsx`) — the hero shade, the rotating-quote marks, the three feature-card icons, the Three.js particle cloud, and the closing-CTA panel. They give the landing a richer three-hue accent motif while still following the selected theme. `--rw-color-accent-2` / `-3` are two additional accent hues; `--rw-color-panel` is a soft section-panel background. The Default values are the landing page's original hand-tuned colours, so the default landing is unchanged.
+
+| Token | default | `ocean-sapphire` | `amethyst-wisteria` | `autumn-ruby` | `royal-gemstone` |
+|---|---|---|---|---|---|
+| `--color-accent-2` (warm/decor accent) | `#C89840` | `#4F94A8` | `#9A7BB8` | `#C67B3E` | `#2E8F86` |
+| `--color-accent-3` (secondary decor accent) | `#6B6AC0` | `#6C6FC2` | `#C58AA6` | `#7F8A5C` | `#B98BC9` |
+| `--color-panel` (CTA section bg) | `#F2EDE3` | `#E9EFF5` | `#F2ECF1` | `#F4EDE5` | `#ECEAF2` |
+
+The particle canvas reads `--rw-color-accent-2`, `--rw-color-accent` and `--rw-color-text-placeholder` at runtime (via `getComputedStyle`) and re-reads on `data-theme` change through a `MutationObserver`, so the bubbles recolour live. Translucent landing accents (shade radials, glows, icon backgrounds) use `color-mix(in srgb, var(--rw-color-…) N%, transparent)`. Note: `app/opengraph-image.tsx` keeps the literal default gold `#C89840` — OG images are static build-time assets and can't read the per-user theme.
+
 ---
 
 ## Typography
