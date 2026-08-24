@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { AppNav } from '@/components/app-nav'
+import { Wordmark } from '@/components/wordmark'
 
 /**
  * Shared chrome for public pages that must adapt to auth state (pricing, terms,
@@ -97,9 +98,7 @@ export function SitePageChrome({ children }: { children: React.ReactNode }) {
         {auth.status === 'unauthenticated' && (
           <header className="border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm shrink-0">
             <div className="px-6 sm:px-10 h-14 flex items-center justify-between">
-              <Link href="/" className="font-serif text-[18px] font-semibold tracking-tight">
-                Remember When
-              </Link>
+              <Wordmark href="/" />
               <div className="flex items-center gap-2">
                 <Link href="/login" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
                   Sign in

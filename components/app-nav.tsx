@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Users, Bell, User } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Wordmark } from '@/components/wordmark'
 import { cn } from '@/lib/utils'
 
 export interface AppNavUser {
@@ -151,22 +152,38 @@ export function AppTabBar({ user, unreadCount }: Props) {
   )
 }
 
-export function AppNav({ user, unreadCount }: Props) {
+/**
+ * The app's primary navigation: a fixed desktop top bar + a mobile bottom tab
+ * bar. Shared by the in-app layout and the landing page (for signed-in visitors)
+ * so the header is pixel-identical everywhere.
+ *
+ * `transparent` renders the desktop bar with no background/border while
+ * `scrolled` is false — used on the landing page so the bar blends into the hero
+ * at the top and fades to solid as the user scrolls. The default (solid) variant
+ * is what the in-app pages use.
+ */
+export function AppNav({
+  user,
+  unreadCount,
+  transparent = false,
+  scrolled = false,
+}: Props & { transparent?: boolean; scrolled?: boolean }) {
+  const solid = !transparent || scrolled
+
   return (
     <>
       {/* ── Desktop: top bar ───────────────────────────────────── */}
       {/* 3 equal columns so the centre links sit at the true page centre,
           independent of the (differing) widths of the logo and right actions. */}
-      <nav className="hidden md:grid grid-cols-3 fixed top-0 inset-x-0 z-50 h-14 border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm items-center px-6 sm:px-10">
-
-        {/* Logo — Lora serif. Links to the landing page so signed-in users can
-            always return there (the landing page offers the app nav back in). */}
-        <Link
-          href="/"
-          className="font-serif text-[18px] font-semibold text-rw-text-primary justify-self-start hover:text-rw-accent transition-colors"
-        >
-          Remember When
-        </Link>
+      <nav
+        className={cn(
+          'hidden md:grid grid-cols-3 fixed top-0 inset-x-0 z-50 h-14 items-center px-6 sm:px-10 transition-all duration-300',
+          solid && 'border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm',
+        )}
+      >
+        {/* Logo — links to the landing page so signed-in users can always return
+            there (the landing page offers this same nav back into the app). */}
+        <Wordmark href="/" className="justify-self-start" />
 
         {/* Centre nav links */}
         <AppNavLinks className="justify-self-center" />

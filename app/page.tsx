@@ -9,7 +9,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { cn } from '@/lib/utils'
 import PillLink from '@/components/ui/pill-link'
 import { useSiteAuth } from '@/components/site-page-chrome'
-import { AppNavLinks, AppNavActions, AppTabBar } from '@/components/app-nav'
+import { AppNav } from '@/components/app-nav'
+import { Wordmark } from '@/components/wordmark'
 
 const HeroCanvas = dynamic(() => import('./_components/hero-canvas'), { ssr: false })
 
@@ -376,52 +377,43 @@ export default function LandingPage() {
     <div className={cn('min-h-screen bg-rw-bg overflow-x-hidden', isAuthed && 'pb-20 md:pb-0')}>
 
       {/* ── NAV ───────────────────────────────────────────────── */}
-      {/* Fixed, transparent-until-scrolled shell that blends with the hero and
-          fades to a solid header on scroll. Its right-hand contents swap by auth
-          state: signed-in → full app nav (Home/Friends + bell + avatar);
-          signed-out → Sign in / Get started; loading → logo only (no flash). */}
-      <nav
-        className={cn(
-          'fixed top-0 inset-x-0 z-50 h-16 flex items-center px-6 sm:px-10 transition-all duration-300',
-          scrolled
-            ? 'bg-rw-bg/[0.94] backdrop-blur-md border-b border-rw-border-subtle shadow-[0_1px_0_rgba(44,42,37,0.06)]'
-            : ''
-        )}
-      >
-        <Link
-          href="/"
-          className="font-serif text-[18px] font-semibold text-rw-text-primary tracking-tight hover:text-rw-accent transition-colors"
+      {/* Signed-in visitors get the exact same nav as the rest of the app
+          (AppNav: logo left, Home/Friends centred, bell + avatar right), only
+          rendered transparent at the top of the hero and fading to solid on
+          scroll so it blends with the landing animation. Signed-out / loading
+          use a matching h-14 shell (same logo position, so it never jumps). */}
+      {auth.status === 'authenticated' ? (
+        <AppNav
+          user={auth.user}
+          unreadCount={auth.unreadCount}
+          transparent
+          scrolled={scrolled}
+        />
+      ) : (
+        <nav
+          className={cn(
+            'fixed top-0 inset-x-0 z-50 h-14 flex items-center px-6 sm:px-10 transition-all duration-300',
+            scrolled
+              ? 'bg-rw-bg/95 backdrop-blur-sm border-b border-rw-border-subtle'
+              : ''
+          )}
         >
-          Remember When
-        </Link>
+          <Wordmark href="/" />
 
-        {auth.status === 'authenticated' && (
-          // Desktop: full app nav inline in the transparent shell. Mobile uses
-          // the bottom tab bar (rendered below), so hide this cluster there.
-          <div className="ml-auto hidden md:flex items-center gap-1.5">
-            <AppNavLinks />
-            <AppNavActions user={auth.user} unreadCount={auth.unreadCount} />
-          </div>
-        )}
-
-        {auth.status === 'unauthenticated' && (
-          <div className="ml-auto flex items-center gap-2.5">
-            <Link
-              href="/login"
-              className="text-[13.5px] font-medium text-rw-text-muted hover:text-rw-text-primary transition-colors px-3 py-2"
-            >
-              Sign in
-            </Link>
-            <PillLink href="/signup" size="sm">
-              Get started
-            </PillLink>
-          </div>
-        )}
-      </nav>
-
-      {/* Mobile bottom tab bar for signed-in visitors — full app navigation. */}
-      {auth.status === 'authenticated' && (
-        <AppTabBar user={auth.user} unreadCount={auth.unreadCount} />
+          {auth.status === 'unauthenticated' && (
+            <div className="ml-auto flex items-center gap-2.5">
+              <Link
+                href="/login"
+                className="text-[13.5px] font-medium text-rw-text-muted hover:text-rw-text-primary transition-colors px-3 py-2"
+              >
+                Sign in
+              </Link>
+              <PillLink href="/signup" size="sm">
+                Get started
+              </PillLink>
+            </div>
+          )}
+        </nav>
       )}
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
