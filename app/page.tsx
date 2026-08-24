@@ -392,10 +392,12 @@ export default function LandingPage() {
       ) : (
         <nav
           className={cn(
-            'fixed top-0 inset-x-0 z-50 h-14 flex items-center px-6 sm:px-10 transition-all duration-300',
+            // border-b is always present (transparent until scrolled) so the
+            // logo's box height is constant and it never nudges on scroll.
+            'fixed top-0 inset-x-0 z-50 h-14 flex items-center px-6 sm:px-10 transition-all duration-300 border-b',
             scrolled
-              ? 'bg-rw-bg/95 backdrop-blur-sm border-b border-rw-border-subtle'
-              : ''
+              ? 'bg-rw-bg/95 backdrop-blur-sm border-rw-border-subtle'
+              : 'border-transparent'
           )}
         >
           <Wordmark href="/" />

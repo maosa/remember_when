@@ -177,8 +177,11 @@ export function AppNav({
           independent of the (differing) widths of the logo and right actions. */}
       <nav
         className={cn(
-          'hidden md:grid grid-cols-3 fixed top-0 inset-x-0 z-50 h-14 items-center px-6 sm:px-10 transition-all duration-300',
-          solid && 'border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm',
+          // border-b is always present (transparent until solid) so toggling the
+          // solid state only changes the border colour, never the box height —
+          // otherwise the 1px border would nudge the vertically-centred logo.
+          'hidden md:grid grid-cols-3 fixed top-0 inset-x-0 z-50 h-14 items-center px-6 sm:px-10 transition-all duration-300 border-b',
+          solid ? 'border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm' : 'border-transparent',
         )}
       >
         {/* Logo — links to the landing page so signed-in users can always return
