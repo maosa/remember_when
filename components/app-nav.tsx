@@ -180,7 +180,11 @@ export function AppNav({
           // border-b is always present (transparent until solid) so toggling the
           // solid state only changes the border colour, never the box height —
           // otherwise the 1px border would nudge the vertically-centred logo.
-          'hidden md:grid grid-cols-3 fixed top-0 inset-x-0 z-50 h-14 items-center px-6 sm:px-10 transition-all duration-300 border-b',
+          // left-0 w-screen (not inset-x-0) makes the bar span the full viewport
+          // width including the reserved scrollbar gutter, so its bottom border
+          // reaches the edge and the scrollbar simply draws on top of it — rather
+          // than the border stopping short at the gutter.
+          'hidden md:grid grid-cols-3 fixed top-0 left-0 w-screen z-50 h-14 items-center px-6 sm:px-10 transition-all duration-300 border-b',
           solid ? 'border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm' : 'border-transparent',
         )}
       >

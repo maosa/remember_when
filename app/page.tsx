@@ -394,7 +394,9 @@ export default function LandingPage() {
           className={cn(
             // border-b is always present (transparent until scrolled) so the
             // logo's box height is constant and it never nudges on scroll.
-            'fixed top-0 inset-x-0 z-50 h-14 flex items-center px-6 sm:px-10 transition-all duration-300 border-b',
+            // left-0 w-screen (not inset-x-0) spans the full viewport width incl.
+            // the reserved scrollbar gutter, so the bottom border reaches the edge.
+            'fixed top-0 left-0 w-screen z-50 h-14 flex items-center px-6 sm:px-10 transition-all duration-300 border-b',
             scrolled
               ? 'bg-rw-bg/95 backdrop-blur-sm border-rw-border-subtle'
               : 'border-transparent'
