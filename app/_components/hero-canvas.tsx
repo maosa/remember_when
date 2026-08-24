@@ -57,14 +57,25 @@ export default function HeroCanvas() {
       // Fewer particles on mobile for performance
       const N = window.innerWidth < 768 ? 28 : 55
 
-      // Brand palette (normalised 0–1): warm gold, sage green, muted warm grey
-      const PALETTE: [number, number, number][] = [
-        [200 / 255, 152 / 255,  64 / 255],  // #C89840 warm gold
-        [ 92 / 255, 122 / 255, 107 / 255],  // #5C7A6B sage green
-        [168 / 255, 163 / 255, 157 / 255],  // #A8A39D warm grey
-        [200 / 255, 152 / 255,  64 / 255],  // extra gold weight
-        [ 92 / 255, 122 / 255, 107 / 255],  // extra sage weight
-      ]
+      // Palette sourced live from the theme tokens so the particles follow the
+      // selected palette: accent-2 (warm decorative accent, weighted 2×), accent
+      // (primary, weighted 2×) and text-placeholder (muted grey). THREE.Color
+      // parses the hex token strings and returns normalised r/g/b.
+      const readColor = (token: string): [number, number, number] => {
+        const cs = getComputedStyle(document.documentElement).getPropertyValue(token).trim()
+        const c = new THREE.Color(cs || '#808080')
+        return [c.r, c.g, c.b]
+      }
+      const buildPalette = (): [number, number, number][] => {
+        const warm    = readColor('--rw-color-accent-2')
+        const primary = readColor('--rw-color-accent')
+        const grey    = readColor('--rw-color-text-placeholder')
+        return [warm, primary, grey, warm, primary]
+      }
+      let palette = buildPalette()
+      // Each particle keeps a stable palette index, so recolouring on a theme
+      // change remaps in place with no visible reshuffle.
+      const paletteIdx = new Uint8Array(N)
 
       const positions  = new Float32Array(N * 3)
       const colors     = new Float32Array(N * 3)
@@ -78,7 +89,9 @@ export default function HeroCanvas() {
         positions[i * 3 + 1] = (Math.random() - 0.5) * 10
         positions[i * 3 + 2] = (Math.random() - 0.5) * 3 - 1
 
-        const c = PALETTE[Math.floor(Math.random() * PALETTE.length)]
+        const idx = Math.floor(Math.random() * palette.length)
+        paletteIdx[i] = idx
+        const c = palette[idx]
         colors[i * 3] = c[0]; colors[i * 3 + 1] = c[1]; colors[i * 3 + 2] = c[2]
 
         speeds[i]     = 0.0012 + Math.random() * 0.0016
@@ -144,6 +157,23 @@ export default function HeroCanvas() {
       )
       visibilityObserver.observe(container)
 
+      // Re-read the palette from the theme tokens whenever data-theme flips on
+      // <html> (e.g. a signed-in user changes theme without a full reload).
+      function recolor() {
+        palette = buildPalette()
+        const arr = geometry.attributes.color.array as Float32Array
+        for (let i = 0; i < N; i++) {
+          const c = palette[paletteIdx[i]]
+          arr[i * 3] = c[0]; arr[i * 3 + 1] = c[1]; arr[i * 3 + 2] = c[2]
+        }
+        geometry.attributes.color.needsUpdate = true
+      }
+      const themeObserver = new MutationObserver(recolor)
+      themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
+      })
+
       function onResize() {
         if (!container) return
         const W2 = container.clientWidth
@@ -156,6 +186,7 @@ export default function HeroCanvas() {
 
       teardown = () => {
         visibilityObserver.disconnect()
+        themeObserver.disconnect()
         window.removeEventListener('resize', onResize)
         if (container.contains(renderer.domElement)) {
           container.removeChild(renderer.domElement)

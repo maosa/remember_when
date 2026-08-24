@@ -92,7 +92,7 @@ const QUOTE_DISPLAY_MS = 4000
 const QUOTE_FADE_MS    = 600
 
 const QUOTE_MARK_STYLE: React.CSSProperties = {
-  color: 'rgba(200,152,64,0.5)',
+  color: 'color-mix(in srgb, var(--rw-color-accent-2) 50%, transparent)',
   fontSize: '1.05em',
 }
 
@@ -268,14 +268,14 @@ const TRIO_ITEMS = [
   },
   {
     num: '02',
-    iconClass: 'bg-[rgba(200,152,64,0.10)] text-[#C89840]',
+    iconClass: 'bg-[color-mix(in_srgb,var(--rw-color-accent-2)_10%,transparent)] text-rw-accent-2',
     icon: <PenLine className="size-[18px]" strokeWidth={1.7} />,
     title: 'Write it together',
     body: "Everyone adds their own piece — photos, stories, the small details only they noticed. No single perspective owns the memory.",
   },
   {
     num: '03',
-    iconClass: 'bg-[rgba(107,106,192,0.10)] text-[#6B6AC0]',
+    iconClass: 'bg-[color-mix(in_srgb,var(--rw-color-accent-3)_10%,transparent)] text-rw-accent-3',
     icon: <Heart className="size-[18px]" strokeWidth={1.7} />,
     title: 'Keep it forever',
     body: "Your moments live here — private, permanent, and waiting whenever you want to go back. No algorithm decides what you see or don't.",
@@ -464,9 +464,9 @@ export default function LandingPage() {
           style={{
             willChange: 'transform',
             background: [
-              'radial-gradient(ellipse 110% 80% at 50% -10%, rgba(200,152,64,0.14) 0%, transparent 55%)',
-              'radial-gradient(ellipse 70%  60% at 5%  80%,  rgba(91,138,125,0.08) 0%, transparent 60%)',
-              'radial-gradient(ellipse 60%  50% at 95% 70%,  rgba(200,152,64,0.07) 0%, transparent 55%)',
+              'radial-gradient(ellipse 110% 80% at 50% -10%, color-mix(in srgb, var(--rw-color-accent-2) 14%, transparent) 0%, transparent 55%)',
+              'radial-gradient(ellipse 70%  60% at 5%  80%,  color-mix(in srgb, var(--rw-color-accent) 8%, transparent) 0%, transparent 60%)',
+              'radial-gradient(ellipse 60%  50% at 95% 70%,  color-mix(in srgb, var(--rw-color-accent-2) 7%, transparent) 0%, transparent 55%)',
             ].join(', '),
           }}
         />
@@ -513,7 +513,7 @@ export default function LandingPage() {
                 href={isAuthed ? '/home' : '/signup'}
                 size="lg"
                 className="hover:-translate-y-px active:translate-y-0 transition-all"
-                style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.30)' }}
+                style={{ boxShadow: '0 4px 16px color-mix(in srgb, var(--rw-color-accent) 30%, transparent)' }}
               >
                 {isAuthed ? 'Go to home page' : 'Get started for free'}
                 <ArrowRight className="size-3.5" strokeWidth={2.5} />
@@ -621,15 +621,15 @@ export default function LandingPage() {
       {/* ── CLOSE CTA ─────────────────────────────────────────────── */}
       <section
         className="relative px-6 sm:px-10 py-24 text-center overflow-hidden"
-        style={{ background: '#F2EDE3' }}
+        style={{ background: 'var(--rw-color-panel)' }}
       >
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
             background: [
-              'radial-gradient(ellipse 70% 100% at 50% 120%, rgba(91,138,125,0.12) 0%, transparent 65%)',
-              'radial-gradient(ellipse 50% 80%  at 10% 0%,   rgba(200,152,64,0.10) 0%, transparent 60%)',
+              'radial-gradient(ellipse 70% 100% at 50% 120%, color-mix(in srgb, var(--rw-color-accent) 12%, transparent) 0%, transparent 65%)',
+              'radial-gradient(ellipse 50% 80%  at 10% 0%,   color-mix(in srgb, var(--rw-color-accent-2) 10%, transparent) 0%, transparent 60%)',
             ].join(', '),
           }}
         />
@@ -657,7 +657,7 @@ export default function LandingPage() {
               <PillLink
                 href="/home"
                 size="md"
-                style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.25)' }}
+                style={{ boxShadow: '0 4px 16px color-mix(in srgb, var(--rw-color-accent) 25%, transparent)' }}
               >
                 Go to home page
               </PillLink>
@@ -667,7 +667,7 @@ export default function LandingPage() {
                 <PillLink
                   href="/signup"
                   size="md"
-                  style={{ boxShadow: '0 4px 16px rgba(91,138,125,0.25)' }}
+                  style={{ boxShadow: '0 4px 16px color-mix(in srgb, var(--rw-color-accent) 25%, transparent)' }}
                 >
                   Create your first moment
                 </PillLink>

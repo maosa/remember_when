@@ -27,6 +27,14 @@
   --rw-color-danger-subtle:    #FDECEA;
   --rw-color-white:            #FFFFFF;
 
+  /* Extended decorative accents — landing page only (hero shade, quote marks,
+     feature-card icons, Three.js particles) + the CTA-section panel bg.
+     accent-2/-3 are two additional accent hues; panel is a soft section
+     surface. Per-theme values live in each [data-theme] block below. */
+  --rw-color-accent-2:         #C89840;
+  --rw-color-accent-3:         #6B6AC0;
+  --rw-color-panel:            #F2EDE3;
+
   /* --- Typography --- */
   --rw-font-serif: var(--font-lora), Georgia, serif;
   --rw-font-sans:  var(--font-dm-sans), system-ui, sans-serif;
@@ -115,6 +123,9 @@
   --rw-color-danger:           #C0392B;
   --rw-color-danger-subtle:    #FBEAE8;
   --rw-color-white:            #FFFFFF;
+  --rw-color-accent-2:         #4F94A8;
+  --rw-color-accent-3:         #6C6FC2;
+  --rw-color-panel:            #E9EFF5;
 }
 
 [data-theme="amethyst-wisteria"] {
@@ -134,6 +145,9 @@
   --rw-color-danger:           #BE3A50;
   --rw-color-danger-subtle:    #FBE9EC;
   --rw-color-white:            #FFFFFF;
+  --rw-color-accent-2:         #9A7BB8;
+  --rw-color-accent-3:         #C58AA6;
+  --rw-color-panel:            #F2ECF1;
 }
 
 [data-theme="autumn-ruby"] {
@@ -153,6 +167,9 @@
   --rw-color-danger:           #B03A2E;
   --rw-color-danger-subtle:    #F7E2DE;
   --rw-color-white:            #FFFFFF;
+  --rw-color-accent-2:         #C67B3E;
+  --rw-color-accent-3:         #7F8A5C;
+  --rw-color-panel:            #F4EDE5;
 }
 
 [data-theme="royal-gemstone"] {
@@ -172,6 +189,9 @@
   --rw-color-danger:           #C0392B;
   --rw-color-danger-subtle:    #FBEAE8;
   --rw-color-white:            #FFFFFF;
+  --rw-color-accent-2:         #2E8F86;
+  --rw-color-accent-3:         #B98BC9;
+  --rw-color-panel:            #ECEAF2;
 }
 
 /* ============================================================
@@ -223,6 +243,8 @@
   --color-rw-accent:           var(--rw-color-accent);
   --color-rw-accent-hover:     var(--rw-color-accent-hover);
   --color-rw-accent-subtle:    var(--rw-color-accent-subtle);
+  --color-rw-accent-2:         var(--rw-color-accent-2);
+  --color-rw-accent-3:         var(--rw-color-accent-3);
   --color-rw-blue:             var(--rw-color-blue);
   --color-rw-blue-subtle:      var(--rw-color-blue-subtle);
   --color-rw-border:           var(--rw-color-border);
