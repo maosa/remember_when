@@ -281,11 +281,6 @@
   }
   html {
     @apply font-sans;
-    /* Always reserve the scrollbar's space so the layout viewport width is
-       identical whether or not a page currently scrolls. Without this, the
-       scrollbar appearing/disappearing across navigations re-centres the fixed
-       top nav and its items visibly jump. Keeps the native scrollbar as-is. */
-    scrollbar-gutter: stable;
   }
   h1, h2, h3 {
     font-family: var(--rw-font-serif);
