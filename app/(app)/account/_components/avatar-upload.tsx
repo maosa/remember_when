@@ -75,7 +75,7 @@ export function AvatarUpload({ currentUrl, initials }: Props) {
           onClick={() => inputRef.current?.click()}
           disabled={isPending}
           className="absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full bg-rw-accent text-white ring-2 ring-rw-bg transition-opacity hover:opacity-80 disabled:opacity-50"
-          aria-label="Change photo"
+          aria-label={preview ? 'Change photo' : 'Upload photo'}
         >
           <Camera className="size-3" />
         </button>
@@ -89,7 +89,7 @@ export function AvatarUpload({ currentUrl, initials }: Props) {
             onClick={() => inputRef.current?.click()}
             disabled={isPending}
           >
-            {isPending ? 'Saving…' : 'Change photo'}
+            {isPending ? 'Saving…' : preview ? 'Change photo' : 'Upload photo'}
           </Button>
           {preview && (
             <Button
