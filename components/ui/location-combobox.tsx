@@ -70,9 +70,18 @@ export function LocationCombobox({
   const containerRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  // Focus the input whenever we switch into search mode.
+  // Focus the input only when the user actively switched into search mode
+  // (clicking the chip to re-search, or clearing a selection). We must NOT focus
+  // on mount: an empty combobox mounts straight into search mode, and focusing
+  // then would steal the dialog's own initial focus (the New moment modal's Name
+  // field). A ref — rather than "skip first mount" — is used so it also survives
+  // React Strict Mode's double effect invocation in dev.
+  const pendingFocusRef = useRef(false)
   useEffect(() => {
-    if (mode === 'search') inputRef.current?.focus()
+    if (mode === 'search' && pendingFocusRef.current) {
+      pendingFocusRef.current = false
+      inputRef.current?.focus()
+    }
   }, [mode])
 
   // Debounced async search. Mirrors the race-guard + debounce pattern in
@@ -115,6 +124,7 @@ export function LocationCombobox({
   function enterSearch() {
     setQuery('')
     setResults(null)
+    pendingFocusRef.current = true
     setMode('search')
   }
 
@@ -133,6 +143,7 @@ export function LocationCombobox({
     setQuery('')
     setResults(null)
     setSearching(false)
+    pendingFocusRef.current = true
     setMode('search')
   }
 
