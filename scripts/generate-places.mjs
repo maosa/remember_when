@@ -11,9 +11,9 @@
 //   lib/places/regions.json    ~5k admin regions (US states, provinces, …),
 //                              shape { iso, name, cc, lat, lng }. Lets moments be
 //                              tagged to e.g. "Connecticut, United States".
-//   lib/places/countries.json  one row per country: { cc, name, capLat, capLng }
-//                              (capital coordinates; country-only moments are
-//                              plotted here).
+//   lib/places/countries.json  one row per country: { cc, name, capLat, capLng,
+//                              n3 } (capital coordinates for country-only moments;
+//                              n3 = ISO numeric code, matches TopoJSON geometry ids).
 //   lib/places/world.json      world map TopoJSON (50m, copied from world-atlas).
 import { createRequire } from 'node:module'
 import { writeFileSync, copyFileSync } from 'node:fs'
@@ -55,7 +55,8 @@ for (const c of countries) {
       ? [c.latlng[0], c.latlng[1]]
       : [null, null]
   if (lat == null || lng == null) continue
-  countryRows.push({ cc, name, capLat: round(lat), capLng: round(lng) })
+  // ccn3 = ISO-3166 numeric code, used to match world-atlas TopoJSON geometry ids.
+  countryRows.push({ cc, name, capLat: round(lat), capLng: round(lng), n3: c.ccn3 ?? null })
 }
 countryRows.sort((a, b) => a.name.localeCompare(b.name))
 

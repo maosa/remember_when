@@ -10,7 +10,7 @@ import { feature } from 'topojson-client'
 import type { Topology, GeometryCollection } from 'topojson-specification'
 import type { Feature, Geometry, Polygon } from 'geojson'
 import worldTopo from '@/lib/places/world.json'
-import { countryName } from '@/lib/places/countries.client'
+import { countryName, ccForNumericId } from '@/lib/places/countries.client'
 import {
   partitionLocated,
   clusterByCountry,
@@ -45,13 +45,15 @@ const projection = geoMercator().fitSize([WIDTH, HEIGHT], CLIP)
 const pathGen = geoPath(projection)
 
 // Decode + pre-project the world once at module load (static asset, fixed projection).
-const countryPaths: { key: string; d: string }[] = (() => {
+const countryPaths: { key: string; d: string; cc: string | null }[] = (() => {
   const topo = worldTopo as unknown as Topology
   const fc = feature(topo, topo.objects.countries as GeometryCollection)
   // Index as key — the array is static and some 50m geometries share an id.
+  // cc (from the geometry's numeric ISO id) is used to tint moment-countries.
   return (fc.features as Feature<Geometry>[]).map((g, i) => ({
     key: String(i),
     d: pathGen(g) ?? '',
+    cc: ccForNumericId(g.id),
   }))
 })()
 
@@ -84,6 +86,13 @@ export function MomentsMap({ moments }: { moments: MomentSummary[] }) {
         createdAt: m.createdAt,
       })),
     [moments]
+  )
+
+  // Countries with at least one moment — tinted on the map (follows the current
+  // search filter, since `moments` is already filtered upstream).
+  const momentCountryCodes = useMemo(
+    () => new Set(mapMoments.map((m) => m.countryCode).filter((cc): cc is string => Boolean(cc))),
+    [mapMoments]
   )
 
   const { located, unlocated } = useMemo(() => partitionLocated(mapMoments), [mapMoments])
@@ -180,13 +189,16 @@ export function MomentsMap({ moments }: { moments: MomentSummary[] }) {
         onClick={() => setSelected(null)}
       >
         <g transform={`translate(${t.x},${t.y}) scale(${t.k})`}>
-          {/* Land */}
+          {/* Land — countries with a moment get the soft accent tint. */}
           {countryPaths.map((c) => (
             <path
               key={c.key}
               d={c.d}
               style={{
-                fill: 'var(--rw-color-surface-raised)',
+                fill:
+                  c.cc && momentCountryCodes.has(c.cc)
+                    ? 'var(--rw-color-accent-subtle)'
+                    : 'var(--rw-color-surface-raised)',
                 stroke: 'var(--rw-color-text-placeholder)',
                 strokeWidth: 0.7 * inv,
                 strokeLinejoin: 'round',
