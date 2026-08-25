@@ -189,22 +189,24 @@ export function MomentsMap({ moments }: { moments: MomentSummary[] }) {
         onClick={() => setSelected(null)}
       >
         <g transform={`translate(${t.x},${t.y}) scale(${t.k})`}>
-          {/* Land — countries with a moment get the soft accent tint. */}
-          {countryPaths.map((c) => (
-            <path
-              key={c.key}
-              d={c.d}
-              style={{
-                fill:
-                  c.cc && momentCountryCodes.has(c.cc)
-                    ? 'var(--rw-color-accent-subtle)'
-                    : 'var(--rw-color-surface-raised)',
-                stroke: 'var(--rw-color-text-placeholder)',
-                strokeWidth: 0.7 * inv,
-                strokeLinejoin: 'round',
-              }}
-            />
-          ))}
+          {/* Land — countries with a moment get an accent wash (stronger than a
+              plain tint so they read at a glance, but muted via fill-opacity). */}
+          {countryPaths.map((c) => {
+            const isMoment = !!c.cc && momentCountryCodes.has(c.cc)
+            return (
+              <path
+                key={c.key}
+                d={c.d}
+                style={{
+                  fill: isMoment ? 'var(--rw-color-accent)' : 'var(--rw-color-surface-raised)',
+                  fillOpacity: isMoment ? 0.5 : 1,
+                  stroke: 'var(--rw-color-text-placeholder)',
+                  strokeWidth: 0.7 * inv,
+                  strokeLinejoin: 'round',
+                }}
+              />
+            )
+          })}
 
           {/* Markers — net scale is 1 (outer scale k × inner scale 1/k), so their
               content is drawn at constant screen size, positioned at the projected point. */}
