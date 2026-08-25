@@ -55,7 +55,6 @@ export type Invitee =
 // ─── Fetch moments for home page ─────────────────────────────────────────────
 
 type RawMember = { user_id: string; role: 'editor' | 'reader'; status: 'pending' | 'accepted' | 'declined' }
-type RawOwner = { id: string; first_name: string; last_name: string; profile_photo_url: string | null } | null
 
 /**
  * Inner cached fetch — runs DB queries using the admin client (no cookie
@@ -82,7 +81,6 @@ function fetchHomeMomentsData(userId: string) {
         .from('moments')
         .select(`
           id, name, date_year, date_month, date_day, location, place_kind, place_country_code, place_lat, place_lng, cover_photo_url, cover_position, owner_id, created_at,
-          owner:users!moments_owner_id_fkey(id, first_name, last_name, profile_photo_url),
           moment_tags(tag, position),
           moment_members(user_id, role, status)
         `)
@@ -100,29 +98,17 @@ function fetchHomeMomentsData(userId: string) {
         admin.from('moment_archive').select('moment_id').eq('user_id', userId),
       ])
 
-      const allMemberIds = [
-        ...new Set(
-          (moments ?? []).flatMap((m) =>
-            (m.moment_members as unknown as RawMember[]).map((mm) => mm.user_id)
-          )
-        ),
-      ]
-
       const allMomentIds = (moments ?? []).map((m) => m.id)
 
-      const [memberUsersRes, postCountRes] = await Promise.all([
-        allMemberIds.length > 0
-          ? admin.from('users').select('id, first_name, last_name, profile_photo_url').in('id', allMemberIds)
-          : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }[] }),
-        allMomentIds.length > 0
-          ? admin.from('posts').select('moment_id').in('moment_id', allMomentIds).is('deleted_at', null)
-          : Promise.resolve({ data: [] as { moment_id: string }[] }),
-      ])
+      const { data: postRows } = allMomentIds.length > 0
+        ? await admin.from('posts').select('moment_id').in('moment_id', allMomentIds).is('deleted_at', null)
+        : { data: [] as { moment_id: string }[] }
 
-      // NOTE: cover photo URLs are signed OUTSIDE this cache (in fetchHomeMoments).
-      // Their tokens are short-lived (24h), so persisting them in the Next data
-      // cache would let a stale cache entry serve an already-expired signed URL.
-      return { moments, archivedRows, memberUsers: memberUsersRes.data ?? [], postRows: postCountRes.data ?? [], error }
+      // NOTE: member/owner names + photos are resolved OUTSIDE this cache (in
+      // fetchHomeMoments) so a profile-photo or name change shows on the home card
+      // immediately, for every viewer — the cache holds only stable structure.
+      // (Cover photo URLs are likewise signed outside; see fetchHomeMoments.)
+      return { moments, archivedRows, postRows: postRows ?? [], error }
     },
     [`home-moments-${userId}`],
     { tags: [homeMomentsTag(userId)], revalidate: 3600 },
@@ -132,7 +118,7 @@ function fetchHomeMomentsData(userId: string) {
 export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; error?: string }> {
   const user = await requireUser()
 
-  const { moments, archivedRows, memberUsers, postRows, error } =
+  const { moments, archivedRows, postRows, error } =
     await fetchHomeMomentsData(user.id)
 
   if (error) return { moments: [], error: error.message }
@@ -147,9 +133,24 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
     .filter((p): p is string => Boolean(p))
   const signedCovers = await signStoragePaths(coverPaths)
 
-  const archivedMomentIds = new Set((archivedRows ?? []).map((a) => a.moment_id))
+  // Resolve owner + member names/photos fresh (OUTSIDE the cache) so an avatar or
+  // name change is reflected on the home card immediately for every viewer, rather
+  // than being stuck behind the unstable_cache revalidate window.
+  const displayUserIds = [
+    ...new Set(
+      (moments ?? []).flatMap((m) => [
+        m.owner_id,
+        ...(m.moment_members as unknown as RawMember[]).map((mm) => mm.user_id),
+      ])
+    ),
+  ]
+  const admin = createAdminClient()
+  const { data: displayUsers } = displayUserIds.length > 0
+    ? await admin.from('users').select('id, first_name, last_name, profile_photo_url').in('id', displayUserIds)
+    : { data: [] as { id: string; first_name: string; last_name: string; profile_photo_url: string | null }[] }
+  const userMap = new Map((displayUsers ?? []).map((u) => [u.id, u]))
 
-  const memberUserMap = new Map(memberUsers.map((u) => [u.id, u]))
+  const archivedMomentIds = new Set((archivedRows ?? []).map((a) => a.moment_id))
 
   const postCountMap = new Map<string, number>()
   for (const row of postRows) {
@@ -159,7 +160,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
   const result: MomentSummary[] = (moments ?? []).map((m) => {
     const isOwner = m.owner_id === user.id
     const rawMembers = m.moment_members as unknown as RawMember[]
-    const owner = (m as unknown as { owner: RawOwner }).owner
+    const owner = userMap.get(m.owner_id)
     const myMembership = rawMembers.find((mm) => mm.user_id === user.id)
     const isArchived = archivedMomentIds.has(m.id)
     const coverPath = m.cover_photo_url ?? null
@@ -184,7 +185,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       createdAt: m.created_at,
       tags: (m.moment_tags as unknown as Array<{ tag: string }>).map((t) => t.tag),
       members: rawMembers.map((mm) => {
-        const u = memberUserMap.get(mm.user_id)
+        const u = userMap.get(mm.user_id)
         return {
           userId: mm.user_id,
           firstName: u?.first_name ?? '',

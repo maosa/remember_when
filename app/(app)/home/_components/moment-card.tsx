@@ -7,6 +7,7 @@ import { MapPin, Calendar, MoreHorizontal, Archive, ArchiveRestore, Pencil, Crow
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Menu, MenuContent, MenuItem, MenuTrigger } from '@/components/ui/menu'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { archiveMoment, unarchiveMoment, type MomentSummary } from '../actions'
 import { MomentTags } from './moment-tags'
@@ -69,20 +70,23 @@ export const MomentCard = memo(function MomentCard({ moment }: Props) {
   // Build ordered member list for avatar stack: owner first, then accepted non-owner members.
   // Memoised so the derived arrays are stable across re-renders caused by local state changes
   // (e.g. opening/closing the edit modal).
-  const { shownAvatars, showOverflow, overflowCount } = useMemo(() => {
+  const { allMembers, shownAvatars, showOverflow, overflowCount } = useMemo(() => {
     const acceptedNonOwner = moment.members.filter(
       (m) => m.userId !== moment.ownerId && m.status === 'accepted'
     )
     const allMembers = [
-      { userId: moment.ownerId, firstName: moment.ownerFirstName, lastName: moment.ownerLastName, photoUrl: moment.ownerPhotoUrl },
-      ...acceptedNonOwner.map((m) => ({ userId: m.userId, firstName: m.firstName, lastName: m.lastName, photoUrl: m.photoUrl })),
+      { userId: moment.ownerId, firstName: moment.ownerFirstName, lastName: moment.ownerLastName, photoUrl: moment.ownerPhotoUrl, role: 'owner' as const },
+      ...acceptedNonOwner.map((m) => ({ userId: m.userId, firstName: m.firstName, lastName: m.lastName, photoUrl: m.photoUrl, role: m.role })),
     ]
     const MAX_AVATARS = 5
     const overflow = allMembers.length > MAX_AVATARS
+    // When overflowing, reserve one slot for the "+N" chip.
+    const shownCount = MAX_AVATARS - 1
     return {
-      shownAvatars: overflow ? allMembers.slice(0, 4) : allMembers,
+      allMembers,
+      shownAvatars: overflow ? allMembers.slice(0, shownCount) : allMembers,
       showOverflow: overflow,
-      overflowCount: allMembers.length - 4,
+      overflowCount: allMembers.length - shownCount,
     }
   }, [moment.members, moment.ownerId, moment.ownerFirstName, moment.ownerLastName, moment.ownerPhotoUrl])
 
@@ -169,23 +173,51 @@ export const MomentCard = memo(function MomentCard({ moment }: Props) {
                   {moment.myRole === 'reader' && <><Eye     className="size-3" /> Reader</>}
                 </span>
 
-                {/* Avatar stack */}
-                <div className="flex -space-x-1.5">
-                  {shownAvatars.map((m) => {
-                    const initials = `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase()
-                    return (
-                      <Avatar key={m.userId} className="size-6 border-2 border-rw-surface">
-                        <AvatarImage src={m.photoUrl ?? undefined} />
-                        <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
-                      </Avatar>
-                    )
-                  })}
-                  {showOverflow && (
-                    <div className="size-6 flex items-center justify-center rounded-full border-2 border-rw-surface bg-rw-surface-raised text-[9px] font-medium text-rw-text-muted">
-                      +{overflowCount}
-                    </div>
-                  )}
-                </div>
+                {/* Avatar stack — hover a badge for the name, "+N" for the full list.
+                    Desktop-only by nature (base-ui Tooltip is hover/focus-triggered);
+                    portaled so it escapes the card's overflow-hidden clip. */}
+                <TooltipProvider>
+                  <div className="flex -space-x-1.5">
+                    {shownAvatars.map((m) => {
+                      const initials = `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase()
+                      return (
+                        <Tooltip key={m.userId}>
+                          <TooltipTrigger
+                            render={
+                              <Avatar className="size-6 border-2 border-rw-surface">
+                                <AvatarImage src={m.photoUrl ?? undefined} />
+                                <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
+                              </Avatar>
+                            }
+                          />
+                          <TooltipContent>{`${m.firstName} ${m.lastName}`.trim()}</TooltipContent>
+                        </Tooltip>
+                      )
+                    })}
+                    {showOverflow && (
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <div className="size-6 flex items-center justify-center rounded-full border-2 border-rw-surface bg-rw-surface-raised text-[9px] font-medium text-rw-text-muted cursor-default">
+                              +{overflowCount}
+                            </div>
+                          }
+                        />
+                        <TooltipContent align="end" className="w-56 max-w-[min(16rem,calc(100vw-2rem))] p-2 space-y-1.5 font-normal">
+                          {allMembers.map((m) => (
+                            <MemberTooltipRow
+                              key={m.userId}
+                              firstName={m.firstName}
+                              lastName={m.lastName}
+                              photoUrl={m.photoUrl}
+                              role={m.role}
+                            />
+                          ))}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                </TooltipProvider>
               </div>
             )}
 
@@ -253,3 +285,35 @@ export const MomentCard = memo(function MomentCard({ moment }: Props) {
     </div>
   )
 })
+
+// ─── Member row for the "+N more" hover list ────────────────────────────────────
+
+function MemberTooltipRow({
+  firstName,
+  lastName,
+  photoUrl,
+  role,
+}: {
+  firstName: string
+  lastName: string
+  photoUrl: string | null
+  role: 'owner' | 'editor' | 'reader'
+}) {
+  const initials = `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase()
+  const RoleIcon = role === 'owner' ? Crown : role === 'editor' ? PenTool : Eye
+  const roleLabel = role === 'owner' ? 'Owner' : role === 'editor' ? 'Editor' : 'Reader'
+  return (
+    <div className="flex items-center gap-2">
+      <Avatar className="size-6 shrink-0">
+        <AvatarImage src={photoUrl ?? undefined} />
+        <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
+      </Avatar>
+      <span className="flex-1 truncate text-[13px] font-medium text-rw-text-primary">
+        {firstName} {lastName}
+      </span>
+      <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-rw-text-muted">
+        <RoleIcon className="size-3" /> {roleLabel}
+      </span>
+    </div>
+  )
+}
