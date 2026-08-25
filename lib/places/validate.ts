@@ -3,13 +3,14 @@
 // blob — run it through this first.
 import type { PlaceValue, PlaceKind } from './types'
 
-const KINDS: PlaceKind[] = ['city', 'country']
+const KINDS: PlaceKind[] = ['city', 'country', 'region']
 
 /**
  * Coerces an untrusted value (as sent from the LocationCombobox) into a valid
  * PlaceValue, or null if it is absent/malformed. Enforces the same invariants as
  * the DB check constraints (kind ∈ {city,country}, ISO-2 country code, lat/lng in
- * range) so a bad payload degrades to "no location" rather than erroring.
+ * range) so a bad payload degrades to "no location" rather than erroring. Kinds:
+ * city | country | region.
  */
 export function normalizePlaceInput(raw: unknown): PlaceValue | null {
   if (!raw || typeof raw !== 'object') return null

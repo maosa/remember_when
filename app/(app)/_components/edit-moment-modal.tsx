@@ -29,7 +29,7 @@ export interface MomentEditValues {
   dateMonth: number | null
   dateDay: number | null
   location: string | null
-  placeKind: 'city' | 'country' | null
+  placeKind: 'city' | 'country' | 'region' | null
   placeCountryCode: string | null
   placeLat: number | null
   placeLng: number | null

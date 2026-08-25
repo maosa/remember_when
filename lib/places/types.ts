@@ -2,14 +2,14 @@
 // this module is safe to pull into client components (the 2 MB city list lives
 // in ./data, which must only be imported from server code).
 
-export type PlaceKind = 'city' | 'country'
+export type PlaceKind = 'city' | 'country' | 'region'
 
 // The structured value produced by selecting a place in the LocationCombobox and
-// persisted on a moment (alongside the human-readable `location` label). For a
-// city, lat/lng are the city's coordinates; for a country, they are the capital's.
+// persisted on a moment (alongside the human-readable `location` label). lat/lng
+// are the city's coordinates, the capital's (country), or the region's centroid.
 export type PlaceValue = {
   kind: PlaceKind
-  label: string // "Barcelona, Spain" (city) or "Spain" (country)
+  label: string // "Barcelona, Spain" (city), "Spain" (country), "Connecticut, United States" (region)
   countryCode: string // ISO-3166 alpha-2, uppercase
   lat: number
   lng: number

@@ -29,7 +29,7 @@ export type MomentSummary = {
   dateMonth: number | null
   dateDay: number | null
   location: string | null
-  placeKind: 'city' | 'country' | null
+  placeKind: 'city' | 'country' | 'region' | null
   placeCountryCode: string | null
   placeLat: number | null
   placeLng: number | null
@@ -172,7 +172,7 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       dateMonth: m.date_month ?? null,
       dateDay: m.date_day ?? null,
       location: m.location ?? null,
-      placeKind: (m as { place_kind: 'city' | 'country' | null }).place_kind ?? null,
+      placeKind: (m as { place_kind: 'city' | 'country' | 'region' | null }).place_kind ?? null,
       placeCountryCode: (m as { place_country_code: string | null }).place_country_code ?? null,
       placeLat: (m as { place_lat: number | null }).place_lat ?? null,
       placeLng: (m as { place_lng: number | null }).place_lng ?? null,

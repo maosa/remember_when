@@ -54,6 +54,7 @@
     "@types/react-dom": "^19",
     "@types/topojson-client": "^3.1.5",
     "all-the-cities": "^3.1.0",
+    "country-state-city": "^3.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "husky": "^9.1.7",

@@ -48,6 +48,19 @@ describe('searchPlaces', () => {
     const keys = results.map((r) => r.key)
     expect(new Set(keys).size).toBe(keys.length)
   })
+
+  it('finds an admin region / US state', () => {
+    const results = searchPlaces('connecticut')
+    const ct = results.find((r) => r.kind === 'region' && r.label === 'Connecticut, United States')
+    expect(ct).toBeDefined()
+    expect(ct!.countryCode).toBe('US')
+    expect(ct!.lat).toBeCloseTo(41.6, 0)
+  })
+
+  it('includes towns down to the 5k threshold (Greenwich, CT)', () => {
+    const results = searchPlaces('greenwich')
+    expect(results.some((r) => r.kind === 'city' && r.countryCode === 'US')).toBe(true)
+  })
 })
 
 describe('country lookups', () => {

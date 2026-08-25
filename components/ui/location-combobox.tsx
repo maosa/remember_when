@@ -1,11 +1,25 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { MapPin, Search, X, Globe2 } from 'lucide-react'
+import { MapPin, MapPinned, Search, X, Globe2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { searchPlaces } from '@/app/(app)/_actions/places'
-import type { PlaceValue, PlaceSearchResult } from '@/lib/places/types'
+import type { PlaceValue, PlaceSearchResult, PlaceKind } from '@/lib/places/types'
+
+// Icon per place kind: globe for a country, pinned-area for a region/state, pin
+// for a city. Returns JSX (not a component) to satisfy react-hooks/static-components.
+const kindIcon = (kind: PlaceKind | null, className: string) =>
+  kind === 'country' ? (
+    <Globe2 className={className} />
+  ) : kind === 'region' ? (
+    <MapPinned className={className} />
+  ) : (
+    <MapPin className={className} />
+  )
+// Short badge label shown on the right of a result row (cities get none).
+const kindBadge = (kind: PlaceKind): string | null =>
+  kind === 'country' ? 'Country' : kind === 'region' ? 'Region' : null
 
 interface Props {
   /** The structured selection, or null when empty. Controlled by the parent. */
@@ -156,7 +170,6 @@ export function LocationCombobox({
 
   // ── Display mode: chip with the selected place + clear button ───────────────
   if (mode === 'display' && displayLabel) {
-    const Icon = displayKind === 'country' ? Globe2 : MapPin
     return (
       <div className="relative">
         <button
@@ -164,7 +177,7 @@ export function LocationCombobox({
           onClick={enterSearch}
           className="flex h-10 w-full items-center gap-2 rounded-rw-input border border-rw-border bg-rw-surface pl-2.5 pr-9 text-left text-base md:text-[14px] font-medium text-rw-text-primary transition-colors outline-none focus-visible:border-rw-accent focus-visible:ring-3 focus-visible:ring-rw-accent/[0.12]"
         >
-          <Icon className="size-3.5 shrink-0 text-rw-text-muted" />
+          {kindIcon(displayKind, 'size-3.5 shrink-0 text-rw-text-muted')}
           <span className="truncate">{displayLabel}</span>
         </button>
         <button
@@ -225,15 +238,11 @@ export function LocationCombobox({
                     i === activeIndex ? 'bg-rw-surface-raised' : 'hover:bg-rw-surface-raised'
                   )}
                 >
-                  {r.kind === 'country' ? (
-                    <Globe2 className="size-4 shrink-0 text-rw-text-muted" />
-                  ) : (
-                    <MapPin className="size-4 shrink-0 text-rw-text-muted" />
-                  )}
+                  {kindIcon(r.kind, 'size-4 shrink-0 text-rw-text-muted')}
                   <span className="text-sm truncate">{r.label}</span>
-                  {r.kind === 'country' && (
+                  {kindBadge(r.kind) && (
                     <span className="ml-auto shrink-0 text-[10px] font-medium uppercase tracking-wide text-rw-text-placeholder">
-                      Country
+                      {kindBadge(r.kind)}
                     </span>
                   )}
                 </button>
