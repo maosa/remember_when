@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -34,6 +34,7 @@ interface Props {
 export function CreateMomentModal({ open, onOpenChange }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   // Form state
   const [name, setName] = useState('')
@@ -114,7 +115,7 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[484px] flex flex-col max-h-[90dvh]">
+      <DialogContent className="sm:max-w-[484px] flex flex-col max-h-[90dvh]" initialFocus={nameInputRef}>
         <DialogHeader className="border-b-0 pb-0">
           <DialogTitle>New moment</DialogTitle>
         </DialogHeader>
@@ -125,11 +126,11 @@ export function CreateMomentModal({ open, onOpenChange }: Props) {
           <div className="space-y-1.5">
             <Label htmlFor="moment-name">Name <span className="text-rw-danger">*</span></Label>
             <Input
+              ref={nameInputRef}
               id="moment-name"
               placeholder="e.g. Summer in Barcelona"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              autoFocus
               aria-invalid={!!error}
               aria-describedby={error ? 'moment-error' : undefined}
             />

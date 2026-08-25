@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -68,6 +68,7 @@ interface Props {
 export function EditMomentModal({ moment, open, onOpenChange }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   // Form state — initialised from moment values
   const [name, setName] = useState(moment.name)
@@ -129,7 +130,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[484px] flex flex-col max-h-[90dvh]">
+      <DialogContent className="sm:max-w-[484px] flex flex-col max-h-[90dvh]" initialFocus={nameInputRef}>
         <DialogHeader className="border-b-0 pb-0">
           <DialogTitle>Edit moment</DialogTitle>
         </DialogHeader>
@@ -142,11 +143,11 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
               Name <span className="text-rw-danger">*</span>
             </Label>
             <Input
+              ref={nameInputRef}
               id="edit-moment-name"
               placeholder="e.g. Summer in Barcelona"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              autoFocus
               aria-invalid={!!error}
               aria-describedby={error ? 'edit-moment-error' : undefined}
             />
