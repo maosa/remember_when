@@ -21,11 +21,18 @@ type CityRow = {
 type RegionRow = { iso: string; cc: string; name: string; lat: number; lng: number }
 type CountryRow = { cc: string; name: string; capLat: number; capLng: number }
 
+// The datasets are static, so their names are normalized once at module load
+// rather than on every keystroke. `_n` holds the pre-normalized name (searching
+// 49k cities would otherwise run ~150k NFD+regex passes per debounced query).
+type CityRowN = CityRow & { _n: string }
+type RegionRowN = RegionRow & { _n: string }
+type CountryRowN = CountryRow & { _n: string }
+
 // cities.json is pre-sorted by population descending, so iteration order already
 // ranks results without any per-query sort.
-const cities = citiesRaw as CityRow[]
-const regions = regionsRaw as RegionRow[]
-const countries = countriesRaw as CountryRow[]
+const cities: CityRowN[] = (citiesRaw as CityRow[]).map((c) => ({ ...c, _n: normalize(c.city) }))
+const regions: RegionRowN[] = (regionsRaw as RegionRow[]).map((r) => ({ ...r, _n: normalize(r.name) }))
+const countries: CountryRowN[] = (countriesRaw as CountryRow[]).map((c) => ({ ...c, _n: normalize(c.name) }))
 
 const countryByCc = new Map(countries.map((c) => [c.cc, c]))
 
@@ -75,7 +82,7 @@ export function searchPlaces(query: string, limit = 20): PlaceSearchResult[] {
 
   // 1. Countries (name starts-with ranks above contains), capped so cities still show.
   const countryHits = countries
-    .map((c) => ({ c, n: normalize(c.name) }))
+    .map((c) => ({ c, n: c._n }))
     .filter(({ n }) => n.includes(q))
     .sort((a, b) => Number(b.n.startsWith(q)) - Number(a.n.startsWith(q)) || a.c.name.localeCompare(b.c.name))
     .slice(0, 5)
@@ -86,7 +93,7 @@ export function searchPlaces(query: string, limit = 20): PlaceSearchResult[] {
 
   // 2. Admin regions / states (name starts-with ranks above contains), capped.
   const regionHits = regions
-    .map((r) => ({ r, n: normalize(r.name) }))
+    .map((r) => ({ r, n: r._n }))
     .filter(({ n }) => n.includes(q))
     .sort((a, b) => Number(b.n.startsWith(q)) - Number(a.n.startsWith(q)) || a.r.name.localeCompare(b.r.name))
     .slice(0, 6)
@@ -103,16 +110,16 @@ export function searchPlaces(query: string, limit = 20): PlaceSearchResult[] {
     lng: city.lng,
     key: `city:${city.id}`,
   })
-  const tiers: Array<(name: string, city: CityRow) => boolean> = [
-    (name) => name.startsWith(q),
-    (_name, city) => matchedCountryCodes.has(city.cc),
-    (name) => name.includes(q),
+  const tiers: Array<(city: CityRowN) => boolean> = [
+    (city) => city._n.startsWith(q),
+    (city) => matchedCountryCodes.has(city.cc),
+    (city) => city._n.includes(q),
   ]
   for (const matches of tiers) {
     if (results.length >= limit) break
     for (const city of cities) {
       if (results.length >= limit) break
-      if (matches(normalize(city.city), city)) push(cityResult(city))
+      if (matches(city)) push(cityResult(city))
     }
   }
 
