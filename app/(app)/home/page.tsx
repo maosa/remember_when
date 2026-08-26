@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Bell } from 'lucide-react'
-import { createClient, getServerUser } from '@/lib/supabase/server'
+import { getServerUser } from '@/lib/supabase/server'
+import { getLayoutProfile } from '@/lib/cached-queries'
 import { fetchHomeMoments } from './actions'
 import { MomentsList } from './_components/moments-list'
 
@@ -13,15 +14,10 @@ export default async function HomePage({ searchParams }: Props) {
   const { data: { user } } = await getServerUser()
   if (!user) redirect('/login')
 
-  const supabase = await createClient()
-
+  // Reuse the layout's cached profile fetch (React cache() dedupes it within this
+  // request, so the greeting name costs no extra DB round-trip here).
   const [profile, { moments }, { pending_invite }] = await Promise.all([
-    supabase
-      .from('users')
-      .select('first_name')
-      .eq('id', user.id)
-      .single()
-      .then((r) => r.data),
+    getLayoutProfile(user.id),
     fetchHomeMoments(),
     searchParams,
   ])
