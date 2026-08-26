@@ -7,7 +7,7 @@ file in sync — a lint exception with no entry here is a loose end.
 Regenerate the source list any time with:
 
 ```bash
-grep -rn "eslint-disable" app lib
+grep -rn "eslint-disable" app lib components
 ```
 
 ## Safety nets (why these can't silently become bugs)
@@ -38,10 +38,10 @@ These effects genuinely synchronize with an async/external source; the flagged
 | `app/(app)/account/_components/profile-form.tsx:57` | Debounced username-availability check; resets status to `idle` when the input matches the current username. | Extra re-render / stale availability status (perf/cosmetic). | Keep the reset in the effect; it pairs with a cancellable async lookup. |
 | `app/(app)/friends/_components/friends-manager.tsx:327` | Debounced user search; clears results when the query is too short. | Stale/leftover search results (cosmetic). | Keep the reset in the effect. |
 | `app/(app)/home/_components/people-invite-input.tsx:44` | Debounced invite search; clears results when the query is too short. | Stale results in the People picker (cosmetic). | Keep the reset in the effect. |
-| `components/ui/location-combobox.tsx:70` | Debounced city/country search; clears results when the query is too short. | Stale place results left in the location picker (cosmetic). | Keep the reset in the effect. |
+| `components/ui/location-combobox.tsx:93` | Debounced city/country search; clears results when the query is too short. | Stale place results left in the location picker (cosmetic). | Keep the reset in the effect. |
 | `app/(app)/moments/[id]/_components/invite-member-dialog.tsx:59` | Debounced lookup; resets status/display when the input is cleared. | Stale lookup status (cosmetic). | Keep the reset in the effect. |
 | `app/(app)/moments/[id]/_components/invite-link-panel.tsx:53` | Reads `window.location.origin` after mount (unavailable during SSR) to build the invite URL. | If "fixed" into render → **hydration mismatch** (React error → **Sentry-visible**). | Keep the read in the mount effect. |
-| `app/page.tsx:81` | Picks a random starting hero quote client-side (mount effect). Initial state is deterministic so SSR and first client render match. | If moved into render/`useState` initializer → **hydration mismatch** (Sentry-visible). | Keep the random pick in the mount effect. |
+| `app/page.tsx:113` | Picks a random starting hero quote client-side (mount effect). Initial state is deterministic so SSR and first client render match. | If moved into render/`useState` initializer → **hydration mismatch** (Sentry-visible). | Keep the random pick in the mount effect. |
 
 ## `react-hooks/refs`
 
@@ -57,13 +57,13 @@ Next image optimizer doesn't fit (and image transformation is disabled on this
 tenant — see `docs`/memory). This is a convention rule, not correctness: no runtime
 failure mode. If we later move to `next/image`, remove these directives.
 
-Locations: `media-viewer.tsx:254`, `moment-card.tsx:102`,
-`cover-photo-section.tsx:158,217`, `moment-header.tsx:222`,
+Locations: `media-viewer.tsx:254`, `moment-card.tsx:106`,
+`cover-photo-section.tsx:172,231`, `moment-header.tsx:222`,
 `edit-post-dialog.tsx:237,262`, `post-card.tsx:74,102,118,127,145`,
-`create-post-dialog.tsx:235`, `moments-map.tsx` (map cluster panel thumbnail).
+`create-post-dialog.tsx:235`, `moments-map.tsx:335` (map cluster panel thumbnail).
 
 ## `@typescript-eslint/no-explicit-any`
 
 | File | Why it's safe | Fix |
 |------|---------------|-----|
-| `app/(app)/moments/[id]/actions.ts:534` | An internal helper takes the Supabase admin client typed as `any` to avoid threading the full generated client generics. Server-only, not user-facing. | Type the param as the admin client's return type if the generics are ever pinned down. |
+| `app/(app)/moments/[id]/actions.ts:544` | An internal helper takes the Supabase admin client typed as `any` to avoid threading the full generated client generics. Server-only, not user-facing. | Type the param as the admin client's return type if the generics are ever pinned down. |
