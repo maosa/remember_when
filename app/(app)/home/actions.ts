@@ -45,7 +45,6 @@ export type MomentSummary = {
   myRole: 'owner' | 'editor' | 'reader'
   myStatus: 'pending' | 'accepted' | 'declined'
   isArchived: boolean
-  postCount: number
 }
 
 export type Invitee =
@@ -98,17 +97,11 @@ function fetchHomeMomentsData(userId: string) {
         admin.from('moment_archive').select('moment_id').eq('user_id', userId),
       ])
 
-      const allMomentIds = (moments ?? []).map((m) => m.id)
-
-      const { data: postRows } = allMomentIds.length > 0
-        ? await admin.from('posts').select('moment_id').in('moment_id', allMomentIds).is('deleted_at', null)
-        : { data: [] as { moment_id: string }[] }
-
       // NOTE: member/owner names + photos are resolved OUTSIDE this cache (in
       // fetchHomeMoments) so a profile-photo or name change shows on the home card
       // immediately, for every viewer — the cache holds only stable structure.
       // (Cover photo URLs are likewise signed outside; see fetchHomeMoments.)
-      return { moments, archivedRows, postRows: postRows ?? [], error }
+      return { moments, archivedRows, error }
     },
     [`home-moments-${userId}`],
     { tags: [homeMomentsTag(userId)], revalidate: 3600 },
@@ -118,7 +111,7 @@ function fetchHomeMomentsData(userId: string) {
 export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; error?: string }> {
   const user = await requireUser()
 
-  const { moments, archivedRows, postRows, error } =
+  const { moments, archivedRows, error } =
     await fetchHomeMomentsData(user.id)
 
   if (error) return { moments: [], error: error.message }
@@ -151,11 +144,6 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
   const userMap = new Map((displayUsers ?? []).map((u) => [u.id, u]))
 
   const archivedMomentIds = new Set((archivedRows ?? []).map((a) => a.moment_id))
-
-  const postCountMap = new Map<string, number>()
-  for (const row of postRows) {
-    postCountMap.set(row.moment_id, (postCountMap.get(row.moment_id) ?? 0) + 1)
-  }
 
   const result: MomentSummary[] = (moments ?? []).map((m) => {
     const isOwner = m.owner_id === user.id
@@ -198,7 +186,6 @@ export async function fetchHomeMoments(): Promise<{ moments: MomentSummary[]; er
       myRole: isOwner ? 'owner' : (myMembership?.role ?? 'editor'),
       myStatus: myMembership?.status ?? (isOwner ? 'accepted' : 'pending'),
       isArchived,
-      postCount: postCountMap.get(m.id) ?? 0,
     }
   })
 
