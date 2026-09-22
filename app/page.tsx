@@ -712,20 +712,17 @@ export default function LandingPage() {
             Privacy
           </Link>
         </nav>
-        <div className="flex flex-col items-center sm:items-end gap-1">
-          <p className="text-[12px] text-rw-text-placeholder">© 2026 Remember When</p>
-          <p className="text-[12px] text-rw-text-placeholder">
-            Created by{' '}
-            <a
-              href="https://andreasmaos.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-rw-text-muted transition-colors"
-            >
-              Andreas Maos
-            </a>
-          </p>
-        </div>
+        <p className="text-[12px] text-rw-text-placeholder">
+          © 2026 Remember When <span aria-hidden="true">·</span> Created by{' '}
+          <a
+            href="https://andreasmaos.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-rw-text-muted transition-colors"
+          >
+            Andreas Maos
+          </a>
+        </p>
       </footer>
 
     </div>
