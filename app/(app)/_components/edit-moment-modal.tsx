@@ -84,20 +84,28 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
   const [placeTouched, setPlaceTouched] = useState(false)
   const [tags, setTags] = useState<string[]>(moment.tags)
 
-  function handleOpenChange(val: boolean) {
-    if (!val) {
-      // Reset to original values on close
-      setName(moment.name)
-      setDateMode(inferDateMode(moment.dateYear, moment.dateMonth, moment.dateDay))
-      setDateYear(moment.dateYear ? String(moment.dateYear) : '')
-      setDateMonth(moment.dateMonth ? MONTHS[moment.dateMonth - 1] ?? '' : '')
-      setDateDay(moment.dateDay ? String(moment.dateDay) : '')
-      setPlace(initialPlace(moment))
-      setPlaceTouched(false)
-      setTags(moment.tags)
-      setError(null)
-    }
-    onOpenChange(val)
+  function resetForm() {
+    setName(moment.name)
+    setDateMode(inferDateMode(moment.dateYear, moment.dateMonth, moment.dateDay))
+    setDateYear(moment.dateYear ? String(moment.dateYear) : '')
+    setDateMonth(moment.dateMonth ? MONTHS[moment.dateMonth - 1] ?? '' : '')
+    setDateDay(moment.dateDay ? String(moment.dateDay) : '')
+    setPlace(initialPlace(moment))
+    setPlaceTouched(false)
+    setTags(moment.tags)
+    setError(null)
+  }
+
+  // Re-seed the form from the latest moment values every time the modal opens.
+  // The modal stays mounted while closed, so without this it would show values
+  // captured at mount — e.g. tags changed via the moment page's tag pills after
+  // page load. Uses the "adjust state during render" pattern (not an effect);
+  // keyed on the `open` prop because the parent opens it via setState, which
+  // doesn't go through onOpenChange.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open) resetForm()
   }
 
   function handleSubmit() {
@@ -129,7 +137,7 @@ export function EditMomentModal({ moment, open, onOpenChange }: Props) {
   const canSubmit = name.trim().length > 0 && !isPending
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[484px] flex flex-col max-h-[90dvh]" initialFocus={nameInputRef}>
         <DialogHeader className="border-b-0 pb-0">
           <DialogTitle>Edit moment</DialogTitle>
