@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import { MapPin, Calendar, CheckCircle2, XCircle, ZoomIn, Plus, MoveVertical, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { formatMomentDate } from '@/lib/date-helpers'
 import { acceptMomentInvite, declineMomentInvite, updateCoverPosition, type MomentDetail, type PostMedia } from '../actions'
 import { useMomentGallery } from './moment-gallery-context'
 import { toast } from 'sonner'
@@ -19,18 +20,6 @@ const CreatePostDialog = dynamic(() =>
   import('./create-post-dialog').then((m) => ({ default: m.CreatePostDialog })),
   { ssr: false }
 )
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-function formatDate(year: number | null, month: number | null, day: number | null): string | null {
-  if (!year) return null
-  if (!month) return String(year)
-  const m = MONTHS_SHORT[month - 1]
-  if (!day) return `${m} ${year}`
-  return `${m} ${day}, ${year}`
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -60,7 +49,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
 
   const { postMedia, galleryReady } = useMomentGallery()
 
-  const date = formatDate(moment.dateYear, moment.dateMonth, moment.dateDay)
+  const date = formatMomentDate(moment.dateYear, moment.dateMonth, moment.dateDay)
   const isPendingInvite = myStatus === 'pending'
   const canPost = myStatus === 'accepted' && (myRole === 'owner' || myRole === 'editor')
   // The cover opens the gallery viewer on click, EXCEPT while repositioning.

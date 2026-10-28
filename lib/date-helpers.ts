@@ -25,3 +25,14 @@ export function inferDateMode(year: number | null, month: number | null, day: nu
   if (month) return 'month-year'
   return 'year'
 }
+
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** Formats a moment's partial date as "2026", "Jul 2026" or "Jul 24, 2026"; null when no year. */
+export function formatMomentDate(year: number | null, month: number | null, day: number | null): string | null {
+  if (!year) return null
+  if (!month) return String(year)
+  const m = MONTHS_SHORT[month - 1]
+  if (!day) return `${m} ${year}`
+  return `${m} ${day}, ${year}`
+}
