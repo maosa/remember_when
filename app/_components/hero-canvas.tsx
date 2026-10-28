@@ -22,11 +22,19 @@ export default function HeroCanvas() {
       const W = container.clientWidth
       const H = container.clientHeight
 
-      const renderer = new THREE.WebGLRenderer({
-        alpha: true,
-        antialias: false,
-        powerPreference: 'low-power',
-      })
+      // WebGL can be unavailable (disabled, no GPU, context limit, headless
+      // crawlers). The canvas is purely decorative, so skip the animation
+      // instead of throwing — same outcome as prefers-reduced-motion.
+      let renderer: InstanceType<typeof THREE.WebGLRenderer>
+      try {
+        renderer = new THREE.WebGLRenderer({
+          alpha: true,
+          antialias: false,
+          powerPreference: 'low-power',
+        })
+      } catch {
+        return
+      }
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
       renderer.setSize(W, H)
       Object.assign(renderer.domElement.style, {
@@ -198,7 +206,9 @@ export default function HeroCanvas() {
       }
     }
 
-    init()
+    // Decorative only — never let a setup failure (e.g. the three.js chunk
+    // failing to load) surface as an unhandled rejection.
+    init().catch(() => {})
 
     return () => {
       mounted = false
