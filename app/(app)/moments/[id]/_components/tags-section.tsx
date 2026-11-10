@@ -10,6 +10,7 @@ import {
   closestCenter,
   useSensor,
   useSensors,
+  type Announcements,
   type DragEndEvent,
 } from '@dnd-kit/core'
 import {
@@ -57,6 +58,19 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
+
+  // Screen-reader announcements in tag names and positions. dnd-kit's defaults
+  // read out the raw tag IDs (UUIDs).
+  const tagName = (id: string | number) => order.find((t) => t.id === id)?.tag ?? 'tag'
+  const position = (id: string | number) => `${order.findIndex((t) => t.id === id) + 1} of ${order.length}`
+  const announcements: Announcements = {
+    onDragStart: ({ active }) => `Picked up tag ${tagName(active.id)}, position ${position(active.id)}.`,
+    onDragOver: ({ active, over }) =>
+      over ? `Tag ${tagName(active.id)} is over position ${position(over.id)}.` : `Tag ${tagName(active.id)} is no longer over a position.`,
+    onDragEnd: ({ active, over }) =>
+      over ? `Tag ${tagName(active.id)} dropped at position ${position(over.id)}.` : `Tag ${tagName(active.id)} dropped.`,
+    onDragCancel: ({ active }) => `Reordering cancelled. Tag ${tagName(active.id)} returned to position ${position(active.id)}.`,
+  }
 
   function showError(msg: string) {
     if (errorTimer.current) clearTimeout(errorTimer.current)
@@ -126,6 +140,12 @@ export function TagsSection({ momentId, tags, canEdit }: Props) {
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
+            accessibility={{
+              announcements,
+              screenReaderInstructions: {
+                draggable: 'To reorder, press Space or Enter to pick up the tag, use the arrow keys to move it, then press Space or Enter to drop it, or Escape to cancel.',
+              },
+            }}
           >
             <SortableContext items={order.map((t) => t.id)} strategy={horizontalListSortingStrategy}>
               {order.map((t) => (
@@ -192,27 +212,35 @@ function SortableTag({ tag, disabled, onRemove }: SortableTagProps) {
     transition,
     opacity: isDragging ? 0.6 : 1,
     zIndex: isDragging ? 1 : undefined,
-    cursor: isDragging ? 'grabbing' : 'grab',
   }
 
+  // The chip is a plain container with two sibling controls: the drag handle
+  // (tag text, carrying dnd-kit's role="button"/tabIndex/listeners) and the
+  // remove button. Nesting the remove button inside the draggable element made
+  // it a button-inside-a-button for screen readers and AI agents. The padding
+  // lives on the children so the chip looks and drags exactly as before, and
+  // the chip shows a focus ring when its handle has keyboard focus.
   return (
     <Badge
       ref={setNodeRef}
       style={style}
       variant="default"
-      className="h-6 gap-1 pl-2 pr-1.5 touch-none select-none"
-      {...attributes}
-      {...listeners}
+      className="h-6 gap-0 px-0 py-0 has-[[data-drag-handle]:focus-visible]:ring-2 has-[[data-drag-handle]:focus-visible]:ring-rw-accent"
     >
-      {tag.tag}
+      <span
+        data-drag-handle=""
+        {...attributes}
+        {...listeners}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        className="flex h-full items-center pl-2 pr-1 rounded-l-rw-pill touch-none select-none outline-none"
+      >
+        {tag.tag}
+      </span>
       <button
         type="button"
-        // Stop the pointer/click from reaching the drag listeners so removing
-        // a tag never starts a drag.
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => { e.stopPropagation(); onRemove() }}
+        onClick={onRemove}
         disabled={disabled}
-        className="text-rw-accent/70 hover:text-rw-accent transition-colors cursor-pointer"
+        className="flex h-full items-center pr-1.5 rounded-r-rw-pill text-rw-accent/70 hover:text-rw-accent transition-colors cursor-pointer"
         aria-label={`Remove tag ${tag.tag}`}
       >
         <X className="size-2.5" />
