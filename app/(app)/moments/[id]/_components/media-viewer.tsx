@@ -68,7 +68,6 @@ export function MediaViewer({
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
   const touchStartXRef = useRef<number | null>(null)
   const touchStartYRef = useRef<number | null>(null)
   const pinchDistRef = useRef<number | null>(null)
@@ -88,11 +87,14 @@ export function MediaViewer({
   }, [])
 
   // ── Focus management ─────────────────────────────────────────────────────
-  // Move focus into the viewer on open (so keyboard users and AI agents land
-  // on its controls, not the page behind) and hand it back on close.
+  // Move focus into the viewer on open (so keyboard users, screen readers and
+  // AI agents land in the dialog, not the page behind) and hand it back on
+  // close. Focus the container rather than the Close button: a button acts on
+  // Enter keydown (including key-repeat), so the Enter that opened the viewer
+  // could otherwise close it again straight away.
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null
-    closeButtonRef.current?.focus({ preventScroll: true })
+    containerRef.current?.focus({ preventScroll: true })
     return () => { previouslyFocused?.focus?.({ preventScroll: true }) }
   }, [])
 
@@ -234,7 +236,8 @@ export function MediaViewer({
       role="dialog"
       aria-modal="true"
       aria-label="Media viewer"
-      className="fixed inset-0 z-50 flex items-center justify-center select-none"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-center justify-center select-none outline-none"
       style={{
         backgroundColor: 'rgba(0,0,0,0.92)',
         backdropFilter: 'blur(4px)',
@@ -445,7 +448,6 @@ export function MediaViewer({
             <Download size={20} />
           </a>
           <button
-            ref={closeButtonRef}
             type="button"
             aria-label="Close viewer"
             style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.8)', borderRadius: '50%', border: 'none', background: 'none', cursor: 'pointer' }}
