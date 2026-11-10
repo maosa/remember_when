@@ -163,7 +163,12 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
   return (
     <>
       {/* ── Collapsed sticky bar ──────────────────────────────── */}
+      {/* While hidden it's `inert` + aria-hidden, not just transparent: otherwise
+          its h1 and Add entry button stay in the accessibility tree over the
+          cover photo, and an agent "clicking" them hits the cover underneath. */}
       <div
+        inert={!collapsed}
+        aria-hidden={!collapsed}
         className={cn(
           'fixed inset-x-0 z-40 h-12 border-b border-rw-border-subtle bg-rw-bg/95 backdrop-blur-sm transition-all duration-200 ease-in-out',
           'shadow-[0_1px_0_rgba(44,42,37,0.08),_0_2px_12px_rgba(44,42,37,0.06)]',
@@ -240,7 +245,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
                   'absolute top-3 right-3 z-10 rounded-full p-2.5 text-white transition-all',
                   repositioning
                     ? 'bg-rw-accent opacity-100 shadow-md'
-                    : 'bg-black/40 opacity-0 group-hover:opacity-100 hover:bg-black/60'
+                    : 'bg-black/40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-black/60'
                 )}
               >
                 {repositioning ? <Check className="size-5" /> : <MoveVertical className="size-5" />}

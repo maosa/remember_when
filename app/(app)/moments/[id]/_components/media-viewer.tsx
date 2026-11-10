@@ -68,6 +68,7 @@ export function MediaViewer({
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
   const touchStartXRef = useRef<number | null>(null)
   const touchStartYRef = useRef<number | null>(null)
   const pinchDistRef = useRef<number | null>(null)
@@ -84,6 +85,15 @@ export function MediaViewer({
   useEffect(() => {
     const raf = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(raf)
+  }, [])
+
+  // ── Focus management ─────────────────────────────────────────────────────
+  // Move focus into the viewer on open (so keyboard users and AI agents land
+  // on its controls, not the page behind) and hand it back on close.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null
+    closeButtonRef.current?.focus({ preventScroll: true })
+    return () => { previouslyFocused?.focus?.({ preventScroll: true }) }
   }, [])
 
   // ── Body scroll lock ─────────────────────────────────────────────────────
@@ -221,6 +231,9 @@ export function MediaViewer({
   const content = (
     <div
       ref={containerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Media viewer"
       className="fixed inset-0 z-50 flex items-center justify-center select-none"
       style={{
         backgroundColor: 'rgba(0,0,0,0.92)',
@@ -432,6 +445,8 @@ export function MediaViewer({
             <Download size={20} />
           </a>
           <button
+            ref={closeButtonRef}
+            type="button"
             aria-label="Close viewer"
             style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.8)', borderRadius: '50%', border: 'none', background: 'none', cursor: 'pointer' }}
             onClick={() => handleCloseRef.current()}
@@ -443,6 +458,7 @@ export function MediaViewer({
         {/* Left nav arrow — always shown when there's more than one item (looping) */}
         {items.length > 1 && (
           <button
+            type="button"
             aria-label="Previous"
             className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-auto"
             style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', border: 'none', background: 'none', cursor: 'pointer', borderRadius: '50%' }}
@@ -455,6 +471,7 @@ export function MediaViewer({
         {/* Right nav arrow — always shown when there's more than one item (looping) */}
         {items.length > 1 && (
           <button
+            type="button"
             aria-label="Next"
             className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-auto"
             style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', border: 'none', background: 'none', cursor: 'pointer', borderRadius: '50%' }}
