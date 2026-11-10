@@ -95,6 +95,10 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // No file-extension exclusions: the app serves no same-origin images (user
+    // media lives in Supabase Storage), and an extension rule would let any
+    // path ending in e.g. `.png` skip the auth redirect. Public static files
+    // are allowlisted by exact path in `isAuthRoute` instead.
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
