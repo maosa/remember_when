@@ -247,7 +247,7 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
                   'absolute top-3 right-3 z-10 rounded-full p-2.5 text-white transition-all',
                   repositioning
                     ? 'bg-rw-accent opacity-100 shadow-md'
-                    : 'bg-black/40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:bg-black/60'
+                    : 'bg-black/40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 touch:opacity-100 hover:bg-black/60'
                 )}
               >
                 {repositioning ? <Check className="size-5" /> : <MoveVertical className="size-5" />}

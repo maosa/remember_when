@@ -225,7 +225,7 @@ export const MomentCard = memo(function MomentCard({ moment }: Props) {
       </Link>
 
       {/* ── Action menu — hover-only, top-right of cover ─────────── */}
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 has-[:focus-visible]:opacity-100 has-[[data-popup-open]]:opacity-100 pointer-events-none group-hover:pointer-events-auto has-[:focus-visible]:pointer-events-auto has-[[data-popup-open]]:pointer-events-auto transition-opacity">
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 has-[:focus-visible]:opacity-100 has-[[data-popup-open]]:opacity-100 touch:opacity-100 pointer-events-none group-hover:pointer-events-auto has-[:focus-visible]:pointer-events-auto has-[[data-popup-open]]:pointer-events-auto touch:pointer-events-auto transition-opacity">
         <Menu>
           <MenuTrigger
             render={

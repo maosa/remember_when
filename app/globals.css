@@ -3,6 +3,10 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+/* Devices whose primary pointer can't hover (phones, tablets). Use to reveal
+   controls that are otherwise shown only on hover, e.g. `touch:opacity-100`.
+   Doesn't match touchscreen laptops, whose primary pointer can hover. */
+@custom-variant touch (@media (hover: none));
 
 /* ============================================================
    REMEMBER WHEN — DESIGN TOKENS
