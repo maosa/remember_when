@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { resolveCurrency } from '@/lib/pricing/currency'
 import { PricingClient } from './pricing-client'
+
+export const metadata: Metadata = {
+  title: 'Pricing — Remember When',
+  description: 'Plans and pricing for Remember When, the shared memory book for the moments that matter.',
+  alternates: { canonical: '/pricing' },
+}
 
 export default async function PricingPage({
   searchParams,

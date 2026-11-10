@@ -282,6 +282,25 @@ const TRIO_ITEMS = [
   },
 ] as const
 
+// ─── Structured data (JSON-LD) ────────────────────────────────────────────────
+//
+// Describes the product to search engines and AI agents. Built from constants
+// only — never interpolate user or request data here. The `<` escape (per the
+// Next.js JSON-LD guide) prevents a `</script>` breakout regardless.
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://rememberwhen.app'
+
+const JSON_LD = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Remember When',
+  url: APP_URL,
+  description:
+    'A shared memory book for the moments that matter. Create a moment, invite the people who were there, and build the memory together with photos and stories.',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+}).replace(/</g, '\\u003c')
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
@@ -404,6 +423,7 @@ export default function LandingPage() {
 
   return (
     <div className={cn('min-h-screen bg-rw-bg overflow-x-hidden', isAuthed && 'pb-20 md:pb-0')}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD }} />
 
       {/* ── NAV ───────────────────────────────────────────────── */}
       {/* Signed-in visitors get the exact same nav as the rest of the app
@@ -475,6 +495,14 @@ export default function LandingPage() {
         <HeroCanvas />
 
         <div className="relative z-10 max-w-[860px] w-full text-center">
+
+          {/* Plain product summary for screen readers and AI agents — the
+              visible headline is a rotating example quote, not a description. */}
+          <p className="sr-only">
+            Remember When is a shared memory book: create a moment, invite the
+            people who were there, and build the memory together with photos
+            and stories.
+          </p>
 
           {/* Kicker — serif italic, very faint */}
           <p

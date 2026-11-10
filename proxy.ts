@@ -48,6 +48,13 @@ export async function proxy(request: NextRequest) {
     pathname === '/pricing' ||
     pathname === '/terms' || // legal pages — publicly accessible (linked from signup)
     pathname === '/privacy' ||
+    // Static crawler/agent discovery files. Exact matches only — never widen
+    // these to prefixes or matcher exclusions, so no other path can slip past
+    // the auth redirect. None of these handlers read cookies, user or DB.
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml' ||
+    pathname === '/llms.txt' ||
+    pathname === '/opengraph-image' ||
     pathname === '/' // landing page — publicly accessible
 
   // Helper: redirect while preserving any Supabase cookie updates

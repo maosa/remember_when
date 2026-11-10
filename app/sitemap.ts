@@ -8,5 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${APP_URL}/pricing`,      lastModified: new Date(), priority: 0.8 },
     { url: `${APP_URL}/signup`,       lastModified: new Date(), priority: 0.6 },
     { url: `${APP_URL}/login`,        lastModified: new Date(), priority: 0.5 },
+    { url: `${APP_URL}/terms`,        lastModified: new Date(), priority: 0.3 },
+    { url: `${APP_URL}/privacy`,      lastModified: new Date(), priority: 0.3 },
   ]
 }
