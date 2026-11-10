@@ -70,7 +70,7 @@ function SinglePhoto({ photo, onOpen }: { photo: MediaItem; onOpen: (id: string)
   }
 
   return (
-    <button onClick={() => onOpen(photo.id)} className={`w-full rounded-xl ${btnBase}`}>
+    <button type="button" aria-label="Open photo" onClick={() => onOpen(photo.id)} className={`w-full rounded-xl ${btnBase}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={photo.storageUrl}
@@ -97,8 +97,8 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
   if (count === 2) {
     return (
       <div className="grid grid-cols-2 gap-1">
-        {photos.map((m) => (
-          <button key={m.id} onClick={() => onOpen(m.id)} className={`rounded-lg ${btnBase}`}>
+        {photos.map((m, i) => (
+          <button key={m.id} type="button" aria-label={`Open photo ${i + 1} of ${count}`} onClick={() => onOpen(m.id)} className={`rounded-lg ${btnBase}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={m.storageUrl}
@@ -114,7 +114,7 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
   if (count === 3) {
     return (
       <div className="grid grid-cols-2 gap-1">
-        <button onClick={() => onOpen(photos[0].id)} className={`col-span-2 rounded-xl ${btnBase}`}>
+        <button type="button" aria-label={`Open photo 1 of ${count}`} onClick={() => onOpen(photos[0].id)} className={`col-span-2 rounded-xl ${btnBase}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photos[0].storageUrl}
@@ -122,8 +122,8 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
             className="w-full aspect-video object-cover bg-rw-surface-raised"
           />
         </button>
-        {photos.slice(1).map((m) => (
-          <button key={m.id} onClick={() => onOpen(m.id)} className={`rounded-lg ${btnBase}`}>
+        {photos.slice(1).map((m, i) => (
+          <button key={m.id} type="button" aria-label={`Open photo ${i + 2} of ${count}`} onClick={() => onOpen(m.id)} className={`rounded-lg ${btnBase}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={m.storageUrl}
@@ -141,7 +141,17 @@ function PhotoGrid({ photos, onOpen }: { photos: MediaItem[]; onOpen: (id: strin
   return (
     <div className="grid grid-cols-2 gap-1">
       {photos.slice(0, 4).map((m, idx) => (
-        <button key={m.id} onClick={() => onOpen(m.id)} className={`relative rounded-lg ${btnBase}`}>
+        <button
+          key={m.id}
+          type="button"
+          aria-label={
+            idx === 3 && overflow > 0
+              ? `Open photo 4 of ${count}, ${overflow} more`
+              : `Open photo ${idx + 1} of ${count}`
+          }
+          onClick={() => onOpen(m.id)}
+          className={`relative rounded-lg ${btnBase}`}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={m.storageUrl}
@@ -199,12 +209,14 @@ function AudioRow({ m, label, onClick }: { m: MediaItem; label: string; onClick:
 
 // ─── Video thumbnail ──────────────────────────────────────────────────────────
 
-function VideoThumbnail({ m, onClick }: { m: MediaItem; onClick: () => void }) {
+function VideoThumbnail({ m, label, onClick }: { m: MediaItem; label: string; onClick: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [duration, setDuration] = useState<string | null>(null)
 
   return (
     <button
+      type="button"
+      aria-label={duration ? `${label}, ${duration}` : label}
       onClick={onClick}
       className="relative w-full rounded-xl overflow-hidden bg-rw-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rw-accent"
     >
@@ -390,8 +402,13 @@ export const PostCard = memo(function PostCard({ post, canDelete, canEdit }: Pro
       )}
 
       {/* Videos */}
-      {videos.map((m) => (
-        <VideoThumbnail key={m.id} m={m} onClick={() => openViewer(m.id)} />
+      {videos.map((m, idx) => (
+        <VideoThumbnail
+          key={m.id}
+          m={m}
+          label={videos.length === 1 ? 'Play video' : `Play video ${idx + 1} of ${videos.length}`}
+          onClick={() => openViewer(m.id)}
+        />
       ))}
 
       {/* Audio */}

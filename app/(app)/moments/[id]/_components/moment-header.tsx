@@ -197,17 +197,14 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
       <div className="relative">
         {/* Cover photo */}
         {moment.coverPhotoUrl ? (
+          // Plain container: the gallery button and the reposition button are
+          // siblings inside it (never one nested in the other), so screen
+          // readers and agents see two distinct controls.
           <div
             className={cn(
               'relative h-52 sm:h-72 overflow-hidden bg-rw-surface-raised group',
-              canOpenGallery && 'cursor-pointer',
               repositioning && 'cursor-ns-resize touch-none select-none'
             )}
-            onClick={canOpenGallery ? () => setGalleryOpen(true) : undefined}
-            role={canOpenGallery ? 'button' : undefined}
-            tabIndex={canOpenGallery ? 0 : undefined}
-            onKeyDown={canOpenGallery ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setGalleryOpen(true) } } : undefined}
-            aria-label={canOpenGallery ? 'View moment gallery' : undefined}
             onPointerDown={repositioning ? onCoverPointerDown : undefined}
             onPointerMove={repositioning ? onCoverPointerMove : undefined}
             onPointerUp={repositioning ? onCoverPointerUp : undefined}
@@ -225,11 +222,16 @@ export function MomentHeader({ moment, myRole, myStatus }: Props) {
             />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(44,42,37,0.75) 0%, rgba(44,42,37,0.3) 50%, transparent 100%)' }} />
             {canOpenGallery && (
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full bg-black/40 p-2.5">
+              <button
+                type="button"
+                onClick={() => setGalleryOpen(true)}
+                aria-label="View moment gallery"
+                className="absolute inset-0 cursor-pointer bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rw-accent"
+              >
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full bg-black/40 p-2.5">
                   <ZoomIn className="size-5 text-white" />
-                </div>
-              </div>
+                </span>
+              </button>
             )}
             {/* Reposition control (editors only) — top-right, mirrors the ZoomIn circle */}
             {canPost && !isPendingInvite && (
